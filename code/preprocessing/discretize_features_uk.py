@@ -38,7 +38,7 @@ def main():
         NONE
     
     OUTPUT:
-        returns nothing, but creates writes the converted UK dataset to another .csv file
+        returns nothing, but, writes the converted UK dataset to the output .csv file
     """
     newLabel = {
         'Day' : "Day",
@@ -75,7 +75,7 @@ def main():
             rawData.append(row)
 
     with open(optFileName, "w") as optFile:
-        myWriter = csv.DictWriter(optFile, newLabel)
+        myWriter = csv.DictWriter(optFile, list(newLabel.keys()))
         #Put the column labels in
         myWriter.writerow(newLabel)
 
@@ -113,7 +113,7 @@ def main():
             newLine["Sports and Leisure"] = SEVERITY[row["Sports and Leisure"].lower()]
 
             newLine["Schools Closure"] = CLOSURE[row["Schools Closure"].lower()]
-            
+
             myWriter.writerow(newLine)
             
 
