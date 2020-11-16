@@ -1,5 +1,3 @@
-import csv
-import sys
 
 SEVERITY = {
     "low" : 1,
@@ -27,38 +25,3 @@ REGIONS = {
     "wales" : 12,
 }
 
-fileName = "../../data/uk_data.csv"
-optFileName = "../../data/uk_mlTable_0_0.csv"
-
-def main():
-    """
-    Converts the UK dataset into a format that is usuable in the next stage
-
-    INPUT:
-        NONE
-    
-    OUTPUT:
-        returns nothing, but creates writes the converted UK dataset to another .csv file
-    """
-    newLabel = []
-    readLabel = True
-    
-    rawData = []
-
-
-    with open(fileName, "r") as dataFile:
-        myReader = csv.DictReader(dataFile)
-
-        for row in myReader:
-            if readLabel:
-                readLabel = False
-                
-                newLabel = list(row.keys())
-                continue
-
-            rawData.append(row)
-
-    print(newLabel)
-
-if __name__ == '__main__':
-    sys.exit(main()) 
