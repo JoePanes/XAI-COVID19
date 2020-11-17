@@ -98,7 +98,7 @@ def main():
 
             """
             TO DO:
-                Discretize the date?
+                Convert the date?
             """
             newLine["Date"] = row["Date"]
 
