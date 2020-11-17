@@ -27,8 +27,17 @@ REGIONS = {
     "wales" : 12,
 }
 
+TEMP_THRESHOLD = [-float("inf"), 0, 10, 20, float("inf")]
+HUMIDITY_THRESHOLD = [0, 40, 80, float("inf")]
+
 fileName = "../../data/uk_data.csv"
 optFileName = "../../data/uk_mlTable_0_0.csv"
+
+def discretizeVal(val, thresholds):
+    for i in range(len(thresholds)-1):
+        if float(val) >= thresholds[i] and float(val) <= thresholds[i+1]:
+            return i     
+
 
 def main():
     """
@@ -56,6 +65,8 @@ def main():
         'Pubs and Bars' : "Pubs and Bars", 
         'Sports and Leisure' : "Sports and Leisure", 
         'Schools Closure' : "Schools Closure",
+        'Temperature' : 'Temperature',
+        'Humidity' : 'Humidity'
     }
     #readLabel = True
     
@@ -91,7 +102,7 @@ def main():
             """
             newLine["Date"] = row["Date"]
 
-            newLine["Regions"] = REGIONS[row["Regions"].lower()]
+            newLine["Regions"] = REGIONS.get(row["Regions"].lower())
 
             newLine["Cases"] = row["Cases"]
             newLine["Cumulative Cases"] = row["Cumulative Cases"]
@@ -102,18 +113,24 @@ def main():
             newLine["Tests"] = row["Tests"]
             newLine["Cumulative Tests"] = row["Cumulative Tests"]
 
-            newLine["Meeting Friends/Family"] = SEVERITY[row["Meeting Friends/Family"].lower()]
+            newLine["Meeting Friends/Family"] = SEVERITY.get(row["Meeting Friends/Family"].lower())
 
-            newLine["Domestic Travel"] = SEVERITY[row["Domestic Travel"].lower()]
+            newLine["Domestic Travel"] = SEVERITY.get(row["Domestic Travel"].lower())
 
-            newLine["Cafes and Restaurants"] = SEVERITY[row["Cafes and Restaurants"].lower()]
+            newLine["Cafes and Restaurants"] = SEVERITY.get(row["Cafes and Restaurants"].lower())
 
-            newLine["Pubs and Bars"] = SEVERITY[row["Pubs and Bars"].lower()]
+            newLine["Pubs and Bars"] = SEVERITY.get(row["Pubs and Bars"].lower())
 
-            newLine["Sports and Leisure"] = SEVERITY[row["Sports and Leisure"].lower()]
+            newLine["Sports and Leisure"] = SEVERITY.get(row["Sports and Leisure"].lower())
 
-            newLine["Schools Closure"] = CLOSURE[row["Schools Closure"].lower()]
+            newLine["Schools Closure"] = CLOSURE.get(row["Schools Closure"].lower())
 
+            """
+            For when this is made available in the data set
+            newLine["Temperature"] = discretizeVal(row["Temperature"], TEMP_THRESHOLD)
+
+            newLine["Humidity"] = discretizeVal(row["Humidity"], HUMIDITY_THRESHOLD)
+            """
             myWriter.writerow(newLine)
             
 
