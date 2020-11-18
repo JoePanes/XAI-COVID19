@@ -4,6 +4,7 @@ and extracts the temperature and humidity, averages all of their values for a
 given date then writes them into the processed folder.
 
 Uses weather data from this website: https://rp5.ru/Weather_archive_in_Chisinau
+Click "See on map" to access other weather forecasts and archives
 """
 
 import csv
@@ -11,8 +12,7 @@ import sys
 import statistics
 import os
 
-filePath = "../../data/weather/raw/"
-optFilePath = "../../data/weather/processed/"
+filePath = "../../data/weather/"
 
 def writeToFile(fileWriter, date, tempList, humidList):
     """
@@ -65,12 +65,13 @@ def printProgressBar(currNo, totalNo):
     progressBar = "".join(progressBar)
     print("Progress: ["+ progressBar + f"] {currNo} / {totalNo}")
     
-def readFile(fileName, encoding):
+def readFile(fileName, dataset, encoding):
     """
     Reads in the given file using the specified encoder, then orders the rows to match the desired dataset.
 
     INPUTS:
         :param fileName: String, the name of the current file to be read
+        :param dataset: String, the corresponding dataset which the data is being processed for
         :param encoding: String, either UTF-8 or cp1252
 
     OUTPUT:
@@ -79,7 +80,7 @@ def readFile(fileName, encoding):
     """
 
     rawData = []
-    with open(filePath + fileName +".csv","r", encoding=encoding) as dataFile:
+    with open(filePath + dataset + "/raw/" + fileName +".csv","r", encoding=encoding) as dataFile:
             #Skip over rows that are not part of the database
             for _ in range(6):
                 next(dataFile)
@@ -104,8 +105,11 @@ def readFile(fileName, encoding):
                         i += 1 
                     readLabel = False
                 else:
-                    #Reverse the order of the data to match the EU dataset
-                    rawData.insert(0, row)
+                    if dataset == "eu":
+                        #Reverse the order of the data to match the EU dataset
+                        rawData.insert(0, row)
+                    else:
+                        rawData.append(row)
 
     return rawData, tempIndex, humidityIndex
 
@@ -121,7 +125,17 @@ def main():
         returns nothing, but, it converts the .csv files in raw into the expected format
             and outputs them in processed
     """
-    fileList = os.listdir(filePath)
+    if len(sys.argv) != 2 or (sys.argv[1].lower() != "uk" and sys.argv[1] != "eu"):
+        print("In order to use this program, you need to specify whether you are using the UK or EU data")
+        print("Such as, python process_weather.py uk")
+
+        return -1
+    
+    chosenDataset = sys.argv[1].lower()
+
+
+
+    fileList = os.listdir(filePath + chosenDataset + "/raw/")
 
     inputFiles = []
     for currFile in fileList:
@@ -144,12 +158,12 @@ def main():
 
         #Some of the datasets despite claming to be UTF-8 encoded, are not, hence this is necessary
         try:
-            rawData, tempIndex, humidityIndex = readFile(currFileName, "UTF-8")
+            rawData, tempIndex, humidityIndex = readFile(currFileName, chosenDataset, "UTF-8")
         except:
-            rawData, tempIndex, humidityIndex = readFile(currFileName, "cp1252")
+            rawData, tempIndex, humidityIndex = readFile(currFileName, chosenDataset, "cp1252")
 
 
-        with open(optFilePath + currFileName + "_processed.csv", "w") as optFile:
+        with open(filePath + chosenDataset + "/processed/" + currFileName + "_processed.csv", "w") as optFile:
             myWriter = csv.DictWriter(optFile, ["Date", "Temp", "Humidity",])
 
             myWriter.writerow({"Date" : "Date", "Temp" : "Temp", "Humidity" : "Humidity"})
