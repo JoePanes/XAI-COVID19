@@ -11,6 +11,7 @@ import csv
 import sys
 import statistics
 import os
+from datetime import datetime
 
 filePath = "../../data/weather/"
 
@@ -152,13 +153,12 @@ def main():
     print(f"Found {totalFiles} files")
     
     currFileNo = 1
+    dataErrorCount = 0
+    errorList = []
 
     for currFileName in inputFiles:
         printProgressBar(currFileNo, totalFiles)
-        rawData = []
         
-        
-
         rawData = []
 
         #Some of the datasets despite claming to be UTF-8 encoded, are not, hence this is necessary
@@ -190,15 +190,36 @@ def main():
                         currDateHumid.append(float(row[humidityIndex]))
                     except:
                         """
-                        This tends to occur when a feature within a dataset has no value
+                        This tends to occur when a field (or fields) in a record has no value
                         
                         However, it seems to be that only one or two readings may have this occur on a specific date
                         and has very little impact.
                         """
+                        dataErrorCount += 1
+                        errorList.append(f"{row[0]} | {currFileName}")
+
                             
             writeToFile(myWriter, currDate, currDateTemp,currDateHumid)
             
-        currFileNo +=1 
+        currFileNo +=1
+
+    #When finished, restore order to the command line     
     print("\n")
+    
+    if dataErrorCount > 0:
+        fileName = chosenDataset+ "_" + datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
+
+        print(f"There were {dataErrorCount} errors when reading the data.")
+        print(f"Go to '{filePath}{chosenDataset}/errors/{fileName}' for the dates where these occured.")
+
+        fileName = chosenDataset+ "_" + datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
+
+        errorOutput = open(f"{filePath}{chosenDataset}/errors/{fileName}.txt", "x")
+
+        errorText = f"Total errors {dataErrorCount}\n\n"
+        for currError in errorList:
+            errorText += currError + "\n"
+         
+        errorOutput.write(errorText)
 if __name__ == '__main__':
     sys.exit(main()) 
