@@ -54,7 +54,7 @@ def printProgressBar(currNo, totalNo):
     OUTPUT:
         returns nothing, but, prints the current progress out to the command line
     """
-    #Calculate the percentage
+    #Calculate the percentage (reduced by x10 to map to progress bar)
     progress = int((currNo / totalNo) * 10)
 
     progressBar = ["-"]*10
@@ -63,7 +63,12 @@ def printProgressBar(currNo, totalNo):
 
 
     progressBar = "".join(progressBar)
-    print("Progress: ["+ progressBar + f"] {currNo} / {totalNo}")
+
+    output = "Progress: ["+ progressBar + f"] {currNo} / {totalNo}"
+
+    #Copied from https://stackoverflow.com/a/6361028
+    sys.stdout.write("\r\x1b[K"+output)
+    sys.stdout.flush()
     
 def readFile(fileName, dataset, encoding):
     """
@@ -194,6 +199,6 @@ def main():
             writeToFile(myWriter, currDate, currDateTemp,currDateHumid)
             
         currFileNo +=1 
-
+    print("\n")
 if __name__ == '__main__':
     sys.exit(main()) 
