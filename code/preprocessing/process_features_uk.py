@@ -29,24 +29,6 @@ class processFeaturesUK(processFeatures):
     INPUT_FILE = "/uk/raw/uk_data.csv"
     OUTPUT_FILE = "/uk/processed/uk_mlTable_0_0.csv"
 
-    def discretizeVal(self, val, THRESHOLDS):
-        """
-        Finds where the current value belongs amongst the corresponding list thresholds
-
-        INPUTS:
-            :param val: Float, the value from a feature that needs to be discreatized
-            :param THRESHOLDS: Constant, a call to one of the constants that exist above this function (e.g. TEMP_THRESHOLD)
-        
-        OUTPUT:
-            returns the index value in which the value meets the criteria for
-
-        Copied from code by Xiyui Fan
-        """
-        for i in range(len(THRESHOLDS)-1):
-            if float(val) >= THRESHOLDS[i] and float(val) <= THRESHOLDS[i+1]:
-                return i     
-
-
     def main(self):
         """
         Converts the UK dataset into a format that is usuable in the next stage
@@ -57,52 +39,20 @@ class processFeaturesUK(processFeatures):
         OUTPUT:
             returns nothing, but, writes the converted UK dataset to the output .csv file
         """
+       
+        fieldNames = self.getFieldNames()
+        rawData = self.readFile()
         
-        newLabel = {
-            'Day' : "Day",
-            'Date' : "Date",
-            'Regions' : "Regions",
-            'Cases' : "Cases",
-            'Cumulative Cases' : "Cumulative Cases",
-            'Deaths' : "Deaths", 
-            'Cumulative Deaths' : "Cumulative Deaths", 
-            'Tests' : "Tests", 
-            'Cumulative Tests' : "Cumulative Tests", 
-            'Meeting Friends/Family' : "Meeting Friends/Family",
-            'Domestic Travel' : "Domestic Travel", 
-            'Cafes and Restaurants' : "Cafes and Restaurants",
-            'Pubs and Bars' : "Pubs and Bars", 
-            'Sports and Leisure' : "Sports and Leisure", 
-            'Schools Closure' : "Schools Closure",
-            'Temperature' : 'Temperature',
-            'Humidity' : 'Humidity'
-        }
-        #readLabel = True
-        
-        rawData = []
 
-
-        with open(self.FILE_PATH + self.INPUT_FILE, "r") as dataFile:
-            myReader = csv.DictReader(dataFile)
-
-            for row in myReader:
-                """if readLabel:
-                    readLabel = False
-                    
-                    newLabel = list(row.keys())
-                    continue"""
-
-                rawData.append(row)
 
         with open(self.FILE_PATH + self.OUTPUT_FILE, "w") as optFile:
-            myWriter = csv.DictWriter(optFile, list(newLabel.keys()))
+            myWriter = csv.DictWriter(optFile, list(fieldNames.keys()))
             #Put the column labels in
-            myWriter.writerow(newLabel)
+            myWriter.writerow(fieldNames)
 
             for row in rawData:
                 #Copy over info from the original, and discretize where relevant
                 newLine = {}
-
                 newLine["Day"] = row["Day"]
 
                 """
@@ -135,10 +85,11 @@ class processFeaturesUK(processFeatures):
                 newLine["Schools Closure"] = self.CLOSURE.get(row["Schools Closure"].lower())
 
                 """
-                For when this is made available in the data set
-                newLine["Temperature"] = discretizeVal(row["Temperature"], TEMP_THRESHOLD)
-
-                newLine["Humidity"] = discretizeVal(row["Humidity"], HUMIDITY_THRESHOLD)
+                try:
+                    newLine["Temperature"], newLine["Humidity"] = self.discretizeWeather(row["Temperature"], row["Humidity"])
+                except:
+                    #In this event there exists no value within the current entry
+                    pass
                 """
                 myWriter.writerow(newLine)
                 
