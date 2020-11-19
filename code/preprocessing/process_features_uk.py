@@ -7,6 +7,11 @@ import csv
 import sys
 from process_features import processFeatures
 
+
+
+
+
+
 REGIONS = {
     "east midlands" : 1,
     "east of england" : 2,
@@ -22,12 +27,30 @@ REGIONS = {
     "wales" : 12,
 }
 
+def setupCategoriedFields():
+    """
+    Extend the constant such that it contains both the original values and
+    values specific to the UK database
 
+    INPUTS:
+        NONE
+    
+    OUTPUTS:
+        returns the merged dictionary
+    """
+    category = processFeatures.CATEGORISED_FIELDS
+    category.update({"regions" : REGIONS})
 
+    return category
 
 class processFeaturesUK(processFeatures):
+
+    CATEGORISED_FIELDS = setupCategoriedFields()
+    
     INPUT_FILE = "/uk/raw/uk_data.csv"
     OUTPUT_FILE = "/uk/processed/uk_mlTable_0_0.csv"
+
+    
 
     def main(self):
         """
@@ -43,8 +66,6 @@ class processFeaturesUK(processFeatures):
         fieldNames = self.getFieldNames()
         rawData = self.readFile()
         
-
-
         with open(self.FILE_PATH + self.OUTPUT_FILE, "w") as optFile:
             myWriter = csv.DictWriter(optFile, list(fieldNames.keys()))
             #Put the column labels in
@@ -52,38 +73,7 @@ class processFeaturesUK(processFeatures):
 
             for row in rawData:
                 #Copy over info from the original, and discretize where relevant
-                newLine = {}
-                newLine["Day"] = row["Day"]
-
-                """
-                TO DO:
-                    Convert the date?
-                """
-                newLine["Date"] = row["Date"]
-
-                newLine["Regions"] = REGIONS.get(row["Regions"].lower())
-
-                newLine["Cases"] = row["Cases"]
-                newLine["Cumulative Cases"] = row["Cumulative Cases"]
-                
-                newLine["Deaths"] = row["Deaths"]
-                newLine["Cumulative Deaths"] = row["Cumulative Deaths"]
-                
-                newLine["Tests"] = row["Tests"]
-                newLine["Cumulative Tests"] = row["Cumulative Tests"]
-
-                newLine["Meeting Friends/Family"] = self.SEVERITY.get(row["Meeting Friends/Family"].lower())
-
-                newLine["Domestic Travel"] = self.SEVERITY.get(row["Domestic Travel"].lower())
-
-                newLine["Cafes and Restaurants"] = self.SEVERITY.get(row["Cafes and Restaurants"].lower())
-
-                newLine["Pubs and Bars"] = self.SEVERITY.get(row["Pubs and Bars"].lower())
-
-                newLine["Sports and Leisure"] = self.SEVERITY.get(row["Sports and Leisure"].lower())
-
-                newLine["Schools Closure"] = self.CLOSURE.get(row["Schools Closure"].lower())
-
+                newLine = self.gatherData(row, fieldNames)
                 """
                 try:
                     newLine["Temperature"], newLine["Humidity"] = self.discretizeWeather(row["Temperature"], row["Humidity"])

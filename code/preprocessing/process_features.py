@@ -17,6 +17,21 @@ class processFeatures:
     TEMP_THRESHOLD = [-float("inf"), 0, 10, 20, float("inf")]
     HUMIDITY_THRESHOLD = [0, 40, 80, float("inf")]
 
+    #Some shared fields need to categorised from their string values
+    CATEGORISED_FIELDS = {
+        "meeting friends/family" : SEVERITY,
+        "domestic travel" : SEVERITY,
+        "cafes and restaurants" : SEVERITY,
+        "pubs and bars" : SEVERITY,
+        "sports and leisure" : SEVERITY,
+        "schools closure" : CLOSURE,
+    }
+
+    DISCRETIZE_FIELDS = {
+        "temperature" : TEMP_THRESHOLD,
+        "humidity" : HUMIDITY_THRESHOLD,
+     }
+
     def getFieldNames(self):
         """
         Read the first row of the file and retrieve its field names
@@ -63,8 +78,68 @@ class processFeatures:
 
         return rawData
 
-    def main(self):
-        pass
+    def gatherData(self, row, fieldNames):
+        """
+        Iterate over a row, retrieve information to be written as it goes
+        and converting strings to their numerical equivalent.
+
+        INPUT:
+            :param row: Dictionary, one row from the current dataset
+            :param fieldNames: List, the list of all fields present within the dataset
+
+        OUTPUT:
+            returns the processed row ready for writing to the output file
+        """
+        newLine = {}
+        for currField in fieldNames:
+            try:
+                data = row[currField]
+                currField = self.removeBrackets(currField).rstrip()
+
+                # Certain fields require processing according to certain rules 
+                # and in different ways
+                if currField.lower() in self.CATEGORISED_FIELDS:
+                    categoryConversion = self.CATEGORISED_FIELDS.get(currField.lower())
+                    newLine[currField] = categoryConversion.get(data.lower())
+                
+                elif currField.lower() in self.DISCRETIZE_FIELDS:
+                    discreteConversion = self.DISCRETIZE_FIELDS.get(currField.lower())
+                    newLine[currField] = self.discretizeVal(data, discreteConversion)
+
+                else:
+                    newLine[currField] = data
+            except:
+                #If invalid data, do not include it
+                #If missing data, carry on
+                pass
+
+        return newLine
+    
+    #Taken from https://stackoverflow.com/a/14598135
+    def removeBrackets(self, fieldName):
+        """
+        Removes any bracketed text from a string
+
+        INPUT:
+            :param fieldName: String, the field name being checked
+        OUPUT:
+            returns a string that contains only text not within a bracket
+        """
+        ret = ''
+        skip1c = 0
+        skip2c = 0
+        for i in fieldName:
+            if i == '[':
+                skip1c += 1
+            elif i == '(':
+                skip2c += 1
+            elif i == ']' and skip1c > 0:
+                skip1c -= 1
+            elif i == ')'and skip2c > 0:
+                skip2c -= 1
+            elif skip1c == 0 and skip2c == 0:
+                ret += i
+        return ret
 
     def discretizeVal(self, val, THRESHOLDS):
         """
@@ -82,23 +157,6 @@ class processFeatures:
         for i in range(len(THRESHOLDS)-1):
             if float(val) >= THRESHOLDS[i] and float(val) <= THRESHOLDS[i+1]:
                 return i
-    
-    def discretizeWeather(self, temp, humidity):
-        """
-        Convert the float values of temp and humidity into an integer indicating which threshold
-        they exist within.
-
-        INPUTS:
-            :param currLine: Dictionary, the data stored about the current row to be written
-            :param temp: Float, the average temperature for a given day
-            :param humidity: Float, the average humidity for a given day
-
-        OUTPUTS:
-            returns the number for the threshold which each fit into
-        """
-        discreteTemp = self.discretizeVal(temp, self.TEMP_THRESHOLD)
-
-        discreteHumid = self.discretizeVal(humidity, self.HUMIDITY_THRESHOLD)
-
-        return discreteTemp, discreteHumid
-
+                
+    def main(self):
+        pass
