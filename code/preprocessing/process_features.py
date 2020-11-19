@@ -1,8 +1,13 @@
 import csv
+import os
+import output_data_error
+import sys
+
 class processFeatures:
     FILE_PATH = "../../data/core/"
     INPUT_FILE = None
     OUTPUT_FILE = None
+    OUTPUT_ERROR = None
     
     SEVERITY = {
     "low" : 1,
@@ -32,6 +37,9 @@ class processFeatures:
         "temperature" : TEMP_THRESHOLD,
         "humidity" : HUMIDITY_THRESHOLD,
      }
+
+    errorList = []
+    errorNo = 0
 
     def getFieldNames(self):
         """
@@ -100,8 +108,8 @@ class processFeatures:
                 # Certain fields require processing according to certain rules 
                 # and in different ways
                 if standardFieldName.lower() in self.CATEGORISED_FIELDS:
-                    categoryConversion = self.CATEGORISED_FIELDS.get(currField.lower())
-                    newLine[currField] = categoryConversion.get(data.lower())
+                    categoryConversion = self.CATEGORISED_FIELDS.get(standardFieldName.lower())
+                    newLine[currField] = categoryConversion[data.lower()]
                 
                 elif standardFieldName.lower() in self.DISCRETIZE_FIELDS:
                     discreteConversion = self.DISCRETIZE_FIELDS.get(currField.lower())
@@ -112,7 +120,10 @@ class processFeatures:
             except:
                 #If invalid data, do not include it
                 #If missing data, carry on
-                pass
+                errorText = self.generateErrorEntry(row, currField)
+
+                self.errorList.append(errorText)
+                self.errorNo += 1
 
         return newLine
     
@@ -158,7 +169,42 @@ class processFeatures:
         for i in range(len(THRESHOLDS)-1):
             if float(val) >= THRESHOLDS[i] and float(val) <= THRESHOLDS[i+1]:
                 return i
-                
+    
+    def generateErrorEntry(self, row, currField):
+        """
+        Specifies where within the dataset the error has occured
+
+        INPUT:
+            :param row: Dictionary, current row of the dataset
+            :param currField: String, specifically which column the invalid data exists
+        
+        OUPUT:
+            returns the text entry to be added to the error file
+        """
+        date = row["Date"]
+        if len(row["Date"]) == 9:
+            date = "0" + date
+
+        errorText = f"{date} | "
+        fieldNamePadding = [" "]*40
+        
+        i = 0
+        for letter in currField:
+            fieldNamePadding[i] = letter
+            i +=1
+        
+        currField = "".join(fieldNamePadding)
+        errorText += f"{currField} | "
+
+        location = self.getRecordsGeographicalLocation(row)
+
+        errorText = errorText + location
+        
+        return errorText
+        
+    def getRecordsGeographicalLocation(self, row):
+        return -1 
+
     def main(self):
         """
         Converts the dataset into a format that is usuable in the next stage
@@ -182,3 +228,15 @@ class processFeatures:
                 #Copy over info from the original, and discretize where relevant
                 newLine = self.gatherData(row, fieldNames)
                 myWriter.writerow(newLine)
+
+        if self.errorNo > 0:
+            #Get the current dataset from the command used
+            dataset = sys.argv[0][-5:-3]
+            output_data_error.createErrorFile(self.FILE_PATH, dataset, 
+                                              self.errorNo, self.errorList)
+
+if __name__ == '__main__':
+    #In the event that the user runs this file
+    inp = input("Do you wish to process either the UK or EU dataset? ")
+
+    os.system(f"python process_features_{inp.lower()}.py")

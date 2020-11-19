@@ -30,7 +30,7 @@ COUNTRIES = {
 def setupCategoriedFields():
     """
     Extend the constant such that it contains both the original values and
-    values specific to the UK database
+    values specific to the EU database
 
     INPUTS:
         NONE
@@ -39,7 +39,7 @@ def setupCategoriedFields():
         returns the merged dictionary
     """
     category = processFeatures.CATEGORISED_FIELDS
-    category.update({"countries" : COUNTRIES})
+    category.update({"country" : COUNTRIES})
 
     return category
 
@@ -47,8 +47,22 @@ class processFeaturesEU(processFeatures):
     CATEGORISED_FIELDS = setupCategoriedFields()
 
     INPUT_FILE = "/eu/raw/eu_data.csv"
-    OUTPUT_FILE = "/eu/processed/eu_mlTable_0_0.csv"       
+    OUTPUT_FILE = "/eu/processed/eu_mlTable_0_0.csv"
+    OUTPUT_ERROR = "/eu/errors/"
 
+    def getRecordsGeographicalLocation(self, row):
+        """
+        Retrieve the record's Country
+
+        INPUT:
+            :param row: Dictionary, the contents of the current row of the dataset
+
+        OUTPUT:
+            returns the current locations name
+        """
+
+        return row["Country"]
+   
 if __name__ == '__main__':
     run = processFeaturesEU()
     sys.exit(run.main()) 

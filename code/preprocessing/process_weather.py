@@ -11,6 +11,7 @@ import csv
 import sys
 import statistics
 import os
+import output_data_error
 from datetime import datetime
 
 filePath = "../../data/weather/"
@@ -207,19 +208,7 @@ def main():
     print("\n")
     
     if dataErrorCount > 0:
-        fileName = chosenDataset+ "_" + datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
-
-        print(f"There were {dataErrorCount} errors when reading the data.")
-        print(f"Go to '{filePath}{chosenDataset}/errors/{fileName}' for the dates where these occured.")
-
-        fileName = chosenDataset+ "_" + datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
-
-        errorOutput = open(f"{filePath}{chosenDataset}/errors/{fileName}.txt", "x")
-
-        errorText = f"Total errors {dataErrorCount}\n\n"
-        for currError in errorList:
-            errorText += currError + "\n"
-         
-        errorOutput.write(errorText)
+        output_data_error.createErrorFile(filePath, chosenDataset, 
+                                          dataErrorCount, errorList)
 if __name__ == '__main__':
     sys.exit(main()) 

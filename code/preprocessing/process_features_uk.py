@@ -44,7 +44,21 @@ class processFeaturesUK(processFeatures):
     
     INPUT_FILE = "/uk/raw/uk_data.csv"
     OUTPUT_FILE = "/uk/processed/uk_mlTable_0_0.csv"
-                
+    OUTPUT_ERROR = "/uk/errors/"
+    
+    def getRecordsGeographicalLocation(self, row):
+        """
+        Retrieve the record's Region
+
+        INPUT:
+            :param row: Dictionary, the contents of the current row of the dataset
+
+        OUTPUT:
+            returns the current locations name
+        """
+
+        return row["Regions"]
+
 if __name__ == '__main__':
     run = processFeaturesUK()
     sys.exit(run.main()) 
