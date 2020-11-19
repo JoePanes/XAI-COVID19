@@ -2,6 +2,7 @@ import csv
 class processFeatures:
     FILE_PATH = "../../data/core/"
     INPUT_FILE = None
+    OUTPUT_FILE = None
     
     SEVERITY = {
     "low" : 1,
@@ -94,15 +95,15 @@ class processFeatures:
         for currField in fieldNames:
             try:
                 data = row[currField]
-                currField = self.removeBrackets(currField).rstrip()
+                standardFieldName = self.removeBrackets(currField).rstrip()
 
                 # Certain fields require processing according to certain rules 
                 # and in different ways
-                if currField.lower() in self.CATEGORISED_FIELDS:
+                if standardFieldName.lower() in self.CATEGORISED_FIELDS:
                     categoryConversion = self.CATEGORISED_FIELDS.get(currField.lower())
                     newLine[currField] = categoryConversion.get(data.lower())
                 
-                elif currField.lower() in self.DISCRETIZE_FIELDS:
+                elif standardFieldName.lower() in self.DISCRETIZE_FIELDS:
                     discreteConversion = self.DISCRETIZE_FIELDS.get(currField.lower())
                     newLine[currField] = self.discretizeVal(data, discreteConversion)
 
@@ -159,4 +160,25 @@ class processFeatures:
                 return i
                 
     def main(self):
-        pass
+        """
+        Converts the dataset into a format that is usuable in the next stage
+
+        INPUT:
+            NONE
+        
+        OUTPUT:
+            returns nothing, but, writes the converted UK dataset to the output .csv file
+        """
+       
+        fieldNames = self.getFieldNames()
+        rawData = self.readFile()
+        
+        with open(self.FILE_PATH + self.OUTPUT_FILE, "w") as optFile:
+            myWriter = csv.DictWriter(optFile, list(fieldNames.keys()))
+            #Put the column labels in
+            myWriter.writerow(fieldNames)
+
+            for row in rawData:
+                #Copy over info from the original, and discretize where relevant
+                newLine = self.gatherData(row, fieldNames)
+                myWriter.writerow(newLine)

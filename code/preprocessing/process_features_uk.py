@@ -7,11 +7,6 @@ import csv
 import sys
 from process_features import processFeatures
 
-
-
-
-
-
 REGIONS = {
     "east midlands" : 1,
     "east of england" : 2,
@@ -49,41 +44,7 @@ class processFeaturesUK(processFeatures):
     
     INPUT_FILE = "/uk/raw/uk_data.csv"
     OUTPUT_FILE = "/uk/processed/uk_mlTable_0_0.csv"
-
-    
-
-    def main(self):
-        """
-        Converts the UK dataset into a format that is usuable in the next stage
-
-        INPUT:
-            NONE
-        
-        OUTPUT:
-            returns nothing, but, writes the converted UK dataset to the output .csv file
-        """
-       
-        fieldNames = self.getFieldNames()
-        rawData = self.readFile()
-        
-        with open(self.FILE_PATH + self.OUTPUT_FILE, "w") as optFile:
-            myWriter = csv.DictWriter(optFile, list(fieldNames.keys()))
-            #Put the column labels in
-            myWriter.writerow(fieldNames)
-
-            for row in rawData:
-                #Copy over info from the original, and discretize where relevant
-                newLine = self.gatherData(row, fieldNames)
-                """
-                try:
-                    newLine["Temperature"], newLine["Humidity"] = self.discretizeWeather(row["Temperature"], row["Humidity"])
-                except:
-                    #In this event there exists no value within the current entry
-                    pass
-                """
-                myWriter.writerow(newLine)
                 
-
 if __name__ == '__main__':
     run = processFeaturesUK()
     sys.exit(run.main()) 
