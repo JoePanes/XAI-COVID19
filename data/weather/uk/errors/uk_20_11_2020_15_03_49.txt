@@ -1,0 +1,8 @@
+Total errors 6
+
+10.06.2020 15:00 | east_midlands
+10.06.2020 14:00 | east_midlands
+10.06.2020 13:00 | east_midlands
+31.07.2020 16:20 | north_west
+03.06.2020 11:00 | scotland
+03.06.2020 10:00 | scotland

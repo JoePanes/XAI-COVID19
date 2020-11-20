@@ -50,7 +50,7 @@ class processFeaturesEU(processFeatures):
     OUTPUT_FILE = "/eu/processed/eu_mlTable_0_0.csv"
     OUTPUT_ERROR = "/eu/errors/"
 
-    def getRecordsGeographicalLocation(self, row):
+    def getRecordsRegion(self, row):
         """
         Retrieve the record's Country
 

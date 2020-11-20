@@ -46,7 +46,7 @@ class processFeaturesUK(processFeatures):
     OUTPUT_FILE = "/uk/processed/uk_mlTable_0_0.csv"
     OUTPUT_ERROR = "/uk/errors/"
     
-    def getRecordsGeographicalLocation(self, row):
+    def getRecordsRegion(self, row):
         """
         Retrieve the record's Region
 

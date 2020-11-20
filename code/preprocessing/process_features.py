@@ -196,13 +196,13 @@ class processFeatures:
         currField = "".join(fieldNamePadding)
         errorText += f"{currField} | "
 
-        location = self.getRecordsGeographicalLocation(row)
+        location = self.getRecordsRegion(row)
 
         errorText = errorText + location
         
         return errorText
         
-    def getRecordsGeographicalLocation(self, row):
+    def getRecordsRegion(self, row):
         return -1 
 
     def main(self):
