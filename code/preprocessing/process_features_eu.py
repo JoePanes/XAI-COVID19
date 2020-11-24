@@ -39,7 +39,11 @@ def setupCategoriedFields():
         returns the merged dictionary
     """
     category = processFeatures.CATEGORISED_FIELDS
-    category.update({"country" : COUNTRIES})
+    category.update(
+        {
+            "country" : COUNTRIES,
+            "nursing & care home visits" : processFeatures.SEVERITY,
+        })
 
     return category
 

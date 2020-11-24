@@ -31,6 +31,7 @@ class processFeatures:
         "pubs and bars" : SEVERITY,
         "sports and leisure" : SEVERITY,
         "schools closure" : CLOSURE,
+        "international travel" : SEVERITY,
     }
 
     DISCRETIZE_FIELDS = {
