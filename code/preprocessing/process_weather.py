@@ -71,7 +71,61 @@ def printProgressBar(currNo, totalNo):
     #Copied from https://stackoverflow.com/a/6361028
     sys.stdout.write("\r\x1b[K"+output)
     sys.stdout.flush()
+
+def prepareRawFile(fileName, dataset, encoding):
+    """
+    Reads in the .csv file (straight from the website, which is all one column), and prepare it so that it can be processed
+
+    INPUTS:
+        :param fileName: String, the name of the current file to be read
+        :param dataset: String, the corresponding dataset which the data is being processed for
+        :param encoding: String, either UTF-8 or cp1252
     
+    OUPUT:
+        returns nothing, but splits the data in one column, in to a multicolumn dataset ready for processing.
+    """
+    rawData = []
+    labels = {}
+    with open(filePath + dataset + "/raw/" + fileName + ".csv", "r", encoding=encoding) as dataFile:
+        #Skip over rows that are not part of the database
+        for _ in range(6):
+            next(dataFile)
+
+        myReader = csv.reader(dataFile)
+        readLabel = True
+
+        for row in myReader:
+            #Some rows have their data split randomly over columns
+            rowContents = "".join(row)
+            rowContents = rowContents.split(";")
+            #Remove unnecessary speech/quote marks
+            for i in range(len(rowContents)):
+                rowContents[i] = rowContents[i].replace('"', '')
+
+            if readLabel:
+                for currCol in rowContents:
+                    labels[currCol] = currCol
+
+                readLabel = False
+            
+            rawData.append(rowContents)
+
+    with open(filePath + dataset + "/unprocessed/" + fileName + ".csv", "w", encoding=encoding) as optFile:
+        myWriter = csv.DictWriter(optFile, labels)
+        
+        fieldNames = list(labels.keys())
+        for row in rawData:
+            formattedEntry = {}
+            
+            i = 0
+            for currCol in fieldNames:
+                formattedEntry[currCol] = row[i]
+                i += 1
+
+            myWriter.writerow(formattedEntry)
+
+                
+
 def readFile(fileName, dataset, encoding):
     """
     Reads in the given file using the specified encoder, then orders the rows to match the desired dataset.
@@ -87,10 +141,10 @@ def readFile(fileName, dataset, encoding):
     """
 
     rawData = []
-    with open(filePath + dataset + "/raw/" + fileName +".csv","r", encoding=encoding) as dataFile:
+    with open(filePath + dataset + "/unprocessed/" + fileName +".csv","r", encoding=encoding) as dataFile:
             #Skip over rows that are not part of the database
-            for _ in range(6):
-                next(dataFile)
+            """for _ in range(6):
+                next(dataFile)"""
 
             myReader = csv.reader(dataFile)
             readLabel = True
@@ -161,13 +215,16 @@ def main():
         printProgressBar(currFileNo, totalFiles)
         
         rawData = []
-
-        #Some of the datasets despite claming to be UTF-8 encoded, are not, hence this is necessary
+        encoding = "UTF-8"
+        #Some datasets have lied about being UTF-8 encoded, hence the need for this
         try:
-            rawData, tempIndex, humidityIndex = readFile(currFileName, chosenDataset, "UTF-8")
+            prepareRawFile(currFileName, chosenDataset, encoding)
+            
         except:
-            rawData, tempIndex, humidityIndex = readFile(currFileName, chosenDataset, "cp1252")
+            encoding = "cp1252"
+            prepareRawFile(currFileName, chosenDataset, encoding)
 
+        rawData, tempIndex, humidityIndex = readFile(currFileName, chosenDataset, encoding)
 
         with open(filePath + chosenDataset + "/processed/" + currFileName + "_processed.csv", "w") as optFile:
             myWriter = csv.DictWriter(optFile, ["Date", "Temp", "Humidity",])
