@@ -186,8 +186,15 @@ def main():
         returns nothing, but, it converts the .csv files in raw into the expected format
             and outputs them in processed
     """
-    if len(sys.argv) != 2 or (sys.argv[1].lower() != "uk" and sys.argv[1] != "eu"):
-        print("In order to use this program, you need to specify whether you are using the UK or EU data")
+    acceptedDatasets = {
+        "uk" : 1,
+        "eu" : 2,
+        "wa" : 3,
+    }
+    
+    if len(sys.argv) != 2 or sys.argv[1].lower() not in acceptedDatasets:
+        print("In order to use this program, you need to specify the dataset you are using in two characters")
+        print("The options for datasets, are: uk, eu or wa")
         print("Such as, python process_weather.py uk")
 
         return -1
