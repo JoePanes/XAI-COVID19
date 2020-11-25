@@ -1,0 +1,34 @@
+Hello,
+
+Here you will find the files which were used to calculate the Temperature and Humidity values for their corresponding columns in the Core data folder.
+
+The order of operation in which the folders are used are as follows:
+
+         ___________________
+        |                   |    This is when the files have been downloaded from the weather website, and nothing has been done with them.
+        |        raw        |    At this stage, all information is in a very confusing and hard to interpret format, while technically usable, checking for errors
+        |___________________|    within the data (either on the end of the website, or through the processing by the code) would be substantially more difficult.
+            |           |
+          __|           |__
+          \               /
+           \             /
+            \           /
+         ___________________
+        |                   |    At this point, the dataset has been broken up from its hard to read format into something you would normally expect in a .csv file.
+        |    unprocessed    |    By this I mean the data split across the columns, rather than the reality of the raw data which is either randomly clumpted together in
+        |___________________|    one column, or split across two or more columns.
+            |           |
+          __|           |__
+          \               /
+           \             /
+            \           /
+         ___________________
+        |                   |    Finally, it now only contains only the average temperature (T) and humidity (U) for each day. Resulting in the dataset now being significantly
+        |     processed     |    more smaller, and matching the desired chronological order of dates such that it can be copied and pasted over into the main datasets.
+        |___________________|
+
+
+         ___________________
+        |                   |    Over the course of reading the weather data, there will undoubtably be cases where there are errors in the data (mainly missing temperature and humidity   
+        |      error s      |    readings). This is just for the sake of keeping a record of where these occur, and may be able to provide an answer for why the data is the way it is.
+        |___________________|

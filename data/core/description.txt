@@ -1,0 +1,33 @@
+Hello,
+
+In the following folders you will find the dataset in various stages of preprocessing.
+
+The order of operation in which the folders are used are as follows:
+
+         ___________________
+        |                   |    This is the data in a human-orientated format, it uses things like strings of text when representing information.
+        |        raw        |
+        |___________________|
+            |           |
+          __|           |__
+          \               /
+           \             /
+            \           /
+         ___________________
+        |                   |    At this stage, any strings have been mapped to a their numerical equivalent, and fields that offer highly variable numbers 
+        |     processed     |    have been discretized.
+        |___________________|
+            |           |
+          __|           |__
+          \               /
+           \             /
+            \           /
+         ___________________
+        |                   |   Here the processed information has now been used to calculate the R value throughout the dataset, with the resultant value 
+        |        R t        |   for each day added to the row in a new column.
+        |___________________|
+
+         ___________________
+        |                   |    While reading in the core dataset, it is useful to know where there may be some human errors within the dataset (e.g. missing or 
+        |      error s      |    mistyped data). Therefore, this helps keep a log of where issues have arisen while converting the data so that the user can more easily
+        |___________________|    rectify any errors that would otherwise be easily missed.
