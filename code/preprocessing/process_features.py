@@ -2,9 +2,9 @@ import csv
 import os
 import output_data_error
 import sys
+from info.general import FILE_PATH_CORE
 
 class processFeatures:
-    FILE_PATH = "../../data/core/"
     INPUT_FILE = None
     OUTPUT_FILE = None
     OUTPUT_ERROR = None
@@ -54,7 +54,7 @@ class processFeatures:
         """
         databaseFields = {}
         
-        with open(self.FILE_PATH + self.INPUT_FILE, "r") as dataFile:
+        with open(FILE_PATH_CORE + self.INPUT_FILE, "r") as dataFile:
             myReader = csv.reader(dataFile)
             readLabel = True
 
@@ -80,7 +80,7 @@ class processFeatures:
         """
         rawData = []
 
-        with open(self.FILE_PATH + self.INPUT_FILE, "r") as dataFile:
+        with open(FILE_PATH_CORE + self.INPUT_FILE, "r") as dataFile:
             myReader = csv.DictReader(dataFile)
 
             for row in myReader:
@@ -220,7 +220,7 @@ class processFeatures:
         fieldNames = self.getFieldNames()
         rawData = self.readFile()
         
-        with open(self.FILE_PATH + self.OUTPUT_FILE, "w") as optFile:
+        with open(FILE_PATH_CORE + self.OUTPUT_FILE, "w") as optFile:
             myWriter = csv.DictWriter(optFile, list(fieldNames.keys()))
             #Put the column labels in
             myWriter.writerow(fieldNames)
@@ -233,7 +233,7 @@ class processFeatures:
         if self.errorNo > 0:
             #Get the current dataset from the command used
             dataset = sys.argv[0][-5:-3]
-            output_data_error.createErrorFile(self.FILE_PATH, dataset, 
+            output_data_error.createErrorFile(FILE_PATH_CORE, dataset, 
                                               self.errorNo, self.errorList)
 
 if __name__ == '__main__':
