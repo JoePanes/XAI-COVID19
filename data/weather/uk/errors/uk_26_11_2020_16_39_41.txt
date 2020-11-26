@@ -1,4 +1,4 @@
-Total errors 94
+Total errors 105
 
 04.03.2020 20:00 | blaenau_gwent
 04.03.2020 19:00 | blaenau_gwent
@@ -24,10 +24,16 @@ Total errors 94
 17.06.2020 12:00 | carmarthenshire
 17.06.2020 11:00 | carmarthenshire
 17.06.2020 10:00 | carmarthenshire
-18.11.2020 13:20 | conwy
-31.07.2020 16:20 | conwy
+07.10.2020 14:00 | conwy
+07.10.2020 13:00 | conwy
+03.03.2020 14:00 | conwy
+03.03.2020 13:00 | conwy
+03.03.2020 12:00 | conwy
 18.11.2020 13:20 | denbighshire
 31.07.2020 16:20 | denbighshire
+10.06.2020 15:00 | east_midlands
+10.06.2020 14:00 | east_midlands
+10.06.2020 13:00 | east_midlands
 18.11.2020 13:20 | flintshire
 31.07.2020 16:20 | flintshire
 08.10.2020 14:00 | gwynedd
@@ -60,6 +66,7 @@ Total errors 94
 17.06.2020 12:00 | neath_port_talbot
 17.06.2020 11:00 | neath_port_talbot
 17.06.2020 10:00 | neath_port_talbot
+31.07.2020 16:20 | north_west
 01.07.2020 20:00 | pembrokeshire
 01.07.2020 19:00 | pembrokeshire
 01.07.2020 18:00 | pembrokeshire
@@ -86,6 +93,8 @@ Total errors 94
 25.02.2020 14:00 | powys
 25.02.2020 13:00 | powys
 25.02.2020 12:00 | powys
+03.06.2020 11:00 | scotland
+03.06.2020 10:00 | scotland
 14.07.2020 12:00 | swansea
 14.07.2020 11:00 | swansea
 17.06.2020 14:00 | swansea
@@ -94,3 +103,5 @@ Total errors 94
 17.06.2020 11:00 | swansea
 17.06.2020 10:00 | swansea
 22.10.2020 21:20 | wrexham
+02.06.2020 14:00 | yorkshire_and_the_humber
+02.06.2020 13:00 | yorkshire_and_the_humber

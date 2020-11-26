@@ -189,12 +189,11 @@ def main():
     acceptedDatasets = {
         "uk" : 1,
         "eu" : 2,
-        "wa" : 3,
     }
     
     if len(sys.argv) != 2 or sys.argv[1].lower() not in acceptedDatasets:
         print("In order to use this program, you need to specify the dataset you are using in two characters")
-        print("The options for datasets, are: uk, eu or wa")
+        print("The options for datasets, are: uk or eu")
         print("Such as, python process_weather.py uk")
 
         return -1

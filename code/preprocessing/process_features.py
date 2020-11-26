@@ -238,6 +238,6 @@ class processFeatures:
 
 if __name__ == '__main__':
     #In the event that the user runs this file
-    inp = input("Do you wish to process either the EU, UK, WA dataset? ")
+    inp = input("Do you wish to process either the EU or UK dataset? ")
 
     os.system(f"python process_features_{inp.lower()}.py")
