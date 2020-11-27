@@ -11,7 +11,7 @@ import csv
 import sys
 import statistics
 import os
-import output_data_error
+from shared.sharedFunctions import createErrorFile
 from datetime import datetime
 
 filePath = "../../data/weather/"
@@ -271,7 +271,6 @@ def main():
     print("\n")
     
     if dataErrorCount > 0:
-        output_data_error.createErrorFile(filePath, chosenDataset, 
-                                          dataErrorCount, errorList)
+        createErrorFile(filePath, chosenDataset, dataErrorCount, errorList)
 if __name__ == '__main__':
     sys.exit(main()) 

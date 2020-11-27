@@ -1,8 +1,9 @@
 import csv
 import os
-import output_data_error
 import sys
-from info.general import FILE_PATH_CORE
+from shared.sharedFunctions import createErrorFile
+from shared.sharedFunctions import removeBrackets
+from shared.sharedVariables import FILE_PATH_CORE
 
 class processFeatures:
     INPUT_FILE = None
@@ -30,7 +31,7 @@ class processFeatures:
         "cafes and restaurants" : SEVERITY,
         "pubs and bars" : SEVERITY,
         "sports and leisure" : SEVERITY,
-        "schools closure" : CLOSURE,
+        "school closure" : CLOSURE,
         "international travel" : SEVERITY,
     }
 
@@ -104,7 +105,7 @@ class processFeatures:
         for currField in fieldNames:
             try:
                 data = row[currField]
-                standardFieldName = self.removeBrackets(currField).rstrip()
+                standardFieldName = removeBrackets(currField).rstrip()
 
                 # Certain fields require processing according to certain rules 
                 # and in different ways
@@ -127,32 +128,6 @@ class processFeatures:
                 self.errorNo += 1
 
         return newLine
-    
-    #Taken from https://stackoverflow.com/a/14598135
-    def removeBrackets(self, fieldName):
-        """
-        Removes any bracketed text from a string
-
-        INPUT:
-            :param fieldName: String, the field name being checked
-        OUPUT:
-            returns a string that contains only text not within a bracket
-        """
-        ret = ''
-        skip1c = 0
-        skip2c = 0
-        for i in fieldName:
-            if i == '[':
-                skip1c += 1
-            elif i == '(':
-                skip2c += 1
-            elif i == ']' and skip1c > 0:
-                skip1c -= 1
-            elif i == ')'and skip2c > 0:
-                skip2c -= 1
-            elif skip1c == 0 and skip2c == 0:
-                ret += i
-        return ret
 
     def discretizeVal(self, val, THRESHOLDS):
         """
@@ -233,8 +208,7 @@ class processFeatures:
         if self.errorNo > 0:
             #Get the current dataset from the command used
             dataset = sys.argv[0][-5:-3]
-            output_data_error.createErrorFile(FILE_PATH_CORE, dataset, 
-                                              self.errorNo, self.errorList)
+            createErrorFile(FILE_PATH_CORE, dataset, self.errorNo, self.errorList)
 
 if __name__ == '__main__':
     #In the event that the user runs this file
