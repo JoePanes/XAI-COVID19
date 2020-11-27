@@ -2,6 +2,7 @@
 A place to keep functions that are used by more than one file
 """
 from datetime import datetime
+from sys import stdout
 
 #Taken from https://stackoverflow.com/a/14598135
 def removeBrackets(fieldName):
@@ -57,3 +58,30 @@ def createErrorFile(filePath, chosenDataset, dataErrorCount, errorList):
         errorText += currError + "\n"
         
     errorOutput.write(errorText)
+
+def printProgressBar(currNo, totalNo):
+    """
+    Calculate the current progress through the files and print a visual representation
+
+    INPUT:
+        :param currNo: Integer, the number of files that have been looked at already
+        :param totalNo: Integer, the total number of files in the list of files
+    
+    OUTPUT:
+        returns nothing, but, prints the current progress out to the command line
+    """
+    #Calculate the percentage (reduced by x10 to map to progress bar)
+    progress = int((currNo / totalNo) * 10)
+
+    progressBar = ["-"]*10
+    for i in range(0, progress):
+        progressBar[i] = "#"
+
+
+    progressBar = "".join(progressBar)
+
+    output = "Progress: ["+ progressBar + f"] {currNo} / {totalNo}"
+
+    #Copied from https://stackoverflow.com/a/6361028
+    stdout.write("\r\x1b[K"+output)
+    stdout.flush()

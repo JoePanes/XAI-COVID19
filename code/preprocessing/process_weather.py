@@ -11,8 +11,11 @@ import csv
 import sys
 import statistics
 import os
-from shared.sharedFunctions import createErrorFile
+
 from datetime import datetime
+
+from shared.sharedFunctions import createErrorFile
+from shared.sharedFunctions import printProgressBar
 
 filePath = "../../data/weather/"
 
@@ -44,33 +47,6 @@ def writeToFile(fileWriter, date, tempList, humidList):
     )
 
     return None, [], []
-
-def printProgressBar(currNo, totalNo):
-    """
-    Calculate the current progress through the files and print a visual representation
-
-    INPUT:
-        :param currNo: Integer, the number of files that have been looked at already
-        :param totalNo: Integer, the total number of files in the list of files
-    
-    OUTPUT:
-        returns nothing, but, prints the current progress out to the command line
-    """
-    #Calculate the percentage (reduced by x10 to map to progress bar)
-    progress = int((currNo / totalNo) * 10)
-
-    progressBar = ["-"]*10
-    for i in range(0, progress):
-        progressBar[i] = "#"
-
-
-    progressBar = "".join(progressBar)
-
-    output = "Progress: ["+ progressBar + f"] {currNo} / {totalNo}"
-
-    #Copied from https://stackoverflow.com/a/6361028
-    sys.stdout.write("\r\x1b[K"+output)
-    sys.stdout.flush()
 
 def prepareRawFile(fileName, dataset, encoding):
     """

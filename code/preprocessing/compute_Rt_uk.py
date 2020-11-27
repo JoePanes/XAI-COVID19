@@ -62,12 +62,12 @@ class computeRtUK(computeRt):
 
         return processedData
 
-    def writeFile(self, dataset):
+    def writeFile(self, dataset, fileName):
         newDataset = []
 
         for row in dataset:
             newDataset.insert(0, row)
-        with open(FILE_PATH_CORE + self.DATASET + self.OUTPUT_FILE, "w") as optFile:
+        with open(FILE_PATH_CORE + self.DATASET + fileName, "w") as optFile:
             
             labels = {}
             for currFieldName in newDataset[0].keys():
