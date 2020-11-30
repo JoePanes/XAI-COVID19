@@ -16,8 +16,8 @@ def setControlMeasures():
     controlMeasures = computeRt.CONTROL_MEASURES
     
     controlMeasures.update({
-        "Non-Essential Shops" : "Binary",
-        "Hospitals/ Care and Nursing Home Visits" : "Trinary",
+        "Non-Essential Shops" : ("Binary", ["Opened", "Closed"]),
+        "Hospitals/ Care and Nursing Home Visits" : ("Trinary", ["Low", "Moderate", "High"]),
     })
 
     return controlMeasures

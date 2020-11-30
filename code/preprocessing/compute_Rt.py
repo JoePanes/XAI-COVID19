@@ -31,14 +31,14 @@ class computeRt():
     DATASET = sys.argv[0][-5:-3]
 
     CONTROL_MEASURES = {
-        "Meeting Friends/Family (Indoor)" : "Trinary",
-        "Meeting Friends/Family (Outdoor)" : "Trinary",
-        "Domestic Travel": "Trinary",
-        "International Travel": "Trinary",
-        "Cafes and Restaurants": "Trinary",
-        "Pubs and Bars": "Trinary",
-        "Sports and Leisure" : "Trinary",
-        "School Closure" : "Binary",
+        "Meeting Friends/Family (Indoor)" : ("Trinary", ["Low", "Moderate", "High"]),
+        "Meeting Friends/Family (Outdoor)" : ("Trinary", ["Low", "Moderate", "High"]),
+        "Domestic Travel": ("Trinary", ["Low", "Moderate", "High"]),
+        "International Travel": ("Trinary", ["Low", "Moderate", "High"]),
+        "Cafes and Restaurants": ("Trinary", ["Low", "Moderate", "High"]),
+        "Pubs and Bars": ("Trinary", ["Low", "Moderate", "High"]),
+        "Sports and Leisure" : ("Trinary", ["Low", "Moderate", "High"]),
+        "School Closure" : ("Binary", ["Opened", "Closed"]),
     }
 
     def readFile(self):
@@ -110,7 +110,6 @@ class computeRt():
             dataset
         """
         optDataList = []
-        oldLabel = None
 
         processedData = self.readFile()
 
@@ -136,8 +135,21 @@ class computeRt():
                         val = int(processedData[previousDateIndex].get(currControlMeasure))
                         typeOfControlMeasure = self.CONTROL_MEASURES.get(currControlMeasure)
                         
-                        if typeOfControlMeasure is "Binary" and val >= 1:
-                            processedData[currRowIndex][currControlMeasure] = str(self.PAST_DATE_LIST.index(currDateReduction) + val)            
+                        if typeOfControlMeasure[0] is "Binary" and val >= 1:
+                            processedData[currRowIndex][currControlMeasure] = str(self.PAST_DATE_LIST.index(currDateReduction) + val)
+                        
+                        elif typeOfControlMeasure[0] is "Trinary":
+                            trinaryValues = deepcopy(typeOfControlMeasure[1])
+
+                            val-=1
+
+                            #print(trinaryValues[val])                   
+                            processedData[currRowIndex].update({f"{currControlMeasure} ({trinaryValues[val]})" : str(self.PAST_DATE_LIST.index(currDateReduction) + 1)})
+                            trinaryValues.pop(val)
+
+                            for currOption in trinaryValues:
+                                processedData[currRowIndex][f"{currControlMeasure} ({currOption})"] = 0   
+
             nextRegion = self.getRegion(processedData[currRowIndex + 1])
 
             if currRegion != nextRegion:
@@ -145,6 +157,10 @@ class computeRt():
             
 
             newRow = deepcopy(processedData[currRowIndex])
+
+            for currControlMeasure in self.CONTROL_MEASURES:
+                if self.CONTROL_MEASURES.get(currControlMeasure)[0] is "Trinary":
+                    newRow.pop(currControlMeasure)
 
             prevCaseCount = int(processedData[currRowIndex - 1].get("Cases"))
             currCaseCount = int(processedData[currRowIndex].get("Cases"))
@@ -154,12 +170,12 @@ class computeRt():
 
             newData.append(newRow)
         #Log the current dataset before further processing
-        self.writeFile(newData, "/Rt/Rt_after_control_measures.csv")
+        self.writeFile(newData, "/Rt/after_control_measures.csv")
 
         prevRegion = None
         prevConfirmed = 0
         tauZeroRow = 0
-
+        prevRt = 0
         #Calculate the Rt
         for rowInd in range(len(newData)):
             Rt = self.RZERO
@@ -173,6 +189,7 @@ class computeRt():
             if currRegion != prevRegion:
                 tauZeroRow = rowInd
                 prevConfirmed = 0
+                prevRt = 0
 
             # t - Days since first record (for region)   
             currDayNo = rowInd - tauZeroRow
@@ -182,31 +199,55 @@ class computeRt():
                 newInfections = currConfirmed - prevConfirmed
                 
                 temp = 0
-
+                
                 for tau in range(1, currDayNo):
 
                     casesTau = int(newData[tauZeroRow + tau].get('Cases')) - int(newData[tauZeroRow + tau - 1].get("Cases"))
 
                     """if casesTau < 0:
                         errorList = []
-                        errorList.append(f"cTau: {casesTau}\n")
-                        errorList.append(f"Error: rowInd: {rowInd}, region: {currRegion} | {prevRegion}:, newData[tauZeroRow + tau]['Cases']:, {newData[tauZeroRow + tau].get('Cases')},") 
-                        errorList.append(f"newData[tauZeroRow + tau - 1]['Cases']:, {newData[tauZeroRow + tau - 1].get('Cases')}")
-                        errorList.append(f"{prevRegion}, {tauZeroRow}:, {tauZeroRow}, tau:, {tau}")
+                        errorList.append("----Current----")
+                        errorList.append(f"Day: {newData[rowInd]['Day']}")
+                        errorList.append(f"Region: {self.getRegion(newData[rowInd])}")
+                        errorList.append(f"Cases: {newData[rowInd]['Cases']}")
+                        errorList.append(f"Case Tau: {casesTau}")
+                        errorList.append(f"Temp: {temp}")
 
-                        errorList.append(f"newData[tauZeroRow + tau]: {newData[tauZeroRow + tau]}")
-                        errorList.append(f"newData[tauZeroRow + tau - 1]: {newData[tauZeroRow + tau - 1]}")
+                        errorList.append("\n----Previous----")
+                        errorList.append(f"Day: {newData[rowInd-1]['Day']}")
+                        errorList.append(f"Region: {self.getRegion(newData[rowInd-1])}")
+                        errorList.append(f"Cases: {newData[rowInd-1]['Cases']}")
+
+                        errorList.append("\n----TauZeroRow + Tau----")
+                        errorList.append(f"Day: {newData[tauZeroRow + tau]['Day']}")
+                        errorList.append(f"Region: {self.getRegion(newData[tauZeroRow + tau])}")
+                        errorList.append(f"Cases: {newData[tauZeroRow + tau]['Cases']}")
+
+                        errorList.append("\n----TauZeroRow + Tau -1 ----")
+                        errorList.append(f"Day: {newData[tauZeroRow + tau - 1]['Day']}")
+                        errorList.append(f"Region: {self.getRegion(newData[tauZeroRow + tau - 1])}")
+                        errorList.append(f"Cases: {newData[tauZeroRow + tau - 1]['Cases']}")
+
+
 
                         createErrorFile(FILE_PATH_CORE, self.DATASET, 1, errorList)
                         sys.exit(0)"""
 
                     gs = self.computeGs(currDayNo - tau)
-
+                    
                     temp += casesTau * gs
 
-                Rt = newInfections / temp
+                if temp > 0:
+                    Rt = newInfections / temp
+                else:
+                    Rt = prevRt
             else:
                 Rt = 2.3
+            
+            #Since the R number can't go below 0, correct
+            if Rt < 0:
+                Rt = 0
+                prevRt = 0
 
             #Add the Rt to the new dataset
             row.update({"Rt" : str(Rt)})    

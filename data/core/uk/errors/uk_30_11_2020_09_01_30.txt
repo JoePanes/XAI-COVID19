@@ -1,0 +1,12 @@
+Total errors 1
+
+cTau: -3
+
+Error:
+rowInd: 40, currRegion: 33 
+ prevRegion: 33:, 
+Curr cases:, 1,
+Prev cases:, 4
+0:, 0, tau:, 39
+newData[tauZeroRow + tau]: OrderedDict([('Day', '41'), ('Date', '14/03/2020'), ('Regions', '33'), ('Cases', 1), ('Cumulative Cases', '15'), ('Deaths', '0'), ('Cumulative Deaths', '0'), ('Tests', '5'), ('Cumulative Tests', '105'), ('Meeting Friends/Family (Indoor)', '1'), ('Meeting Friends/Family (Outdoor)', '1'), ('Domestic Travel', '1'), ('International Travel', '1'), ('Cafes and Restaurants', '1'), ('Pubs and Bars', '1'), ('Sports and Leisure', '1'), ('Hospitals/ Care and Nursing Home Visits', '1'), ('Non-Essential Shops', '0'), ('School Closure', '0'), ('Temperature', '1'), ('Humidity', '2'), ('Rt', '-7.7386202532186')])
+newData[tauZeroRow + tau - 1]: OrderedDict([('Day', '40'), ('Date', '13/03/2020'), ('Regions', '33'), ('Cases', 4), ('Cumulative Cases', '15'), ('Deaths', '0'), ('Cumulative Deaths', '0'), ('Tests', '20'), ('Cumulative Tests', '100'), ('Meeting Friends/Family (Indoor)', '1'), ('Meeting Friends/Family (Outdoor)', '1'), ('Domestic Travel', '1'), ('International Travel', '1'), ('Cafes and Restaurants', '1'), ('Pubs and Bars', '1'), ('Sports and Leisure', '1'), ('Hospitals/ Care and Nursing Home Visits', '1'), ('Non-Essential Shops', '0'), ('School Closure', '0'), ('Temperature', '1'), ('Humidity', '1'), ('Rt', '0.0')])
