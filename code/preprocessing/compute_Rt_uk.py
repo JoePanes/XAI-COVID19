@@ -105,7 +105,7 @@ class computeRtUK(computeRt):
                     insertIndex += 1
 
             if containRt:
-                desiredOrder.extend("Rt")
+                desiredOrder.extend(["Rt"])
 
             #Based on https://stackoverflow.com/a/52044835        
             reorderedLabels = {k : labels[k] for k in desiredOrder}
