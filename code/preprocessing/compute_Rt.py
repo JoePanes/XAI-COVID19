@@ -5,10 +5,11 @@ Computes the Rt throughout the given dataset
 import sys
 import csv
 import statistics
+import multiprocessing
 
 from copy import deepcopy
-
 from scipy.stats import gamma
+
 from shared.sharedVariables import FILE_PATH_CORE
 from shared.sharedFunctions import createErrorFile
 from shared.sharedFunctions import printProgressBar
@@ -97,22 +98,17 @@ class computeRt():
             returnVal = gamma.cdf(s+0.5, a, 0, scale) - gamma.cdf(s-0.5, a, 0, scale)
             return returnVal
 
-    def main(self):
+    def processControlMeasures(self, processedData):
         """
-        Over the course of its functions, it will calculate the Rt for each day,
-        then add them as a new column to the dataset, and save it to a new .csv file.
+        Look at the Control measures used, and evalutate the length that have been implemented for, 
+        and provide a value.
 
         INPUT:
-            NONE
-        
+            :param processedData: List of dictionaries, where each entry is a row from the datasetc
+
         OUTPUT:
-            returns nothing, but creates a new .csv file in the folder /Rt/ of the given
-            dataset
+            returns the new altered version of the dataset
         """
-        optDataList = []
-
-        processedData = self.readFile()
-
         newData = []
         currRegion = self.getRegion(processedData[0])
         
@@ -169,8 +165,20 @@ class computeRt():
             newRow["Cases"] = int((prevCaseCount + currCaseCount + nextCaseCount) / 3)
 
             newData.append(newRow)
-        #Log the current dataset before further processing
-        self.writeFile(newData, "/Rt/after_control_measures.csv")
+        
+        return newData
+
+    def calculateRt(self, newData):
+        """
+        Calculates the R value for each day within the dataset
+
+        INPUT:
+            :param newData: List of dictionaries, where each entry is a row of the dataset
+        
+        OUTPUT:
+            returns the dataset with the newly added Rt column
+        """
+        optDataList = []
 
         prevRegion = None
         prevConfirmed = 0
@@ -266,7 +274,22 @@ class computeRt():
 
                 median = statistics.median([prevRt, currRt, nextRt])
                 optDataList[rowInd]["Rt"] = str(median)
+
+        print("\n")
+        return optDataList
             
+    def filterDate(self, newData, optDataList):
+        """
+        Filters the data so that only days that have above the CONFIRMED_THRESHOLD are present
+        in the outputted dataset
+
+        INPUTS:
+            :param newData: List of dictionaries, where each entry is a row from the dataset (post convertControlMeasures version)
+            :param optDataList: List of dictionaries, where each entry is a row from the dataset (post calculateRt version)
+        
+        OUTPUT:
+            returns the dataset containing only the entries the meet and exceed the threshold
+        """
         filteredData = []
 
         for rowInd in range(len(optDataList)):
@@ -274,6 +297,68 @@ class computeRt():
                 continue
             filteredData.append(optDataList[rowInd])
 
-        optDataList = filteredData
+        return filteredData
+    
+    def getRegionalIndexs(self, dataset):
+        """
+        From the dataset, get the start and end indexes for each region
+
+        INPUT:
+            :param dataset: List of Dictionaries, where each entry is a row from the dataset
+        
+        OUTPUT:
+            returns a list of tuples, which specify the start and end index range of each region in the
+            dataset
+        """
+        currStartIndexNo = None
+        currRegion = None
+        regionalRangeList = []
+        for currIndex in range(len(dataset)):
+            
+            if currRegion != self.getRegion(dataset[currIndex]):
+                if currRegion != None:
+                    regionalRangeList.append((currStartIndexNo, currIndex - 1))
+                
+                currRegion = self.getRegion(dataset[currIndex])
+                currStartIndexNo = currIndex
+            
+            currIndex += 1
+
+        #A bodge to cover why it is missing one region
+        currIndex = regionalRangeList[-1][1]
+        regionalRangeList.append((currIndex + 1, len(dataset)))
+
+        return regionalRangeList
+
+    def main(self):
+        """
+        Over the course of its functions, it will calculate the Rt for each day,
+        then add them as a new column to the dataset, and save it to a new .csv file.
+
+        INPUT:
+            NONE
+        
+        OUTPUT:
+            returns nothing, but creates a new .csv file in the folder /Rt/ of the given
+            dataset
+        """
+        optDataList = []
+
+        processedData = self.readFile()
+
+        newData = self.processControlMeasures(processedData)
+
+        #Log the current dataset before further processing
+        self.writeFile(newData, "/Rt/after_control_measures.csv")
+
+        """startList = self.getRegionalIndexs(newData)
+
+        print(len(startList))
+        for currRegion in startList:
+            print(currRegion)"""
+
+        optDataList = self.calculateRt(newData)
+
+        optDataList = self.filterDate(newData, optDataList)
 
         self.writeFile(optDataList, self.OUTPUT_FILE, True)

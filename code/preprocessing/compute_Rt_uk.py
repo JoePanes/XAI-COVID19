@@ -78,8 +78,10 @@ class computeRtUK(computeRt):
         """
         newDataset = []
 
+        #Reorder to match original
         for row in dataset:
             newDataset.insert(0, row)
+
         with open(FILE_PATH_CORE + self.DATASET + fileName, "w") as optFile:
             
             labels = {}
