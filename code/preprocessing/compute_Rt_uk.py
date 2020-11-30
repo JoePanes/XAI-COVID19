@@ -1,5 +1,6 @@
 from compute_Rt import computeRt
 from shared.sharedVariables import FILE_PATH_CORE
+from shared.sharedFunctions import removeBrackets
 
 import csv
 def setControlMeasures():
@@ -62,7 +63,19 @@ class computeRtUK(computeRt):
 
         return processedData
 
-    def writeFile(self, dataset, fileName):
+    def writeFile(self, dataset, fileName, containRt = False):
+        """
+        Writes the current state of the dataset to a .csv file, (along with reorder the dataset
+        inorder to match the desired format).
+
+        INPUTS:
+            :param dataset: List of dictionaries, where each entry in the list is a row from the dataset
+            :param fileName: String, what the name of the outputted file will be
+            :param containRt: Boolean, OPTIONAL, whether the current state of the dataset contains an Rt row
+
+        OUTPUT:
+            returns nothing, but creates/overwrites a .csv file of the given filename
+        """
         newDataset = []
 
         for row in dataset:
@@ -73,7 +86,31 @@ class computeRtUK(computeRt):
             for currFieldName in newDataset[0].keys():
                 labels[currFieldName] = currFieldName
             
-            myWriter = csv.DictWriter(optFile, labels)
+            desiredOrder = ["Day", "Date", "Regions", "Cases", "Cumulative Cases", "Deaths", "Cumulative Deaths",  "Tests", "Cumulative Tests", "Temperature", "Humidity"]
+
+            #Insert control measures between deaths and temp
+            insertIndex = 9
+            
+            
+            for currControlMeasure in self.CONTROL_MEASURES:
+                controlType = self.CONTROL_MEASURES.get(currControlMeasure)
+
+                if controlType[0] is "Trinary":
+                    for currLevel in controlType[1]:
+                        desiredOrder.insert(insertIndex, f"{currControlMeasure} ({currLevel})")
+                        insertIndex += 1
+                
+                elif controlType[0] is "Binary":
+                    desiredOrder.insert(insertIndex, currControlMeasure)
+                    insertIndex += 1
+
+            if containRt:
+                desiredOrder.extend("Rt")
+
+            #Based on https://stackoverflow.com/a/52044835        
+            reorderedLabels = {k : labels[k] for k in desiredOrder}
+
+            myWriter = csv.DictWriter(optFile, reorderedLabels)
             
             myWriter.writerow(labels)
             

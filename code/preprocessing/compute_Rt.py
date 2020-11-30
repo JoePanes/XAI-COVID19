@@ -65,7 +65,7 @@ class computeRt():
     def getRegion(self, currRow):
         return -1
 
-    def writeFile(self, dataset, fileName):
+    def writeFile(self, dataset, fileName, containRt = False):
         pass
     
     def computeGs(self, s):
@@ -276,4 +276,4 @@ class computeRt():
 
         optDataList = filteredData
 
-        self.writeFile(optDataList, self.OUTPUT_FILE)
+        self.writeFile(optDataList, self.OUTPUT_FILE, True)
