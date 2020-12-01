@@ -88,30 +88,7 @@ class computeRtUK(computeRt):
             for currFieldName in newDataset[0].keys():
                 labels[currFieldName] = currFieldName
             
-            desiredOrder = ["Day", "Date", "Regions", "Cases", "Cumulative Cases", "Deaths", "Cumulative Deaths",  "Tests", "Cumulative Tests", "Temperature", "Humidity"]
-
-            #Insert control measures between deaths and temp
-            insertIndex = 9
-            
-            
-            for currControlMeasure in self.CONTROL_MEASURES:
-                controlType = self.CONTROL_MEASURES.get(currControlMeasure)
-
-                if controlType[0] is "Trinary":
-                    for currLevel in controlType[1]:
-                        desiredOrder.insert(insertIndex, f"{currControlMeasure} ({currLevel})")
-                        insertIndex += 1
-                
-                elif controlType[0] is "Binary":
-                    desiredOrder.insert(insertIndex, currControlMeasure)
-                    insertIndex += 1
-
-            if containRt:
-                desiredOrder.extend(["Rt"])
-
-            #Based on https://stackoverflow.com/a/52044835        
-            reorderedLabels = {k : labels[k] for k in desiredOrder}
-
+            reorderedLabels = self.orderFields(labels, containRt)
             myWriter = csv.DictWriter(optFile, reorderedLabels)
             
             myWriter.writerow(labels)

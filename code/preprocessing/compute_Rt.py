@@ -71,6 +71,43 @@ class computeRt():
     def writeFile(self, dataset, fileName, containRt = False):
         pass
     
+    def orderFields(self, labels, containRt):
+        """
+        After the splitting up of the Trinary fields, it results in a rather oddly ordered dataset,
+        this will put everything in the same order as is expected.
+
+        INPUT:
+            :param labels: List of Strings, the current order of fields within the dataset
+            :param containRt: Boolean, whether Rt needs to be added to the dataset labels
+        
+        OUTPUT:
+            returns the new order for the dataset to be written to a file with
+        """
+        desiredOrder = ["Day", "Date", "Regions", "Cases", "Cumulative Cases", "Deaths", "Cumulative Deaths",  "Tests", "Cumulative Tests", "Temperature", "Humidity"]
+
+        #Insert control measures between tests and temp
+        insertIndex = 9
+        
+        for currControlMeasure in self.CONTROL_MEASURES:
+            controlType = self.CONTROL_MEASURES.get(currControlMeasure)
+
+            if controlType[0] is "Trinary":
+                for currLevel in controlType[1]:
+                    desiredOrder.insert(insertIndex, f"{currControlMeasure} ({currLevel})")
+                    insertIndex += 1
+            
+            elif controlType[0] is "Binary":
+                desiredOrder.insert(insertIndex, currControlMeasure)
+                insertIndex += 1
+
+        if containRt:
+            desiredOrder.extend(["Rt"])
+
+        #Based on https://stackoverflow.com/a/52044835        
+        reorderedLabels = {k : labels[k] for k in desiredOrder}
+
+        return reorderedLabels
+
     def computeGs(self, s):
         """
         Computes the Gamma distribution with mean 7 and standard deviation of 4.5
