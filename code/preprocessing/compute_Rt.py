@@ -6,9 +6,11 @@ import sys
 import csv
 import statistics
 import multiprocessing
+import os
 
 from copy import deepcopy
 from scipy.stats import gamma
+from itertools import chain
 
 from shared.sharedVariables import FILE_PATH_CORE
 from shared.sharedFunctions import createErrorFile
@@ -184,6 +186,10 @@ class computeRt():
         prevConfirmed = 0
         tauZeroRow = 0
         prevRt = 0
+        print("---------------------")
+        print(f"pid      | {os.getpid()}")
+        print(f"regionNo | {self.getRegion(newData[0])}")
+        print("---------------------")
         #Calculate the Rt
         for rowInd in range(len(newData)):
             Rt = self.RZERO
@@ -192,7 +198,7 @@ class computeRt():
             currRegion = self.getRegion(row)
             currConfirmed = row.get("Cases")
             
-            printProgressBar(rowInd, len(newData))
+            #printProgressBar(rowInd, len(newData))
 
             if currRegion != prevRegion:
                 tauZeroRow = rowInd
@@ -275,7 +281,7 @@ class computeRt():
                 median = statistics.median([prevRt, currRt, nextRt])
                 optDataList[rowInd]["Rt"] = str(median)
 
-        print("\n")
+        #print("\n")
         return optDataList
             
     def filterDate(self, newData, optDataList):
@@ -323,8 +329,8 @@ class computeRt():
                 currStartIndexNo = currIndex
             
             currIndex += 1
-
-        #A bodge to cover why it is missing one region
+        
+        #It misses (due to the if) one region at the end, therefore, add it on
         currIndex = regionalRangeList[-1][1]
         regionalRangeList.append((currIndex + 1, len(dataset)))
 
@@ -351,13 +357,22 @@ class computeRt():
         #Log the current dataset before further processing
         self.writeFile(newData, "/Rt/after_control_measures.csv")
 
-        """startList = self.getRegionalIndexs(newData)
+        regionalIndexList = self.getRegionalIndexs(newData)
+        
+        splitList = []
+        
+        for currStartIndex, currEndIndex in regionalIndexList:
+            splitList.append(newData[currStartIndex:currEndIndex])
 
-        print(len(startList))
-        for currRegion in startList:
-            print(currRegion)"""
+        numProcesses = 10
 
-        optDataList = self.calculateRt(newData)
+        with multiprocessing.Pool(numProcesses) as p:
+            result = p.map(self.calculateRt, splitList)
+
+        for currRegionalList in result:
+            for row in currRegionalList:
+                optDataList.append(row)
+        #optDataList = self.calculateRt(newData)
 
         optDataList = self.filterDate(newData, optDataList)
 
