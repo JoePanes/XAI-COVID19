@@ -1,3 +1,12 @@
+"""
+Parent class of process_features_eu and process_features_uk
+
+Takes in the raw datasets (as in, unaltered from the more human focused presentation of data)
+Then, converts the control measures from strings, into their numerical translation
+Also, discretizes relevant data such as Temperature and Humidity (Case count, deaths and tests may be added at some point)
+Finally, writes the altered dataset to a new .csv file.
+"""
+
 import csv
 import os
 import sys

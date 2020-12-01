@@ -1,5 +1,13 @@
 """
-Computes the Rt throughout the given dataset
+Parent class of compute_Rt_uk and compute_Rt_eu
+
+Can currently only take in the UK dataset due to that being at a completed level, the EU dataset is
+missing a lot of data, therefore is unusable.
+
+It is able to take in a dataset, that has been processed by process_features and its corresponding child class.
+Then, it processes the control measures and breaks down any non-binary control measures by splitting them up so that they are binary (each level is its own column).
+Next, it calculates the Rt based upon the change in cases numbers rather than the case numbers themselves.
+Finally, it writes the results of the new dataset with all the extra processing, into a new .csv file.
 """
 
 import sys
@@ -166,6 +174,7 @@ class computeRt():
                 pastDateRegion = self.getRegion(processedData[previousDateIndex])
                 
                 if previousDateIndex > 0 and pastDateRegion == currRegion:
+
                     for currControlMeasure in self.CONTROL_MEASURES:
                         val = int(processedData[previousDateIndex].get(currControlMeasure))
                         typeOfControlMeasure = self.CONTROL_MEASURES.get(currControlMeasure)
@@ -223,10 +232,12 @@ class computeRt():
         prevConfirmed = 0
         tauZeroRow = 0
         prevRt = 0
+
         print("---------------------")
         print(f"pid      | {os.getpid()}")
         print(f"regionNo | {self.getRegion(newData[0])}")
         print("---------------------")
+
         #Calculate the Rt
         for rowInd in range(len(newData)):
             Rt = self.RZERO
@@ -336,6 +347,7 @@ class computeRt():
         filteredData = []
 
         for rowInd in range(len(optDataList)):
+            
             if int(newData[rowInd].get("Cases")) < self.CONFIRMED_THRESHOLD:
                 continue
             filteredData.append(optDataList[rowInd])
@@ -414,3 +426,9 @@ class computeRt():
         optDataList = self.filterDate(newData, optDataList)
 
         self.writeFile(optDataList, self.OUTPUT_FILE, True)
+
+if __name__ == '__main__':
+    #In the event that the user runs this file
+    inp = input("Do you wish to process either the EU or UK dataset? ")
+
+    os.system(f"python compute_Rt_{inp.lower()}.py")

@@ -1,8 +1,15 @@
+"""
+Child class of compute_Rt
+Contains the variations of functions and variables necessary to compute using the UK dataset, then output
+as desired.
+"""
+
 from compute_Rt import computeRt
 from shared.sharedVariables import FILE_PATH_CORE
 from shared.sharedFunctions import removeBrackets
 
 import csv
+
 def setControlMeasures():
     """
     Imports the control measures from the parent and
@@ -95,5 +102,7 @@ class computeRtUK(computeRt):
             
             for row in newDataset:
                 myWriter.writerow(row)
-run = computeRtUK()
-run.main()
+
+if __name__ == '__main__':
+    run = computeRtUK()
+    run.main()
