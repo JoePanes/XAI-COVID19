@@ -37,6 +37,8 @@ class computeRtUK(computeRt):
 
     CONTROL_MEASURES = setControlMeasures()
 
+    REGIONAL_FIELD_NAME = "Regions"
+    
     def getRegion(self, currRow):
         """
         Retrieves the current region name from the row

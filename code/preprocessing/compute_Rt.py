@@ -31,7 +31,7 @@ class computeRt():
     OUTPUT_FILE = None
     OUTPUT_ERROR = None
 
-    CONFIRMED_THRESHOLD = 20
+    CONFIRMED_THRESHOLD = 10
 
     PAST_DATE_LIST = [0, 6, 12, 18]
 
@@ -51,6 +51,8 @@ class computeRt():
         "Sports and Leisure" : ("Trinary", ["Low", "Moderate", "High"]),
         "School Closure" : ("Binary", ["Opened", "Closed"]),
     }
+
+    REGIONAL_FIELD_NAME = None
 
     def readFile(self):
         """
@@ -78,7 +80,20 @@ class computeRt():
 
     def writeFile(self, dataset, fileName, containRt = False):
         pass
-    
+
+    def getRegionalLabel(self):
+        """
+        Simply return what the regional fieldname is called
+
+        INPUT:
+           NONE
+
+        OUTPUT:
+            returns the the regional fieldname
+        """
+        
+        return self.REGIONAL_FIELD_NAME
+
     def orderFields(self, labels, containRt):
         """
         After the splitting up of the Trinary fields, it results in a rather oddly ordered dataset,
@@ -87,28 +102,51 @@ class computeRt():
         INPUT:
             :param labels: List of Strings, the current order of fields within the dataset
             :param containRt: Boolean, whether Rt needs to be added to the dataset labels
-        
+
         OUTPUT:
             returns the new order for the dataset to be written to a file with
         """
-        desiredOrder = ["Day", "Date", "Regions", "Cases", "Cumulative Cases", "Deaths", "Cumulative Deaths",  "Tests", "Cumulative Tests", "Temperature", "Humidity"]
+        
+        desiredOrder = ["Day", "Date", "Cases", "Cumulative Cases", "Deaths", "Cumulative Deaths",  "Tests", "Cumulative Tests", "Temperature", "Humidity"]
 
-        #Insert control measures between tests and temp
-        insertIndex = 9
+        regionalLabel = self.getRegionalLabel()
+
+        insertIndexs = []      
+        controlMeasureIndex = None
+        
+        #Find the indexs to insert non-regular measures
+        for currIndex in range(len(desiredOrder)):
+            if desiredOrder[currIndex] is "Date":
+                insertIndexs.append((regionalLabel, currIndex + 1))
+            
+            elif desiredOrder[currIndex] is "Temperature":
+                insertIndexs.append(("Control Measures", currIndex))
+
+        #Insert unique labels into the labels, adjusting index as it goes 
+        adjustment = 0
+        for name, index in insertIndexs:
+            if name is "Control Measures":
+                controlMeasureIndex = index + adjustment
+            else:
+                desiredOrder.insert(index + adjustment, name)
+            adjustment += 1
+
+        
         
         for currControlMeasure in self.CONTROL_MEASURES:
             controlType = self.CONTROL_MEASURES.get(currControlMeasure)
 
             if controlType[0] is "Trinary":
                 for currLevel in controlType[1]:
-                    desiredOrder.insert(insertIndex, f"{currControlMeasure} ({currLevel})")
-                    insertIndex += 1
+                    desiredOrder.insert(controlMeasureIndex, f"{currControlMeasure} ({currLevel})")
+                    controlMeasureIndex += 1
             
             elif controlType[0] is "Binary":
-                desiredOrder.insert(insertIndex, currControlMeasure)
-                insertIndex += 1
+                desiredOrder.insert(controlMeasureIndex, currControlMeasure)
+                controlMeasureIndex += 1
 
         if containRt:
+            desiredOrder.insert(4, "Case Change")
             desiredOrder.extend(["Rt"])
 
         #Based on https://stackoverflow.com/a/52044835        
@@ -314,7 +352,7 @@ class computeRt():
             #Add the Rt to the new dataset
             row.update({"Rt" : str(Rt)})    
             newRow = deepcopy(row)
-            newRow["Cases"] = currConfirmed - prevConfirmed
+            newRow["Case Change"] = currConfirmed - prevConfirmed
             optDataList.append(newRow)
 
             prevRegion = currRegion
