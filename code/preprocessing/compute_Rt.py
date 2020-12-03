@@ -54,6 +54,8 @@ class computeRt():
 
     REGIONAL_FIELD_NAME = None
 
+    NON_CONTROL_MEASURE_FIELDS = []
+
     def readFile(self):
         """
         Takes in the contents of the file, and compiles it into
@@ -108,6 +110,11 @@ class computeRt():
         """
         
         desiredOrder = ["Day", "Date", "Cases", "Cumulative Cases", "Deaths", "Cumulative Deaths",  "Tests", "Cumulative Tests", "Temperature", "Humidity"]
+        
+        #Add fields that are specific to the dataset, but not control measures
+        for fieldToAdd, fieldToInsertAfter in self.NON_CONTROL_MEASURE_FIELDS:
+            insertionIndex = desiredOrder.index(fieldToInsertAfter)
+            desiredOrder.insert(insertionIndex + 1, fieldToAdd)
 
         regionalLabel = self.getRegionalLabel()
 
@@ -130,8 +137,6 @@ class computeRt():
             else:
                 desiredOrder.insert(index + adjustment, name)
             adjustment += 1
-
-        
         
         for currControlMeasure in self.CONTROL_MEASURES:
             controlType = self.CONTROL_MEASURES.get(currControlMeasure)
@@ -153,6 +158,9 @@ class computeRt():
         reorderedLabels = {k : labels[k] for k in desiredOrder}
 
         return reorderedLabels
+
+    def orderDatasetSpecificFields(self, desiredOrder):
+        return []
 
     def computeGs(self, s):
         """
@@ -251,7 +259,6 @@ class computeRt():
             nextRegion = self.getRegion(processedData[currRowIndex + 1])
 
             if currRegion != nextRegion:
-                
                 continue
             
 
@@ -319,6 +326,8 @@ class computeRt():
                 for tau in range(1, currDayNo):
 
                     casesTau = int(newData[tauZeroRow + tau].get('Cumulative Cases')) - int(newData[tauZeroRow + tau - 1].get("Cumulative Cases"))
+                    
+                    #If this is the case, then there is an issue in the data
                     if casesTau < 0:
                         errorList.append("########################")
                         errorList.append("----Current----")
@@ -483,8 +492,8 @@ class computeRt():
             myWriter = csv.writer(optFile, labels)
             myWriter.writerow(labels)
             for row in results:
-                myWriter.writerow(row)
-        self.writeFile(optDataList, self.OUTPUT_FILE, True)"""
+                myWriter.writerow(row)"""
+        self.writeFile(optDataList, self.OUTPUT_FILE, True)
 
 if __name__ == '__main__':
     #In the event that the user runs this file
