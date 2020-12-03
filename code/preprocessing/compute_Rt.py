@@ -221,20 +221,37 @@ class computeRt():
                             processedData[currRowIndex][currControlMeasure] = str(self.PAST_DATE_LIST.index(currDateReduction) + val)
                         
                         elif typeOfControlMeasure[0] is "Trinary":
-                            trinaryValues = deepcopy(typeOfControlMeasure[1])
+                            trinaryValues = typeOfControlMeasure[1]
 
-                            val-=1
+                            currLevel = int(processedData[currRowIndex][currControlMeasure])
+                            
+                            #Convert the level of the control measure into 3 binary fields
+                            currDateControlLevel = [1]*currLevel + [0]*(3 - currLevel)
 
-                            #print(trinaryValues[val])                   
-                            processedData[currRowIndex].update({f"{currControlMeasure} ({trinaryValues[val]})" : str(self.PAST_DATE_LIST.index(currDateReduction) + 1)})
-                            trinaryValues.pop(val)
+                            prevDateControlLevel = [1]*val + [0]*(3 - val)
 
-                            for currOption in trinaryValues:
-                                processedData[currRowIndex][f"{currControlMeasure} ({currOption})"] = 0   
+                            for currIndex in range(len(currDateControlLevel)):
+
+                                currField = f"{currControlMeasure} ({trinaryValues[currIndex]})"
+
+                                if currDateControlLevel[currIndex] == 1 and currDateControlLevel[currIndex] == prevDateControlLevel[currIndex]:    
+                                    try:
+                                        #Due to the breaking up of fields, the val used in binary is not usable for the same purpose here,
+                                        #since we are not overwriting the same field
+                                        prevDateTrinaryVal = int(processedData[previousDateIndex].get(currField))
+                                    except:
+                                        #If this is the case, then it is early on in the converting of this region
+                                        prevDateTrinaryVal = 1
+
+                                    processedData[currRowIndex].update({currField : str(self.PAST_DATE_LIST.index(currDateReduction) + prevDateTrinaryVal)})
+                                else:
+
+                                    processedData[currRowIndex].update({currField : 0})                            
 
             nextRegion = self.getRegion(processedData[currRowIndex + 1])
 
             if currRegion != nextRegion:
+                
                 continue
             
 
@@ -460,16 +477,14 @@ class computeRt():
             orgStart, orgEnd = regionalIndexList[currIndex]
             results.insert(0, [(33 - currIndex), f"{len(newData[orgStart:orgEnd])}", f"{len(optDataList[optStart:optEnd])}"])
         
-        for currLine in results:
-            print(currLine)
-        with open(FILE_PATH_CORE + self.DATASET + "test.csv", "w") as optFile:
+        """with open(FILE_PATH_CORE + self.DATASET + "/Rt/test.csv", "w") as optFile:
             labels = ["Region No", "Original Size", "New Size"]
 
             myWriter = csv.writer(optFile, labels)
             myWriter.writerow(labels)
             for row in results:
                 myWriter.writerow(row)
-        self.writeFile(optDataList, self.OUTPUT_FILE, True)
+        self.writeFile(optDataList, self.OUTPUT_FILE, True)"""
 
 if __name__ == '__main__':
     #In the event that the user runs this file
