@@ -31,7 +31,7 @@ class computeRt():
     OUTPUT_FILE = None
     OUTPUT_ERROR = None
 
-    CONFIRMED_THRESHOLD = 10
+    CONFIRMED_THRESHOLD = 20
 
     PAST_DATE_LIST = [0, 6, 12, 18]
 
@@ -275,21 +275,21 @@ class computeRt():
         print(f"pid      | {os.getpid()}")
         print(f"regionNo | {self.getRegion(newData[0])}")
         print("---------------------")
-
+        
+        errorList = [] #remove
         #Calculate the Rt
         for rowInd in range(len(newData)):
             Rt = self.RZERO
             row = newData[rowInd]           
 
             currRegion = self.getRegion(row)
-            currConfirmed = row.get("Cases")
+            currConfirmed = int(row.get("Cumulative Cases"))       
             
             #printProgressBar(rowInd, len(newData))
 
             if currRegion != prevRegion:
                 tauZeroRow = rowInd
                 prevConfirmed = 0
-                prevRt = 0
 
             # t - Days since first record (for region)   
             currDayNo = rowInd - tauZeroRow
@@ -299,13 +299,11 @@ class computeRt():
                 newInfections = currConfirmed - prevConfirmed
                 
                 temp = 0
-                
                 for tau in range(1, currDayNo):
 
-                    casesTau = int(newData[tauZeroRow + tau].get('Cases')) - int(newData[tauZeroRow + tau - 1].get("Cases"))
-
-                    """if casesTau < 0:
-                        errorList = []
+                    casesTau = int(newData[tauZeroRow + tau].get('Cumulative Cases')) - int(newData[tauZeroRow + tau - 1].get("Cumulative Cases"))
+                    if casesTau < 0:
+                        errorList.append("########################")
                         errorList.append("----Current----")
                         errorList.append(f"Day: {newData[rowInd]['Day']}")
                         errorList.append(f"Region: {self.getRegion(newData[rowInd])}")
@@ -328,26 +326,16 @@ class computeRt():
                         errorList.append(f"Region: {self.getRegion(newData[tauZeroRow + tau - 1])}")
                         errorList.append(f"Cases: {newData[tauZeroRow + tau - 1]['Cases']}")
 
-
-
-                        createErrorFile(FILE_PATH_CORE, self.DATASET, 1, errorList)
-                        sys.exit(0)"""
-
                     gs = self.computeGs(currDayNo - tau)
                     
                     temp += casesTau * gs
 
-                if temp > 0:
-                    Rt = newInfections / temp
-                else:
-                    Rt = prevRt
+                    if temp != 0 and newInfections != 0:
+                        Rt = float(newInfections / temp)
+                    else:
+                        Rt = 0
             else:
                 Rt = 2.3
-            
-            #Since the R number can't go below 0, correct
-            if Rt < 0:
-                Rt = 0
-                prevRt = 0
 
             #Add the Rt to the new dataset
             row.update({"Rt" : str(Rt)})    
@@ -366,7 +354,9 @@ class computeRt():
 
                 median = statistics.median([prevRt, currRt, nextRt])
                 optDataList[rowInd]["Rt"] = str(median)
-
+        
+        if len(errorList) > 0:
+            createErrorFile(FILE_PATH_CORE, self.DATASET, len(errorList), errorList)
         #print("\n")
         return optDataList
             
@@ -386,7 +376,7 @@ class computeRt():
 
         for rowInd in range(len(optDataList)):
             
-            if int(newData[rowInd].get("Cases")) < self.CONFIRMED_THRESHOLD:
+            if int(newData[rowInd].get("Cumulative Cases")) < self.CONFIRMED_THRESHOLD:
                 continue
             filteredData.append(optDataList[rowInd])
 
@@ -459,10 +449,26 @@ class computeRt():
         for currRegionalList in result:
             for row in currRegionalList:
                 optDataList.append(row)
-        #optDataList = self.calculateRt(newData)
+       #optDataList = self.calculateRt(newData)
 
         optDataList = self.filterDate(newData, optDataList)
+        
+        optRegionalIndex = self.getRegionalIndexs(optDataList)
+        results = []
+        for currIndex in range(len(optRegionalIndex)):
+            optStart, optEnd = optRegionalIndex[currIndex]
+            orgStart, orgEnd = regionalIndexList[currIndex]
+            results.insert(0, [(33 - currIndex), f"{len(newData[orgStart:orgEnd])}", f"{len(optDataList[optStart:optEnd])}"])
+        
+        for currLine in results:
+            print(currLine)
+        with open(FILE_PATH_CORE + self.DATASET + "test.csv", "w") as optFile:
+            labels = ["Region No", "Original Size", "New Size"]
 
+            myWriter = csv.writer(optFile, labels)
+            myWriter.writerow(labels)
+            for row in results:
+                myWriter.writerow(row)
         self.writeFile(optDataList, self.OUTPUT_FILE, True)
 
 if __name__ == '__main__':

@@ -49,7 +49,7 @@ def createErrorFile(filePath, chosenDataset, dataErrorCount, errorList):
     print(f"There were {dataErrorCount} errors when reading the data.")
     print(f"Go to '{filePath}{chosenDataset}/errors/{fileName}' for the dates where these occured.")
 
-    fileName = chosenDataset+ "_" + datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
+    fileName = chosenDataset+ "_" + datetime.now().strftime("%d_%m_%Y_%H_%M_%S_.%f")
 
     errorOutput = open(f"{filePath}{chosenDataset}/errors/{fileName}.txt", "x")
 
