@@ -268,11 +268,11 @@ class computeRt():
                 if self.CONTROL_MEASURES.get(currControlMeasure)[0] is "Trinary":
                     newRow.pop(currControlMeasure)
 
-            prevCaseCount = int(processedData[currRowIndex - 1].get("Cases"))
-            currCaseCount = int(processedData[currRowIndex].get("Cases"))
-            nextCaseCount = int(processedData[currRowIndex + 1].get("Cases"))
+            prevCaseCount = int(processedData[currRowIndex - 1].get("Cumulative Cases"))
+            currCaseCount = int(processedData[currRowIndex].get("Cumulative Cases"))
+            nextCaseCount = int(processedData[currRowIndex + 1].get("Cumulative Cases"))
 
-            newRow["Cases"] = int((prevCaseCount + currCaseCount + nextCaseCount) / 3)
+            newRow["Cumulative Cases"] = int((prevCaseCount + currCaseCount + nextCaseCount) / 3)
 
             newData.append(newRow)
         
@@ -361,7 +361,10 @@ class computeRt():
                     else:
                         Rt = 0
             else:
-                Rt = 2.3
+                if newData[rowInd]['Cumulative Cases'] == 0:
+                    Rt = 0
+                else:
+                    Rt = 2.3
 
             #Add the Rt to the new dataset
             row.update({"Rt" : str(Rt)})    
@@ -386,23 +389,22 @@ class computeRt():
         #print("\n")
         return optDataList
             
-    def filterDate(self, newData, optDataList):
+    def filterDate(self, optDataList):
         """
         Filters the data so that only days that have above the CONFIRMED_THRESHOLD are present
         in the outputted dataset
 
         INPUTS:
-            :param newData: List of dictionaries, where each entry is a row from the dataset (post convertControlMeasures version)
             :param optDataList: List of dictionaries, where each entry is a row from the dataset (post calculateRt version)
         
         OUTPUT:
-            returns the dataset containing only the entries the meet and exceed the threshold
+            returns the dataset containing only the entries that exceed the threshold
         """
         filteredData = []
 
         for rowInd in range(len(optDataList)):
             
-            if int(newData[rowInd].get("Cumulative Cases")) < self.CONFIRMED_THRESHOLD:
+            if int(optDataList[rowInd].get("Cumulative Cases")) < self.CONFIRMED_THRESHOLD:
                 continue
             filteredData.append(optDataList[rowInd])
 
@@ -426,12 +428,11 @@ class computeRt():
             
             if currRegion != self.getRegion(dataset[currIndex]):
                 if currRegion != None:
-                    regionalRangeList.append((currStartIndexNo, currIndex - 1))
+                    regionalRangeList.append((currStartIndexNo, currIndex))
                 
                 currRegion = self.getRegion(dataset[currIndex])
                 currStartIndexNo = currIndex
             
-            currIndex += 1
         
         #It misses (due to the if) one region at the end, therefore, add it on
         currIndex = regionalRangeList[-1][1]
@@ -477,23 +478,23 @@ class computeRt():
                 optDataList.append(row)
        #optDataList = self.calculateRt(newData)
 
-        optDataList = self.filterDate(newData, optDataList)
+        """optDataList = self.filterDate(optDataList)
         
         optRegionalIndex = self.getRegionalIndexs(optDataList)
         results = []
         for currIndex in range(len(optRegionalIndex)):
             optStart, optEnd = optRegionalIndex[currIndex]
             orgStart, orgEnd = regionalIndexList[currIndex]
-            results.insert(0, [(33 - currIndex), f"{len(newData[orgStart:orgEnd])}", f"{len(optDataList[optStart:optEnd])}"])
+            results.insert(0, [(33 - currIndex), f"{orgEnd - orgStart}", f"{optEnd - optStart}"])
         
-        """with open(FILE_PATH_CORE + self.DATASET + "/Rt/test.csv", "w") as optFile:
+        with open(FILE_PATH_CORE + self.DATASET + "/Rt/test.csv", "w") as optFile:
             labels = ["Region No", "Original Size", "New Size"]
 
             myWriter = csv.writer(optFile, labels)
             myWriter.writerow(labels)
             for row in results:
-                myWriter.writerow(row)"""
-        self.writeFile(optDataList, self.OUTPUT_FILE, True)
+                myWriter.writerow(row)
+        self.writeFile(optDataList, self.OUTPUT_FILE, True)"""
 
 if __name__ == '__main__':
     #In the event that the user runs this file
