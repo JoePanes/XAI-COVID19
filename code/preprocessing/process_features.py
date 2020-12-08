@@ -12,6 +12,7 @@ import os
 import sys
 from shared.sharedFunctions import createErrorFile
 from shared.sharedFunctions import removeBrackets
+from shared.sharedFunctions import readFile
 from shared.sharedVariables import FILE_PATH_CORE
 
 class processFeatures:
@@ -81,26 +82,6 @@ class processFeatures:
                 break
         
         return databaseFields
-
-    def readFile(self):
-        """
-        Retrieve the data from the database and put into a usable format
-
-        INPUT:
-            NONE
-        
-        OUTPUT:
-            returns the database all placed into a list of dictionaries
-        """
-        rawData = []
-
-        with open(FILE_PATH_CORE + self.INPUT_FILE, "r") as dataFile:
-            myReader = csv.DictReader(dataFile)
-
-            for row in myReader:
-                rawData.append(row)
-
-        return rawData
 
     def gatherData(self, row, fieldNames):
         """
@@ -223,16 +204,25 @@ class processFeatures:
         """
        
         fieldNames = self.getFieldNames()
-        rawData = self.readFile()
+        dataset = sys.argv[0][-5:-3]
+        rawData = readFile(dataset,f"{FILE_PATH_CORE + self.INPUT_FILE}")
+        
+        outputData = []
+        for row in rawData:
+            #Retain info from the original, and discretize where relevant
+            newLine = self.gatherData(row, fieldNames)
 
+            if dataset == "eu":
+                outputData.append(newLine)
+            else:
+                outputData.insert(0, newLine)
+                
         with open(FILE_PATH_CORE + self.OUTPUT_FILE, "w") as optFile:
             myWriter = csv.DictWriter(optFile, list(fieldNames.keys()))
             #Put the column labels in
             myWriter.writerow(fieldNames)
 
-            for row in rawData:
-                #Copy over info from the original, and discretize where relevant
-                newLine = self.gatherData(row, fieldNames)
+            for newLine in outputData:
                 myWriter.writerow(newLine)
 
         if self.errorNo > 0:

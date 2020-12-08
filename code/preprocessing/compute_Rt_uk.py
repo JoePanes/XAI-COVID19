@@ -51,27 +51,6 @@ class computeRtUK(computeRt):
         """
         return currRow.get("Regions")
 
-    def readFile(self):
-        """
-        Takes in the contents of the file, and compiles it into
-        a usable format
-
-        INPUT:
-            NONE
-        
-        OUTPUT:
-            returns a list of dictionaries, containing the contents of the dataset
-        """
-        processedData = []
-
-        with open(f"{FILE_PATH_CORE}{self.DATASET}{self.INPUT_FILE}", "r") as dataFile:
-            myReader = csv.DictReader(dataFile)
-
-            for row in myReader:
-                processedData.insert(0, row)
-
-        return processedData
-
     def writeFile(self, dataset, fileName, containRt = False):
         """
         Writes the current state of the dataset to a .csv file, (along with reorder the dataset

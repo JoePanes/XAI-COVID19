@@ -3,6 +3,7 @@ A place to keep functions that are used by more than one file
 """
 from datetime import datetime
 from sys import stdout
+from csv import DictReader
 
 #Taken from https://stackoverflow.com/a/14598135
 def removeBrackets(fieldName):
@@ -85,3 +86,28 @@ def printProgressBar(currNo, totalNo):
     #Copied from https://stackoverflow.com/a/6361028
     stdout.write("\r\x1b[K"+output)
     stdout.flush()
+
+def readFile(dataset, filePath):
+    """
+    Takes in the contents of the file, and compiles it into
+    a usable format
+
+    INPUT:
+        :param dataset: String, the name of the dataset being read (determines the order)
+        :param filePath: String, the location of the .csv file to be read from
+    
+    OUTPUT:
+        returns a list of dictionaries, containing the contents of the dataset
+    """
+    compiledData = []
+
+    with open(filePath, "r") as dataFile:
+        myReader = DictReader(dataFile)
+
+        for row in myReader:
+            if dataset == "eu":
+                compiledData.append(row)
+            else:
+                compiledData.insert(0, row)
+
+    return compiledData

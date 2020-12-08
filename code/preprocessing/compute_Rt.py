@@ -23,6 +23,7 @@ from itertools import chain
 from shared.sharedVariables import FILE_PATH_CORE
 from shared.sharedFunctions import createErrorFile
 from shared.sharedFunctions import printProgressBar
+from shared.sharedFunctions import readFile
 
 
 class computeRt():
@@ -55,27 +56,6 @@ class computeRt():
     REGIONAL_FIELD_NAME = None
 
     NON_CONTROL_MEASURE_FIELDS = []
-
-    def readFile(self):
-        """
-        Takes in the contents of the file, and compiles it into
-        a usable format
-
-        INPUT:
-            NONE
-        
-        OUTPUT:
-            returns a list of dictionaries, containing the contents of the dataset
-        """
-        processedData = []
-
-        with open(f"{FILE_PATH_CORE}{self.DATASET}{self.INPUT_FILE}", "r") as dataFile:
-            myReader = csv.DictReader(dataFile)
-
-            for row in myReader:
-                processedData.append(row)
-
-        return processedData
     
     def getRegion(self, currRow):
         return -1
@@ -453,7 +433,7 @@ class computeRt():
         """
         optDataList = []
 
-        processedData = self.readFile()
+        processedData = readFile(self.DATASET, f"{FILE_PATH_CORE}{self.DATASET}{self.INPUT_FILE}")
 
         newData = self.processControlMeasures(processedData)
 
@@ -477,9 +457,9 @@ class computeRt():
                 optDataList.append(row)
        #optDataList = self.calculateRt(newData)
 
-        """optDataList = self.filterDate(optDataList)
+        optDataList = self.filterDate(optDataList)
         
-        optRegionalIndex = self.getRegionalIndexs(optDataList)
+        """optRegionalIndex = self.getRegionalIndexs(optDataList)
         results = []
         for currIndex in range(len(optRegionalIndex)):
             optStart, optEnd = optRegionalIndex[currIndex]
