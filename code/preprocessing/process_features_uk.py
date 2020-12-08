@@ -75,6 +75,8 @@ class processFeaturesUK(processFeatures):
     OUTPUT_ERROR = "/uk/errors/"
     
     NOT_WANTED_FIELDS = {
+        "Day" : 1,
+        "Date" : 1,
         "Longitude" : 1,
         "Latitude": 1,
     }
@@ -90,23 +92,6 @@ class processFeaturesUK(processFeatures):
         """
 
         return row["Regions"]
-
-    def convertDate(self, date):
-        """
-        Convert the date string, into a numerical equivalent
-
-        INPUT:
-            :param date: String, the current date in the format of the dataset
-        
-        OUTPUT:
-            returns a float representation of the date
-        """
-        #Converts 01/12/2020 -> 1.12202
-        day, month, year = date.split("/")
-
-        date = round(float(day) + (float(month) / 100) + (int(year) / 1000000), 6)
-
-        return date
 
 if __name__ == '__main__':
     run = processFeaturesUK()

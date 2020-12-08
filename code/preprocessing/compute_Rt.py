@@ -89,7 +89,7 @@ class computeRt():
             returns the new order for the dataset to be written to a file with
         """
         
-        desiredOrder = ["Day", "Date", "Cases", "Cumulative Cases", "Deaths", "Cumulative Deaths",  "Tests", "Cumulative Tests", "Temperature", "Humidity"]
+        desiredOrder = ["Cases", "Cumulative Cases", "Deaths", "Cumulative Deaths",  "Tests", "Cumulative Tests", "Temperature", "Humidity"]
         
         #Add fields that are specific to the dataset, but not control measures
         for fieldToAdd, fieldToInsertAfter in self.NON_CONTROL_MEASURE_FIELDS:
@@ -103,8 +103,8 @@ class computeRt():
         
         #Find the indexs to insert non-regular measures
         for currIndex in range(len(desiredOrder)):
-            if desiredOrder[currIndex] is "Date":
-                insertIndexs.append((regionalLabel, currIndex + 1))
+            if desiredOrder[currIndex] is "Cases":
+                insertIndexs.append((regionalLabel, currIndex))
             
             elif desiredOrder[currIndex] is "Temperature":
                 insertIndexs.append(("Control Measures", currIndex))

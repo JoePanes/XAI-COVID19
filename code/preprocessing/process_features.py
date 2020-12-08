@@ -120,9 +120,6 @@ class processFeatures:
                             #replace with the case number (due to these being obtained through testing)
                             newLine[currField] = int(row["Cases"])
                             row["Cumulative Tests"] = row["Cumulative Cases"]
-                        
-                        elif currField == "Date":
-                            newLine[currField] = self.convertDate(data)
                         else:
                             raise
                         
@@ -241,4 +238,13 @@ if __name__ == '__main__':
 
     if inp.lower() == "y" or inp.lower() == "yes":
         os.system(f"python compute_Rt_{dataset}.py")
+
+        print("Performing final pre-processing on dataset...")
+
+        os.system(f"python discretize_features.py uk")
+
+    print("Done")
+    print("Thank you")
+    
+    exit()
 

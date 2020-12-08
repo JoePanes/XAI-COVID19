@@ -8,7 +8,14 @@ from datetime import datetime
 from shared.sharedFunctions import readFile
 
 FILE_PATH = "../../data/core/"
-BIN_NO = 8
+
+BIN_NO_CASES = 8
+BIN_NO_CASES_CU = 5
+BIN_NO_DEATHS = 8
+BIN_NO_DEATHS_CU = 5
+BIN_NO_TESTS = 8
+BIN_NO_TESTS_CU = 5
+BIN_NO_RT = 5
 
 def getInformationAboutDiscretizer(discreteData, originalData):
     """
@@ -88,6 +95,8 @@ if __name__ == "__main__":
         tests = []
         testsCumulative = []
 
+        Rt = []
+
         for currRow in rtData:
             cases.append(int(currRow["Cases"]))
             casesCumulative.append(int(currRow["Cumulative Cases"]))
@@ -97,6 +106,8 @@ if __name__ == "__main__":
 
             tests.append(int(currRow["Tests"]))
             testsCumulative.append(int(currRow["Cumulative Tests"]))
+
+            Rt.append(float(currRow["Rt"]))
         
         #Prepare so that the 1D arrays can be used
         cases = np.array(cases).reshape(-1,1)
@@ -108,17 +119,29 @@ if __name__ == "__main__":
         tests = np.array(tests).reshape(-1,1)
         testsCumulative = np.array(testsCumulative).reshape(-1,1)
 
-        discretizer = KBinsDiscretizer(n_bins=BIN_NO, encode='ordinal', strategy='kmeans')
-
+        Rt = np.array(Rt).reshape(-1, 1)
+        
         #perform K-Means
+        discretizer = KBinsDiscretizer(n_bins=BIN_NO_CASES, encode='ordinal', strategy='kmeans')        
         casesDiscrete = discretizer.fit_transform(cases)
+
+        discretizer = KBinsDiscretizer(n_bins=BIN_NO_CASES_CU, encode='ordinal', strategy='kmeans')   
         casesCumulativeDiscrete = discretizer.fit_transform(casesCumulative)
 
+        discretizer = KBinsDiscretizer(n_bins=BIN_NO_DEATHS, encode='ordinal', strategy='kmeans') 
         deathsDiscrete = discretizer.fit_transform(deaths)
+
+        discretizer = KBinsDiscretizer(n_bins=BIN_NO_DEATHS_CU, encode='ordinal', strategy='kmeans') 
         deathsCumulativeDiscrete = discretizer.fit_transform(deathsCumulative)
 
+        discretizer = KBinsDiscretizer(n_bins=BIN_NO_TESTS, encode='ordinal', strategy='kmeans') 
         testsDiscrete = discretizer.fit_transform(tests)
+
+        discretizer = KBinsDiscretizer(n_bins=BIN_NO_TESTS_CU, encode='ordinal', strategy='kmeans') 
         testsCumulativeDiscrete = discretizer.fit_transform(testsCumulative)
+
+        discretizer = KBinsDiscretizer(n_bins=BIN_NO_RT, encode='ordinal', strategy='kmeans') 
+        RtDiscrete = discretizer.fit_transform(Rt)
 
         #Transfer discrete values into dataset
         for rowIndex in range(len(rtData)):
@@ -130,6 +153,8 @@ if __name__ == "__main__":
 
             rtData[rowIndex]["Tests"] = int(testsDiscrete[rowIndex])
             rtData[rowIndex]["Cumulative Tests"] = int(testsCumulativeDiscrete[rowIndex])
+
+            rtData[rowIndex]["Rt"] = int(RtDiscrete[rowIndex])
         
         fieldNames = {}
         for field in list(rtData[0].keys()):
@@ -145,30 +170,40 @@ if __name__ == "__main__":
         
         #Provide explanation for result
         outputText = ""
-        outputText += f"Bin No: {BIN_NO}\n"
 
         outputText += "---Cases---"
+        outputText += f"Bin No: {BIN_NO_CASES}\n"
         currAmount, currRange = getInformationAboutDiscretizer(casesDiscrete, cases)
         outputText += prepareExplainerText(currAmount, currRange)
 
         outputText += "---Cases Cumulative---"
+        outputText += f"Bin No: {BIN_NO_CASES_CU}\n"
         currAmount, currRange = getInformationAboutDiscretizer(casesCumulativeDiscrete, casesCumulative)
         outputText += prepareExplainerText(currAmount, currRange)
 
         outputText += "---Deaths---"
+        outputText += f"\nBin No: {BIN_NO_DEATHS}\n"
         currAmount, currRange = getInformationAboutDiscretizer(deathsDiscrete, deaths)
         outputText += prepareExplainerText(currAmount, currRange)
 
         outputText += "---Deaths Cumulative---"
+        outputText += f"Bin No: {BIN_NO_DEATHS_CU}\n"
         currAmount, currRange = getInformationAboutDiscretizer(deathsCumulativeDiscrete, deathsCumulative)
         outputText += prepareExplainerText(currAmount, currRange)
 
         outputText += "---Tests---"
+        outputText += f"Bin No: {BIN_NO_TESTS}\n"
         currAmount, currRange = getInformationAboutDiscretizer(testsDiscrete, tests)
         outputText += prepareExplainerText(currAmount, currRange)
 
         outputText += "---Tests Cumulative---"
+        outputText += f"Bin No: {BIN_NO_TESTS_CU}\n"
         currAmount, currRange = getInformationAboutDiscretizer(testsCumulativeDiscrete, testsCumulative)
+        outputText += prepareExplainerText(currAmount, currRange)
+
+        outputText += "---Rt---"
+        outputText += f"Bin No: {BIN_NO_RT}\n"
+        currAmount, currRange = getInformationAboutDiscretizer(RtDiscrete, Rt)
         outputText += prepareExplainerText(currAmount, currRange)
 
         #Write to a text file
