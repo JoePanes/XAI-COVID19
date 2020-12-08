@@ -151,7 +151,6 @@ class computeRt():
                 controlMeasureIndex += 1
 
         if containRt:
-            desiredOrder.insert(4, "Case Change")
             desiredOrder.extend(["Rt"])
 
         #Based on https://stackoverflow.com/a/52044835        
@@ -369,7 +368,7 @@ class computeRt():
             #Add the Rt to the new dataset
             row.update({"Rt" : str(Rt)})    
             newRow = deepcopy(row)
-            newRow["Case Change"] = currConfirmed - prevConfirmed
+            newRow["Cases"] = currConfirmed - prevConfirmed
             optDataList.append(newRow)
 
             prevRegion = currRegion
@@ -493,8 +492,8 @@ class computeRt():
             myWriter = csv.writer(optFile, labels)
             myWriter.writerow(labels)
             for row in results:
-                myWriter.writerow(row)
-        self.writeFile(optDataList, self.OUTPUT_FILE, True)"""
+                myWriter.writerow(row)"""
+        self.writeFile(optDataList, self.OUTPUT_FILE, True)
 
 if __name__ == '__main__':
     #In the event that the user runs this file
