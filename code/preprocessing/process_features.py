@@ -111,6 +111,7 @@ class processFeatures:
             returns the processed row ready for writing to the output file
         """
         newLine = {}
+
         for currField in fieldNames:
             try:
                 data = row[currField]
@@ -127,7 +128,20 @@ class processFeatures:
                     newLine[currField] = self.discretizeVal(data, discreteConversion)
 
                 else:
-                    newLine[currField] = data
+                    try:
+                        newLine[currField] = float(data)
+                    except:
+                        if currField == "Tests":
+                            #replace with the case number (due to these being obtained through testing)
+                            newLine[currField] = int(row["Cases"])
+                            row["Cumulative Tests"] = row["Cumulative Cases"]
+                        
+                        elif currField == "Date":
+                            newLine[currField] = self.convertDate(data)
+                        else:
+                            raise
+                        
+
             except:
                 #If invalid data, do not include it
                 #If missing data, carry on
@@ -190,6 +204,9 @@ class processFeatures:
     def getRecordsRegion(self, row):
         return -1 
 
+    def convertDate(self, date):
+        return -1
+
     def main(self):
         """
         Converts the dataset into a format that is usuable in the next stage
@@ -203,7 +220,7 @@ class processFeatures:
        
         fieldNames = self.getFieldNames()
         rawData = self.readFile()
-        
+
         with open(FILE_PATH_CORE + self.OUTPUT_FILE, "w") as optFile:
             myWriter = csv.DictWriter(optFile, list(fieldNames.keys()))
             #Put the column labels in
@@ -221,6 +238,13 @@ class processFeatures:
 
 if __name__ == '__main__':
     #In the event that the user runs this file
-    inp = input("Do you wish to process either the EU or UK dataset? ")
+    dataset = input("Do you wish to process either the EU or UK dataset? ")
 
-    os.system(f"python process_features_{inp.lower()}.py")
+    dataset = dataset.lower()
+    os.system(f"python process_features_{dataset}.py")
+
+    inp = input("Do you want to calculate Rt? (y/n) ")
+
+    if inp.lower() == "y" or inp.lower() == "yes":
+        os.system(f"python compute_Rt_{dataset}.py")
+

@@ -87,6 +87,23 @@ class processFeaturesUK(processFeatures):
 
         return row["Regions"]
 
+    def convertDate(self, date):
+        """
+        Convert the date string, into a numerical equivalent
+
+        INPUT:
+            :param date: String, the current date in the format of the dataset
+        
+        OUTPUT:
+            returns a float representation of the date
+        """
+        #Converts 01/12/2020 -> 1.12202
+        day, month, year = date.split("/")
+
+        date = round(float(day) + (float(month) / 100) + (int(year) / 1000000), 6)
+
+        return date
+
 if __name__ == '__main__':
     run = processFeaturesUK()
     sys.exit(run.main()) 
