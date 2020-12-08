@@ -47,14 +47,16 @@ class processFeatures:
     DISCRETIZE_FIELDS = {
         "temperature" : TEMP_THRESHOLD,
         "humidity" : HUMIDITY_THRESHOLD,
-     }
+    }
+
+    NOT_WANTED_FIELDS = {}
 
     errorList = []
     errorNo = 0
 
     def getFieldNames(self):
         """
-        Read the first row of the file and retrieve its field names
+        Read the first row of the file and retrieve the field names that are wanted (useful for machine learning).
 
         INPUT:
             NONE
@@ -73,6 +75,8 @@ class processFeatures:
                     readLabel = False
                     
                     for currFieldName in row:
+                        if currFieldName in self.NOT_WANTED_FIELDS:
+                            continue
                         databaseFields[currFieldName] = currFieldName
                 break
         
@@ -129,7 +133,7 @@ class processFeatures:
 
                 else:
                     try:
-                        newLine[currField] = float(data)
+                        newLine[currField] = int(data)
                     except:
                         if currField == "Tests":
                             #replace with the case number (due to these being obtained through testing)

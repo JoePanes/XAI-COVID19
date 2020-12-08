@@ -74,6 +74,10 @@ class processFeaturesUK(processFeatures):
     OUTPUT_FILE = "/uk/processed/uk_mlTable_0_0.csv"
     OUTPUT_ERROR = "/uk/errors/"
     
+    NOT_WANTED_FIELDS = {
+        "Longitude" : 1,
+        "Latitude": 1,
+    }
     def getRecordsRegion(self, row):
         """
         Retrieve the record's Region

@@ -38,8 +38,6 @@ class computeRtUK(computeRt):
     CONTROL_MEASURES = setControlMeasures()
 
     REGIONAL_FIELD_NAME = "Regions"
-
-    NON_CONTROL_MEASURE_FIELDS = [("Longitude", "Humidity"), ("Latitude", "Longitude")]
     
     def getRegion(self, currRow):
         """
