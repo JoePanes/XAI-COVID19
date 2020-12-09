@@ -1,3 +1,7 @@
+"""
+This is the final stage of the pre-processing, where after running Rt, it discretises
+the last of the fields that have yet to be processed into a usable format.
+"""
 import matplotlib.pyplot as plt
 import numpy as np
 import csv
@@ -10,12 +14,12 @@ from shared.sharedFunctions import readFile
 FILE_PATH = "../../data/core/"
 
 BIN_NO_CASES = 8
-BIN_NO_CASES_CU = 5
-BIN_NO_DEATHS = 8
+BIN_NO_CASES_CU = 7
+BIN_NO_DEATHS = 6
 BIN_NO_DEATHS_CU = 5
 BIN_NO_TESTS = 8
 BIN_NO_TESTS_CU = 5
-BIN_NO_RT = 5
+BIN_NO_RT = 6
 
 def getInformationAboutDiscretizer(discreteData, originalData):
     """
@@ -41,7 +45,7 @@ def getInformationAboutDiscretizer(discreteData, originalData):
     valueRangesDis = {}
     for currIndex in range(len(discreteData)):
         currDisVal = int(discreteData[currIndex])
-        currOrigVal = int(originalData[currIndex])
+        currOrigVal = float(originalData[currIndex])
         
         if currDisVal in valueRangesDis:
             currMin, currMax = valueRangesDis.get(currDisVal)
@@ -72,8 +76,6 @@ def prepareExplainerText(amount, ranges):
         text += f"{currKey}: {ranges[currKey]} | {amount[currKey]}\n"
     text += "\n\n"
     return text
-    
-
 
 if __name__ == "__main__":
     if len(sys.argv) == 2:
@@ -172,12 +174,12 @@ if __name__ == "__main__":
         outputText = ""
 
         outputText += "---Cases---"
-        outputText += f"Bin No: {BIN_NO_CASES}\n"
+        outputText += f"\nBin No: {BIN_NO_CASES}\n"
         currAmount, currRange = getInformationAboutDiscretizer(casesDiscrete, cases)
         outputText += prepareExplainerText(currAmount, currRange)
 
         outputText += "---Cases Cumulative---"
-        outputText += f"Bin No: {BIN_NO_CASES_CU}\n"
+        outputText += f"\nBin No: {BIN_NO_CASES_CU}\n"
         currAmount, currRange = getInformationAboutDiscretizer(casesCumulativeDiscrete, casesCumulative)
         outputText += prepareExplainerText(currAmount, currRange)
 
@@ -187,22 +189,22 @@ if __name__ == "__main__":
         outputText += prepareExplainerText(currAmount, currRange)
 
         outputText += "---Deaths Cumulative---"
-        outputText += f"Bin No: {BIN_NO_DEATHS_CU}\n"
+        outputText += f"\nBin No: {BIN_NO_DEATHS_CU}\n"
         currAmount, currRange = getInformationAboutDiscretizer(deathsCumulativeDiscrete, deathsCumulative)
         outputText += prepareExplainerText(currAmount, currRange)
 
         outputText += "---Tests---"
-        outputText += f"Bin No: {BIN_NO_TESTS}\n"
+        outputText += f"\nBin No: {BIN_NO_TESTS}\n"
         currAmount, currRange = getInformationAboutDiscretizer(testsDiscrete, tests)
         outputText += prepareExplainerText(currAmount, currRange)
 
         outputText += "---Tests Cumulative---"
-        outputText += f"Bin No: {BIN_NO_TESTS_CU}\n"
+        outputText += f"\nBin No: {BIN_NO_TESTS_CU}\n"
         currAmount, currRange = getInformationAboutDiscretizer(testsCumulativeDiscrete, testsCumulative)
         outputText += prepareExplainerText(currAmount, currRange)
 
         outputText += "---Rt---"
-        outputText += f"Bin No: {BIN_NO_RT}\n"
+        outputText += f"\nBin No: {BIN_NO_RT}\n"
         currAmount, currRange = getInformationAboutDiscretizer(RtDiscrete, Rt)
         outputText += prepareExplainerText(currAmount, currRange)
 
