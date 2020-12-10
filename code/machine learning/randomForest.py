@@ -1,71 +1,50 @@
+from pandas import read_csv
 from sklearn.ensemble import RandomForestClassifier
-from csv import reader
-from random import shuffle
-from random import randint
-from copy import deepcopy
-from itertools import chain
+from sklearn.model_selection import train_test_split
+import os
 
-
-filePath = "../../data/core/uk/final/uk_final.csv"
-
-
-def chunks(list, noChunks):
+def prepareData(filePath):
     """
-    Taken from
-    https://stackoverflow.com/a/54802737
-    Yield n number of striped chunks from l.
-    
-    INPUTS:
-        :param list: List of anything, splits the list into equal (or as equal as possible) chunks between noChunks
-        :param noChunks: Integer, the number of chunks (sublists) to be created from list
+    Read in a .csv file, then prepare the data for use with the Random Forest
+
+    INPUT:
+        :param filePath: String, the location of the final pre-processed dataset
     
     OUTPUT:
-        returns a list of lists, where each sublist is an equal sized chunk of the original list
+        returns four separate Pandas Dataframes, these are the training set, test set, then the corresponding Rt (labels) for both.
     """
-    for i in range(0, noChunks):
-        yield list[i::noChunks]
+    #Read in the file
+    compiledData = read_csv(filePath)
 
+    splitTrainData, splitTestData = train_test_split(compiledData, test_size=0.2, random_state=os.getpid())
 
-#Read in the file
-compiledData = []
-rtData = []
-readLabel = True
-with open(filePath, "r") as dataFile:
-    myReader = reader(dataFile)
+    #Extract Rt from the data
+    trainingData = splitTrainData.drop(["Rt"], axis=1)
+    trainingRt = splitTrainData["Rt"]
 
-    for row in myReader:
-        if readLabel:
-            readLabel = False
-            continue
-        compiledData.append(row)
+    testData = splitTestData.drop(["Rt"], axis=1)
+    testRt = splitTestData["Rt"]
 
-shuffle(compiledData)
-shuffle(compiledData)
+    return trainingData, trainingRt, testData, testRt
 
-#Split compiledData into equally sized chunks        
-splitCompiledData = list(chunks(compiledData,5))
+def runRandomForest(trainingData, trainingRt, testData, testRt):
+    """
+    Using the training data, train a Random Forest Classifer, then test the model it hasn't
+    been exposed to before.
 
-for _ in range(2):
-    shuffle(splitCompiledData)
+    INPUT:
+        :param trainingData: Pandas Dataframe, the main chunk of the dataset's core data containing control measures, cases, etc.
+        :param trainingRt: Pandas Dataframe, the Rt values for the training data records.
+        :param testData: Pandas Dataframe, the remainder of the dataset, containing the same core data fields as training data
+        :param testRt: Pandas Dataframe, the Rt values for the test data records.
 
-    for currIndex in range(len(splitCompiledData)):
-        shuffle(splitCompiledData[currIndex])
+    OUTPUT:
+        returns the classifer and the accuracy score from the model using the test data.
+    """
+    classifer = RandomForestClassifier(bootstrap=True, random_state=os.getpid(), criterion="gini", n_estimators=200)
 
-classifer = RandomForestClassifier(bootstrap=False, criterion="gini")
+    classifer.fit(trainingData, trainingRt)
 
+    accuracyScore = classifer.score(testData, testRt)
 
-splitData = deepcopy(splitCompiledData)
-
-testData = splitData.pop(randint(1, len(splitData))-1)
-
-testRt = [row[-1] for row in testData]
-
-trainingData = []
-for currChunk in splitData:
-    for currRow in currChunk:
-        trainingData += [currRow]
-trainingRt = [row[-1] for row in trainingData]
-
-classifer.fit(trainingData, trainingRt)
-
-print(classifer.score(testData, testRt))
+    return classifer, accuracyScore
