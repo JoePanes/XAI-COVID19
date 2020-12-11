@@ -111,3 +111,20 @@ def readFile(dataset, filePath):
                 compiledData.insert(0, row)
 
     return compiledData
+
+def discretizeVal(val, THRESHOLDS):
+        """
+        Finds where the current value belongs amongst the corresponding list thresholds
+
+        INPUTS:
+            :param val: Float, the value from a feature that needs to be discreatized
+            :param THRESHOLDS: Constant, a call to one of the constants that exist above this function (e.g. TEMP_THRESHOLD)
+        
+        OUTPUT:
+            returns the index value in which the value meets the criteria for
+
+        Copied from code by Xiyui Fan
+        """
+        for i in range(len(THRESHOLDS)-1):
+            if float(val) >= THRESHOLDS[i] and float(val) <= THRESHOLDS[i+1]:
+                return i

@@ -10,6 +10,7 @@ import sys
 from sklearn.preprocessing import KBinsDiscretizer
 from datetime import datetime
 from shared.sharedFunctions import readFile
+from shared.sharedFunctions import discretizeVal
 
 FILE_PATH = "../../data/core/"
 
@@ -19,7 +20,8 @@ BIN_NO_DEATHS = 6
 BIN_NO_DEATHS_CU = 5
 BIN_NO_TESTS = 8
 BIN_NO_TESTS_CU = 5
-BIN_NO_RT = 6
+
+RT_THRESHOLD = [0, 0.5, 1, float("inf")]
 
 def getInformationAboutDiscretizer(discreteData, originalData):
     """
@@ -142,9 +144,6 @@ if __name__ == "__main__":
         discretizer = KBinsDiscretizer(n_bins=BIN_NO_TESTS_CU, encode='ordinal', strategy='kmeans') 
         testsCumulativeDiscrete = discretizer.fit_transform(testsCumulative)
 
-        discretizer = KBinsDiscretizer(n_bins=BIN_NO_RT, encode='ordinal', strategy='kmeans') 
-        RtDiscrete = discretizer.fit_transform(Rt)
-
         #Transfer discrete values into dataset
         for rowIndex in range(len(rtData)):
             rtData[rowIndex]["Cases"] = int(casesDiscrete[rowIndex])
@@ -156,7 +155,7 @@ if __name__ == "__main__":
             rtData[rowIndex]["Tests"] = int(testsDiscrete[rowIndex])
             rtData[rowIndex]["Cumulative Tests"] = int(testsCumulativeDiscrete[rowIndex])
 
-            rtData[rowIndex]["Rt"] = int(RtDiscrete[rowIndex])
+            rtData[rowIndex]["Rt"] = discretizeVal(rtData[rowIndex]["Rt"], RT_THRESHOLD)
         
         fieldNames = {}
         for field in list(rtData[0].keys()):
@@ -171,7 +170,7 @@ if __name__ == "__main__":
                 myWriter.writerow(row)
         
         #Provide explanation for result
-        outputText = ""
+        outputText = "|------K-Means Ranges and Totals------|"
 
         outputText += "---Cases---"
         outputText += f"\nBin No: {BIN_NO_CASES}\n"
@@ -201,11 +200,6 @@ if __name__ == "__main__":
         outputText += "---Tests Cumulative---"
         outputText += f"\nBin No: {BIN_NO_TESTS_CU}\n"
         currAmount, currRange = getInformationAboutDiscretizer(testsCumulativeDiscrete, testsCumulative)
-        outputText += prepareExplainerText(currAmount, currRange)
-
-        outputText += "---Rt---"
-        outputText += f"\nBin No: {BIN_NO_RT}\n"
-        currAmount, currRange = getInformationAboutDiscretizer(RtDiscrete, Rt)
         outputText += prepareExplainerText(currAmount, currRange)
 
         #Write to a text file

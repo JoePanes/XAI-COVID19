@@ -13,6 +13,7 @@ import sys
 from shared.sharedFunctions import createErrorFile
 from shared.sharedFunctions import removeBrackets
 from shared.sharedFunctions import readFile
+from shared.sharedFunctions import discretizeVal
 from shared.sharedVariables import FILE_PATH_CORE
 
 class processFeatures:
@@ -110,7 +111,7 @@ class processFeatures:
                 
                 elif standardFieldName.lower() in self.DISCRETIZE_FIELDS:
                     discreteConversion = self.DISCRETIZE_FIELDS.get(currField.lower())
-                    newLine[currField] = self.discretizeVal(data, discreteConversion)
+                    newLine[currField] = discretizeVal(data, discreteConversion)
 
                 else:
                     try:
@@ -133,23 +134,6 @@ class processFeatures:
                 self.errorNo += 1
 
         return newLine
-
-    def discretizeVal(self, val, THRESHOLDS):
-        """
-        Finds where the current value belongs amongst the corresponding list thresholds
-
-        INPUTS:
-            :param val: Float, the value from a feature that needs to be discreatized
-            :param THRESHOLDS: Constant, a call to one of the constants that exist above this function (e.g. TEMP_THRESHOLD)
-        
-        OUTPUT:
-            returns the index value in which the value meets the criteria for
-
-        Copied from code by Xiyui Fan
-        """
-        for i in range(len(THRESHOLDS)-1):
-            if float(val) >= THRESHOLDS[i] and float(val) <= THRESHOLDS[i+1]:
-                return i
     
     def generateErrorEntry(self, row, currField):
         """
