@@ -1,8 +1,10 @@
+import xgboost
+import os
+
 from pandas import read_csv
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-import os
-
+from random import randint
 def prepareData(filePath):
     """
     Read in a .csv file, then prepare the data for use with the Random Forest
@@ -16,7 +18,7 @@ def prepareData(filePath):
     #Read in the file
     compiledData = read_csv(filePath)
 
-    splitTrainData, splitTestData = train_test_split(compiledData, test_size=0.2, random_state=os.getpid())
+    splitTrainData, splitTestData = train_test_split(compiledData, test_size=0.2, random_state=randint(1, os.getpid()))
 
     #Extract Rt from the data
     trainingData = splitTrainData.drop(["Rt"], axis=1)
@@ -41,7 +43,7 @@ def runRandomForest(trainingData, trainingRt, testData, testRt):
     OUTPUT:
         returns the classifer and the accuracy score from the model using the test data.
     """
-    classifer = RandomForestClassifier(bootstrap=True, random_state=os.getpid(), criterion="gini", n_estimators=200)
+    classifer = RandomForestClassifier(bootstrap=True, random_state=os.getpid(), criterion="gini", n_estimators=25)
 
     classifer.fit(trainingData, trainingRt)
 
