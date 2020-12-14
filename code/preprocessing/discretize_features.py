@@ -99,7 +99,7 @@ if __name__ == "__main__":
         tests = []
         testsCumulative = []
 
-        Rt = []
+        rt = []
 
         for currRow in rtData:
             cases.append(int(currRow["Cases"]))
@@ -111,7 +111,7 @@ if __name__ == "__main__":
             tests.append(int(currRow["Tests"]))
             testsCumulative.append(int(currRow["Cumulative Tests"]))
 
-            Rt.append(float(currRow["Rt"]))
+            rt.append(float(currRow["Rt"]))
         
         #Prepare so that the 1D arrays can be used
         cases = np.array(cases).reshape(-1,1)
@@ -123,7 +123,7 @@ if __name__ == "__main__":
         tests = np.array(tests).reshape(-1,1)
         testsCumulative = np.array(testsCumulative).reshape(-1,1)
 
-        Rt = np.array(Rt).reshape(-1, 1)
+        rt = np.array(rt).reshape(-1, 1)
         
         #perform K-Means
         discretizer = KBinsDiscretizer(n_bins=BIN_NO_CASES, encode='ordinal', strategy='kmeans')        
@@ -155,7 +155,21 @@ if __name__ == "__main__":
             rtData[rowIndex]["Tests"] = int(testsDiscrete[rowIndex])
             rtData[rowIndex]["Cumulative Tests"] = int(testsCumulativeDiscrete[rowIndex])
 
-            rtData[rowIndex]["Rt"] = discretizeVal(rtData[rowIndex]["Rt"], RT_THRESHOLD)
+            disRt =  discretizeVal(rtData[rowIndex]["Rt"], RT_THRESHOLD)
+            rtData[rowIndex]["Rt"] = disRt
+
+            if disRt == 0:
+                rtData[rowIndex]["Rt <= 0.5"] = 0
+                rtData[rowIndex]["Rt <= 1.0"] = 0
+            
+            else:
+                rtData[rowIndex]["Rt <= 0.5"] = 1
+                
+                if disRt == 1:
+                    rtData[rowIndex]["Rt <= 1.0"] = 0
+                else:
+                    rtData[rowIndex]["Rt <= 1.0"] = 1
+            
         
         fieldNames = {}
         for field in list(rtData[0].keys()):
