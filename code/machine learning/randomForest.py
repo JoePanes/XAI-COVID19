@@ -6,7 +6,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from random import randint
 
-def prepareData(filePath, rt="Rt"):
+def prepareData(filePath, rt="Rt", noWales = False):
     """
     Read in a .csv file, then prepare the data for use with the Random Forest
 
@@ -19,6 +19,9 @@ def prepareData(filePath, rt="Rt"):
     #Read in the file
     compiledData = read_csv(filePath)
 
+    if noWales:
+        compiledData = compiledData[5264:]
+    
     splitTrainData, splitTestData = train_test_split(compiledData, test_size=0.2, random_state=randint(1, os.getpid()))
 
     #Extract Rt from the data
