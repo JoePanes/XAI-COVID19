@@ -1,5 +1,9 @@
 from csv import DictReader
+from pandas import qcut
+from pandas import DataFrame
+from statistics import mean
 
+QUANTILE_NO = 8
 filePath = "../../data/core/uk/Rt/uk_Rt.csv"
 
 def readFile(dataset, filePath):
@@ -68,16 +72,58 @@ for currRegion in regionRt:
 
 print(len(rtValueChange))
 print(len(rtValueChange[0]))
-for currIndex in range(len(rtValueChange[0])):
-    print(f"{regionRt[0][currIndex]} : {rtValueChange[0][currIndex]}")
+"""for currIndex in range(len(rtValueChange[0])):
+    print(f"{regionRt[0][currIndex]} : {rtValueChange[0][currIndex]}")"""
         
 
-#Convert the Rt values to positive values
+#Convert the Rt values to positive values and remove 0 values
+for currRegionIndex in range(len(rtValueChange)):
+    newRegionRtValueChange = []
+    
+    for currIndex in range(len(rtValueChange[currRegionIndex])):
+        currVal = rtValueChange[currRegionIndex][currIndex]
+        if currVal < 0:
+            newRegionRtValueChange.append(-currVal)
+        elif currVal == 0:
+            continue
+        else:
+            newRegionRtValueChange.append(currVal)
 
-#Convert into a dataframe
+    rtValueChange[currRegionIndex] = newRegionRtValueChange
 
-#Use qcut (quantile bucketing) to split the data equally
+print(len(rtValueChange))
+print(len(rtValueChange[0]))
+regionalPotentialActionLists = []
 
-#Average each of the buckets to get the action list
+for currRegionIndex in range(len(rtValueChange)):
+    #Convert to a dataframe to easily perform quantile bucketing
+    rtValChangeDataFrame = DataFrame({"change" : rtValueChange[0]}, columns=["change"])
 
-#For each of the postive potential actions add a negative version
+    rtValChangeDataFrame["Bucket"] = qcut(rtValChangeDataFrame.change, QUANTILE_NO, labels=list(range(QUANTILE_NO)))
+
+    #The discretized bucket vals for each record
+    quantileBuckets = list(rtValChangeDataFrame["Bucket"])
+
+    #Where the Rt val changes will be sorted based on quantileBuckets
+    quantileBucketsValues = [[] for _ in range(QUANTILE_NO)]
+    
+    #Sort the Rt values into their corresponding bucket
+    for currIndex in range(len(rtValueChange[0])):
+        bucketVal = quantileBuckets[currIndex]
+        quantileBucketsValues[bucketVal].append(rtValueChange[0][currIndex])
+
+    actionList = [0,]
+    
+    #Average each of the buckets to get the action list
+    for currBucket in quantileBucketsValues:
+        actionList.append(mean(currBucket))
+
+
+    #For each of the postive potential actions add a negative version
+    for currVal in actionList[1:QUANTILE_NO+1]:
+        actionList.append(-currVal)
+    regionalPotentialActionLists.append(actionList)
+    
+print(len(regionalPotentialActionLists[0]))
+
+    
