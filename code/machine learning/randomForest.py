@@ -13,6 +13,7 @@ def prepareData(filePath, rt="Rt", noWales = False):
     INPUT:
         :param filePath: String, the location of the final pre-processed dataset
         :param rt: String, which version of Rt will be used, either "Rt", "Rt <= 0.5", "Rt <= 1.0"
+        :param noWales: Boolean, whether the regions within Wales should be ignored or 
     OUTPUT:
         returns four separate Pandas Dataframes, these are the training set, test set, then the corresponding Rt (labels) for both.
     """
