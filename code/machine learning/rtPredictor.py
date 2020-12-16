@@ -4,8 +4,46 @@ from csv import DictReader
 from pandas import qcut
 from pandas import DataFrame
 from statistics import mean
+from matplotlib import pyplot as plt
+
 
 QUANTILE_NO = 8
+
+REGIONS = {
+    1 : "East Midlands",
+    2 : "East of England",
+    3 : "London",
+    4 : "North East",
+    5 : "North West",
+    6 : "South East",
+    7 : "South West",
+    8 : "West Midlands",
+    9 : "Yorkshire and the Humber",
+    10 : "Northern Ireland",
+    11 : "Scotland",
+    12 : "Blaenau gwent",
+    13 : "Caerphilly",
+    14 : "Monmouthshire",
+    15 : "Newport",
+    16 : "Torfaen",
+    17 : "Conwy",
+    18 : "Denbighshire",
+    19 : "Flintshire",
+    20 : "Gwynedd",
+    21 : "Isle of Anglesey",
+    22 : "Wrexham",
+    23 : "Cardiff",
+    24 : "Vale of Glamorgan",
+    25 : "Bridgend",
+    26 : "Merthyr Tydfil",
+    27 :"Rhondda Cynon Taf",
+    28 : "Carmarthenshire",
+    29 :"Ceredigion",
+    30 : "Pembrokeshire",
+    31 : "Powys",
+    32 : "Neath Port Talbot",
+    33 : "Swansea",
+}
 
 filePath = "../../data/core/uk/Rt/uk_Rt.csv"
 
@@ -152,19 +190,57 @@ def getPotentialActionLists(rtValueChange):
         regionalPotentialActionLists.append(actionList)
     return regionalPotentialActionLists
 
-def greedyAgent(currRegionRtVal, currRegionPotentialActionList):
+def greedyAgent(currRegion, actionList):
     """
     A greedy implementation for the agent to try and mimic as closely the
     movements of the Rt values.
 
     INPUTS:
-        :param currRegionRtVal: List of floats, all of a region's Rt values
-        :param currRegionPotentialActionList: List of floats, the changes in value that the agent will be able to use.
+        :param currRegion: List of floats, all of a region's Rt values
+        :param actionList: List of floats, the changes in value that the agent will be able to use.
 
     OUTPUTS:
         returns a list of floats, with this being the Rt values that its chosen actions have produced
     """
-    pass
+    agentRtValues = [currRegion[0]]
+
+    for currRtIndex in range(len(currRegion[1:])):
+        actionListResults = evaluatePotentialActions(currRegion[currRtIndex-1], currRegion[currRtIndex], actionList)
+        
+        #To make comparison simpler, make all positive
+        for currIndex in range(len(actionListResults)):    
+            if actionListResults[currIndex] < 0:
+                actionListResults[currIndex] = -actionListResults[currIndex]
+
+        #Find the most accurate result
+        currBestIndex = 0
+        for currIndex in range(len(actionListResults)):
+            if actionListResults[currIndex] < actionListResults[currBestIndex]:
+                currBestIndex = currIndex
+        
+        agentRtValues.append(currRegion[currRtIndex-1] + actionListResults[currBestIndex])
+    
+    return agentRtValues
+
+def evaluatePotentialActions(prevPoint, currPoint, potentialActionList):
+    """
+    Look through each of the potential actions, and return a list of how close they are
+    in achieving the next point's value.
+
+    INPUTS:
+        :param prevPoint: Float, the Rt value of the previous point in the data
+        :param currPoint: Float, the Rt value of the current point in the data
+        :param potentialActionList: List of floats, the various alterations that can be done to prevPoint
+
+    OUTPUT:
+        returns a list of floats, where it contains the difference in value between each alteration of prevPoint
+                and nextPoint
+    """
+    actionListResults = []
+    for currAction in potentialActionList:
+        actionListResults.append(prevPoint + currAction - currPoint)
+    
+    return actionListResults
 
 def main():
     regionRt = readFile("uk",filePath)
@@ -176,8 +252,38 @@ def main():
     print(len(rtValueChange))
     print(len(rtValueChange[0]))
     regionalPotentialActionLists = getPotentialActionLists(rtValueChange)
+    
+    for currIndex in range(len(regionRt)):
+        currRegionActionList = regionalPotentialActionLists[currIndex]
+        currRegionRt = regionRt[currIndex]
+
         
-    print(regionalPotentialActionLists[17])
+        agentResults = greedyAgent(currRegionRt, currRegionActionList)
+
+        #Code from Xiyui Fan, adjusted for the dataset
+        width = .4
+        m1_t = DataFrame({'Rt' : currRegionRt, 'Agent Rt' : agentResults})
+        ax1 = m1_t[['Rt']].plot(figsize=(12,3))
+        ax2 = m1_t['Agent Rt'].plot(secondary_y=True, color='red', label='Agent Rt')
+
+        ax1.legend(loc='upper left')
+        ax2.legend(loc='upper right')
+
+        plt.xlim([-width, len(m1_t['Agent Rt'])-width])
+
+        xticks = [int(len(currRegionRt)/10)*k for k in range(10)]
+
+        ax1.set_xticks(xticks)
+        ax1.set_xticklabels([str(x) for x in xticks])
+
+        ax1.set_xlabel('Days')
+        ax1.set_ylabel('Rt')
+        ax2.set_ylabel('Agent Rt', rotation=-90)
+        
+        ax1.set_title(f"{REGIONS[currIndex+1]} - Comparison of Rt vs Agent Rt")
+
+        plt.tight_layout()
+        plt.savefig(f"../../images/Rt/machine learning/rt/{currIndex+1}.png")
 
 if __name__ == "__main__":
     sys.exit(main())
