@@ -97,10 +97,9 @@ regionalPotentialActionLists = []
 
 for currRegionIndex in range(len(rtValueChange)):
     #Convert to a dataframe to easily perform quantile bucketing
-    rtValChangeDataFrame = DataFrame({"change" : rtValueChange[0]}, columns=["change"])
+    rtValChangeDataFrame = DataFrame({"change" : rtValueChange[currRegionIndex]}, columns=["change"])
 
     rtValChangeDataFrame["Bucket"] = qcut(rtValChangeDataFrame.change, QUANTILE_NO, labels=list(range(QUANTILE_NO)))
-
     #The discretized bucket vals for each record
     quantileBuckets = list(rtValChangeDataFrame["Bucket"])
 
@@ -108,9 +107,9 @@ for currRegionIndex in range(len(rtValueChange)):
     quantileBucketsValues = [[] for _ in range(QUANTILE_NO)]
     
     #Sort the Rt values into their corresponding bucket
-    for currIndex in range(len(rtValueChange[0])):
+    for currIndex in range(len(rtValueChange[currRegionIndex])):
         bucketVal = quantileBuckets[currIndex]
-        quantileBucketsValues[bucketVal].append(rtValueChange[0][currIndex])
+        quantileBucketsValues[bucketVal].append(rtValueChange[currRegionIndex][currIndex])
 
     actionList = [0,]
     
@@ -124,6 +123,6 @@ for currRegionIndex in range(len(rtValueChange)):
         actionList.append(-currVal)
     regionalPotentialActionLists.append(actionList)
     
-print(len(regionalPotentialActionLists[0]))
+print(regionalPotentialActionLists[17])
 
     
