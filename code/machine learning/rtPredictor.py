@@ -202,17 +202,23 @@ def greedyAgent(currRegion, actionList):
     OUTPUTS:
         returns a list of floats, with this being the Rt values that its chosen actions have produced
     """
-    agentRtValues = [currRegion[0]]
+    agentRtValues = []
 
-    for currRtIndex in range(len(currRegion[1:])):
-        actionListResults = evaluatePotentialActions(currRegion[currRtIndex-1], currRegion[currRtIndex], actionList)
+    firstIteration = True
+
+    for currRtIndex in range(len(currRegion)):
+        if firstIteration != True:
+            actionListResults = evaluatePotentialActions(currRegion[currRtIndex-1], currRegion[currRtIndex], actionList)
+        else:
+            actionListResults = evaluatePotentialActions(currRegion[currRtIndex], currRegion[currRtIndex], actionList)
+            firstIteration = False    
         
         #To make comparison simpler, make all positive
         for currIndex in range(len(actionListResults)):    
             if actionListResults[currIndex] < 0:
                 actionListResults[currIndex] = -actionListResults[currIndex]
 
-        #Find the most accurate result
+        #Find the closest result
         currBestIndex = 0
         for currIndex in range(len(actionListResults)):
             if actionListResults[currIndex] < actionListResults[currBestIndex]:
@@ -225,7 +231,7 @@ def greedyAgent(currRegion, actionList):
 def evaluatePotentialActions(prevPoint, currPoint, potentialActionList):
     """
     Look through each of the potential actions, and return a list of how close they are
-    in achieving the next point's value.
+    in achieving the current point's value.
 
     INPUTS:
         :param prevPoint: Float, the Rt value of the previous point in the data
@@ -284,6 +290,7 @@ def main():
 
         plt.tight_layout()
         plt.savefig(f"../../images/Rt/machine learning/rt/{currIndex+1}.png")
+        plt.close()
 
 if __name__ == "__main__":
     sys.exit(main())
