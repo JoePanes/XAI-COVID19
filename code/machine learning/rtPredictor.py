@@ -5,6 +5,7 @@ from pandas import qcut
 from pandas import DataFrame
 from statistics import mean
 from matplotlib import pyplot as plt
+from copy import deepcopy
 
 
 QUANTILE_NO = 8
@@ -190,41 +191,54 @@ def getPotentialActionLists(rtValueChange):
         regionalPotentialActionLists.append(actionList)
     return regionalPotentialActionLists
 
-def greedyAgent(currRegion, actionList):
+def greedyAgent(currRegion, actionList, firstValue=True, evaluatePoint=False, evauluateIndex=None, evaluateAction=None, startIndex=None, endIndex=None):
     """
     A greedy implementation for the agent to try and mimic as closely the
     movements of the Rt values.
 
     INPUTS:
-        :param currRegion: List of floats, all of a region's Rt values
+        :param currRegion: List of floats, of the current region's Rt values
         :param actionList: List of floats, the changes in value that the agent will be able to use.
+        :param evaluatePoint: Boolean, whether the agent is being used to evaluate the impact of a point
+        :param evaluateIndex: Integer, the index of the point that is being evaluated
+        :param evaluateAction: Float, the action originally taken that needs to be ignored during the decision making
+        :param startIndex: Interger, during evaluation, starting index of the small chunk of the dataset being checked
+        :param endIndex: Integer, during evaluation, end index of the small chunk of the dataset being checked
 
     OUTPUTS:
-        returns a list of floats, with this being the Rt values that its chosen actions have produced
+        returns a list of tuples, containing the Rt value and the action that resulted in said Rt value
     """
     agentRtValues = []
 
-    firstIteration = True
+    if evaluatePoint:
+        iterations = range(startIndex, endIndex)
+    else:
+        iterations = range(len(currRegion))
 
-    for currRtIndex in range(len(currRegion)):
-        if firstIteration != True:
-            actionListResults = evaluatePotentialActions(currRegion[currRtIndex-1], currRegion[currRtIndex], actionList)
-        else:
-            actionListResults = evaluatePotentialActions(currRegion[currRtIndex], currRegion[currRtIndex], actionList)
-            firstIteration = False    
+    for currRtIndex in iterations:
+        if evaluatePoint != True:
+            actionListResults = prepareCurrentActionResults(currRegion, currRtIndex, actionList, firstValue)
         
-        #To make comparison simpler, make all positive
-        for currIndex in range(len(actionListResults)):    
-            if actionListResults[currIndex] < 0:
-                actionListResults[currIndex] = -actionListResults[currIndex]
+        elif evaluatePoint and currRtIndex == evauluateIndex:
+            evaluateActionList = deepcopy(actionList)
 
+            for currIndex in range(len(evaluateActionList)):
+                if evaluateActionList[currIndex] == evaluateAction:
+                    evaluateActionList.pop(currIndex)
+                    break
+            
+            actionListResults = prepareCurrentActionResults(currRegion, currRtIndex, evaluateActionList, firstValue)        
+
+        if firstValue:
+            firstValue = False
+            
         #Find the closest result
         currBestIndex = 0
         for currIndex in range(len(actionListResults)):
             if actionListResults[currIndex] < actionListResults[currBestIndex]:
                 currBestIndex = currIndex
         
-        agentRtValues.append(currRegion[currRtIndex-1] + actionListResults[currBestIndex])
+        agentRtValues.append((currRegion[currRtIndex-1] + actionList[currBestIndex], actionList[currBestIndex]))
     
     return agentRtValues
 
@@ -248,6 +262,71 @@ def evaluatePotentialActions(prevPoint, currPoint, potentialActionList):
     
     return actionListResults
 
+def prepareCurrentActionResults(currRegion, currRtIndex, actionList, firstValue=False):
+    """
+    From the action list, provide how close to the original Rt value the actions are able
+    to achieve.
+
+    INPUT:
+        :param currRegion: List of floats, a list of the Rt values from the dataset
+        :param currRtIndex: Integer, where within currRegion the current point is
+        :param actionList: List of floats, a list of the possible adjustments that can be made
+        :param firstValue: Boolean, whether the current value is the first within the current region
+    
+    OUTPUT:
+        returns a list of the resultant action of applying the current actions to the current point
+    """
+    if firstValue != True:
+        actionListResults = evaluatePotentialActions(currRegion[currRtIndex-1], currRegion[currRtIndex], actionList)
+    else:
+        actionListResults = evaluatePotentialActions(currRegion[currRtIndex], currRegion[currRtIndex], actionList)  
+    
+    #To make comparison simpler, make all positive
+    for currIndex in range(len(actionListResults)):    
+        if actionListResults[currIndex] < 0:
+            actionListResults[currIndex] = -actionListResults[currIndex]
+    
+    return actionListResults
+
+def createGraph(origRt, agentRt, regionNo):
+    """
+    Create a line graph that provides a clean comparison between the original Rt,
+    and the one produced from the current agent
+
+    Code from Xiyui Fan, adjusted for the dataset and modified further for this application
+
+    INPUT:
+        :param origRt: List of floats, the Rt values for the current region from the dataset
+        :param agentRt: List of floats, the Rt values produced by the agent when trying to mimic the Rt values.
+        :param regionNo: Integer, the current regional number within the dataset
+    
+    OUTPUT:
+        returns nothing, but produces a line graph of the two Rt values plotted together for comparison
+    """
+    width = .4
+    m1_t = DataFrame({'Rt' : origRt, 'Agent Rt' : agentRt})
+    ax1 = m1_t[['Rt']].plot(figsize=(12,3))
+    ax2 = m1_t['Agent Rt'].plot(secondary_y=False, color='red', label='Agent Rt')
+
+    ax2.legend(loc='upper right')
+
+    plt.xlim([-width, len(m1_t['Agent Rt'])-width])
+
+    xticks = [int(len(origRt)/10)*k for k in range(10)]
+
+    ax1.set_xticks(xticks)
+    ax1.set_xticklabels([str(x) for x in xticks])
+
+    ax1.set_xlabel('Days')
+    ax1.set_ylabel('Rt')
+    
+    ax1.set_title(f"{REGIONS[regionNo+1]} - Comparison of Rt vs Agent Rt")
+
+    plt.tight_layout()
+    plt.savefig(f"../../images/Rt/machine learning/rt/{regionNo+1}.png")
+    plt.close()
+
+
 def main():
     regionRt = readFile("uk",filePath)
 
@@ -266,31 +345,24 @@ def main():
         
         agentResults = greedyAgent(currRegionRt, currRegionActionList)
 
-        #Code from Xiyui Fan, adjusted for the dataset
-        width = .4
-        m1_t = DataFrame({'Rt' : currRegionRt, 'Agent Rt' : agentResults})
-        ax1 = m1_t[['Rt']].plot(figsize=(12,3))
-        ax2 = m1_t['Agent Rt'].plot(secondary_y=True, color='red', label='Agent Rt')
+        agentRt = [currRt for currRt, _ in agentResults]
 
-        ax1.legend(loc='upper left')
-        ax2.legend(loc='upper right')
+        createGraph(currRegionRt, agentRt, currIndex)
 
-        plt.xlim([-width, len(m1_t['Agent Rt'])-width])
+    #Split the Agent Rt values into k sized groups
 
-        xticks = [int(len(currRegionRt)/10)*k for k in range(10)]
+    #For each group, add the value to the right of it, to be the goal value to be used for evaluation
 
-        ax1.set_xticks(xticks)
-        ax1.set_xticklabels([str(x) for x in xticks])
-
-        ax1.set_xlabel('Days')
-        ax1.set_ylabel('Rt')
-        ax2.set_ylabel('Agent Rt', rotation=-90)
+    #Then iterate through each group:
+        #Remove the action for the current point that was used to get to the next point
         
-        ax1.set_title(f"{REGIONS[currIndex+1]} - Comparison of Rt vs Agent Rt")
-
-        plt.tight_layout()
-        plt.savefig(f"../../images/Rt/machine learning/rt/{currIndex+1}.png")
-        plt.close()
-
+        #Determine how close the agent was able to get to the goal value, and store this value
+        
+        #Repeat until all values within the group have been re-run by the agent under these conditions
+    
+    #Using these values from the groups, determine which of the points had the largest impact on achieving the goal value
+    #this will be done by the determining which end value is the largest. After all, if the changing of an action at a certain point
+    #can be overcome by later actions, then the effect of that point is rather minimal.
+    
 if __name__ == "__main__":
     sys.exit(main())
