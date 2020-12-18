@@ -369,7 +369,10 @@ def main():
             currRegionSubset = regionRt[currRegionIndex][startIndex:goalIndex+1]
             
             for currIndex in range(len(currRegionSubset)-1):
-                
+                #Don't run on the last elements of the region if they don't fit neatly
+                if goalIndex > len(regionalAgentResults[currRegionIndex])-1:
+                    break
+
                 agentRt, agentAction = regionalAgentResults[currRegionIndex][currIndex]
                 
                 #Due to this being the start val, replace with the agent Rt
@@ -384,8 +387,12 @@ def main():
                 
                 if currRegionIndex == 0 and currSplit == 0:
                     print(agentResults)
+                agentRt, _ = agentResults[-1]
+                print(goalIndex, len(regionalAgentResults[currRegionIndex]))
+
+                distanceFromGoal = regionRt[currRegionIndex][goalIndex] - agentRt
                 #Add the result to current grouping
-                currGroup.append(agentResults)
+                currGroup.append((agentResults, distanceFromGoal))
             
             regionEvaluationGroups[currRegionIndex].append((currSplit, (startIndex, goalIndex-1, goalIndex), currGroup))
 
@@ -393,17 +400,15 @@ def main():
     print(len(regionEvaluationGroups))
     print(len(regionEvaluationGroups[1]))
     print(regionEvaluationGroups[0][82])
-
-    
                 
 
-    #Then iterate through each group:
+    # ! Then iterate through each group:
 
         # ! Remove the action for the current point that was used to get to the next point
         
-        #Determine how close the agent was able to get to the goal value, and store this value
+        # ! Determine how close the agent was able to get to the goal value, and store this value
         
-        #Repeat until all values within the group have been re-run by the agent under these conditions
+        # ! Repeat until all values within the group have been re-run by the agent under these conditions
     
     #Using these values from the groups, determine which of the points had the largest impact on achieving the goal value
     #this will be done by the determining which end value is the largest. After all, if the changing of an action at a certain point
