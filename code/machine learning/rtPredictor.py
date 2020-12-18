@@ -9,6 +9,7 @@ from copy import deepcopy
 
 
 QUANTILE_NO = 8
+GROUP_SIZE = 3
 
 REGIONS = {
     1 : "East Midlands",
@@ -191,7 +192,7 @@ def getPotentialActionLists(rtValueChange):
         regionalPotentialActionLists.append(actionList)
     return regionalPotentialActionLists
 
-def greedyAgent(currRegion, actionList, firstValue=True, evaluatePoint=False, evauluateIndex=None, evaluateAction=None, startIndex=None, endIndex=None):
+def greedyAgent(currRegion, actionList, firstValue=True, evaluatePoint=False, evaluateIndex=None, evaluateAction=None):
     """
     A greedy implementation for the agent to try and mimic as closely the
     movements of the Rt values.
@@ -201,33 +202,29 @@ def greedyAgent(currRegion, actionList, firstValue=True, evaluatePoint=False, ev
         :param actionList: List of floats, the changes in value that the agent will be able to use.
         :param evaluatePoint: Boolean, whether the agent is being used to evaluate the impact of a point
         :param evaluateIndex: Integer, the index of the point that is being evaluated
-        :param evaluateAction: Float, the action originally taken that needs to be ignored during the decision making
-        :param startIndex: Interger, during evaluation, starting index of the small chunk of the dataset being checked
-        :param endIndex: Integer, during evaluation, end index of the small chunk of the dataset being checked
+        :param evaluateAction: Integer, the index for the action originally taken that needs to be ignored at the evaluatePoint
 
     OUTPUTS:
-        returns a list of tuples, containing the Rt value and the action that resulted in said Rt value
+        returns a list of tuples, containing the Rt value and the index for the action that resulted in said Rt value
     """
     agentRtValues = []
 
     if evaluatePoint:
-        iterations = range(startIndex, endIndex)
+        iterations = range(1, len(currRegion))
     else:
         iterations = range(len(currRegion))
 
     for currRtIndex in iterations:
-        if evaluatePoint != True:
+        removedAction = False
+        if evaluatePoint != True or currRtIndex-1 != evaluateIndex:
             actionListResults = prepareCurrentActionResults(currRegion, currRtIndex, actionList, firstValue)
-        
-        elif evaluatePoint and currRtIndex == evauluateIndex:
-            evaluateActionList = deepcopy(actionList)
-
-            for currIndex in range(len(evaluateActionList)):
-                if evaluateActionList[currIndex] == evaluateAction:
-                    evaluateActionList.pop(currIndex)
-                    break
+        else:
+            evalActionList = deepcopy(actionList)
             
-            actionListResults = prepareCurrentActionResults(currRegion, currRtIndex, evaluateActionList, firstValue)        
+            evalActionList.pop(evaluateAction)
+            removedAction = True
+            
+            actionListResults = prepareCurrentActionResults(currRegion, currRtIndex, evalActionList, firstValue)        
 
         if firstValue:
             firstValue = False
@@ -238,7 +235,12 @@ def greedyAgent(currRegion, actionList, firstValue=True, evaluatePoint=False, ev
             if actionListResults[currIndex] < actionListResults[currBestIndex]:
                 currBestIndex = currIndex
         
-        agentRtValues.append((currRegion[currRtIndex-1] + actionList[currBestIndex], actionList[currBestIndex]))
+        #Correct so that compatible with original action list 
+        if removedAction and currBestIndex >= evaluateAction:
+            currBestIndex += 1
+
+        agentRtValues.append((currRegion[currRtIndex-1] + actionList[currBestIndex], currBestIndex))
+        
     
     return agentRtValues
 
@@ -277,7 +279,9 @@ def prepareCurrentActionResults(currRegion, currRtIndex, actionList, firstValue=
         returns a list of the resultant action of applying the current actions to the current point
     """
     if firstValue != True:
-        actionListResults = evaluatePotentialActions(currRegion[currRtIndex-1], currRegion[currRtIndex], actionList)
+        actionListResults = evaluatePotentialActions(currRegion[currRtIndex-1], 
+        currRegion[currRtIndex], 
+        actionList)
     else:
         actionListResults = evaluatePotentialActions(currRegion[currRtIndex], currRegion[currRtIndex], actionList)  
     
@@ -337,7 +341,7 @@ def main():
     print(len(rtValueChange))
     print(len(rtValueChange[0]))
     regionalPotentialActionLists = getPotentialActionLists(rtValueChange)
-    
+    regionalAgentResults = []
     for currIndex in range(len(regionRt)):
         currRegionActionList = regionalPotentialActionLists[currIndex]
         currRegionRt = regionRt[currIndex]
@@ -348,13 +352,54 @@ def main():
         agentRt = [currRt for currRt, _ in agentResults]
 
         createGraph(currRegionRt, agentRt, currIndex)
+        regionalAgentResults.append(agentResults)
 
-    #Split the Agent Rt values into k sized groups
+    regionEvaluationGroups = [[] for _ in regionRt]
 
-    #For each group, add the value to the right of it, to be the goal value to be used for evaluation
+    #For each region, get the start and end index for each group, along with the index of the goal value
+    for currRegionIndex in range(len(regionalAgentResults)):
+        
+        for currSplit in range(int(len(regionalAgentResults[currRegionIndex]) / GROUP_SIZE)):
+            currGroup = []
+            #Split the Rt values into k sized groups
+            startIndex = currSplit * GROUP_SIZE
+            goalIndex = currSplit * GROUP_SIZE + GROUP_SIZE
+            
+            #Gather the current groups data
+            currRegionSubset = regionRt[currRegionIndex][startIndex:goalIndex+1]
+            
+            for currIndex in range(len(currRegionSubset)-1):
+                
+                agentRt, agentAction = regionalAgentResults[currRegionIndex][currIndex]
+                
+                #Due to this being the start val, replace with the agent Rt
+                currRegionSubset[0] = agentRt
+                if currRegionIndex == 0 and currSplit == 0:
+                    print(currRegionSubset)
+
+                agentResults = greedyAgent(currRegionSubset, regionalPotentialActionLists[currRegionIndex], firstValue=False, 
+                                            evaluatePoint=True, evaluateIndex=0, evaluateAction=agentAction)
+                #Remove the value since it is no longer needed
+                currRegionSubset.pop(0)
+                
+                if currRegionIndex == 0 and currSplit == 0:
+                    print(agentResults)
+                #Add the result to current grouping
+                currGroup.append(agentResults)
+            
+            regionEvaluationGroups[currRegionIndex].append((currSplit, (startIndex, goalIndex-1, goalIndex), currGroup))
+
+    print("----")    
+    print(len(regionEvaluationGroups))
+    print(len(regionEvaluationGroups[1]))
+    print(regionEvaluationGroups[0][82])
+
+    
+                
 
     #Then iterate through each group:
-        #Remove the action for the current point that was used to get to the next point
+
+        # ! Remove the action for the current point that was used to get to the next point
         
         #Determine how close the agent was able to get to the goal value, and store this value
         
