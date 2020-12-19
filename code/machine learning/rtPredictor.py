@@ -338,8 +338,6 @@ def main():
 
     rtValueChange = convertRtValues(rtValueChange)
 
-    print(len(rtValueChange))
-    print(len(rtValueChange[0]))
     regionalPotentialActionLists = getPotentialActionLists(rtValueChange)
     regionalAgentResults = []
     for currIndex in range(len(regionRt)):
@@ -359,60 +357,99 @@ def main():
     #For each region, get the start and end index for each group, along with the index of the goal value
     for currRegionIndex in range(len(regionalAgentResults)):
         
-        for currSplit in range(int(len(regionalAgentResults[currRegionIndex]) / GROUP_SIZE)):
+        for currGroupIndex in range(int(len(regionalAgentResults[currRegionIndex]) / GROUP_SIZE)):
             currGroup = []
             #Split the Rt values into k sized groups
-            startIndex = currSplit * GROUP_SIZE
-            goalIndex = currSplit * GROUP_SIZE + GROUP_SIZE
+            startIndex = currGroupIndex * GROUP_SIZE
+            goalIndex = currGroupIndex * GROUP_SIZE + GROUP_SIZE
             
             #Gather the current groups data
             currRegionSubset = regionRt[currRegionIndex][startIndex:goalIndex+1]
             
+            ignoreCurrentValues = False
+            
             for currIndex in range(len(currRegionSubset)-1):
                 #Don't run on the last elements of the region if they don't fit neatly
                 if goalIndex > len(regionalAgentResults[currRegionIndex])-1:
+                    ignoreCurrentValues = True
                     break
 
                 agentRt, agentAction = regionalAgentResults[currRegionIndex][currIndex]
                 
                 #Due to this being the start val, replace with the agent Rt
                 currRegionSubset[0] = agentRt
-                if currRegionIndex == 0 and currSplit == 0:
-                    print(currRegionSubset)
 
                 agentResults = greedyAgent(currRegionSubset, regionalPotentialActionLists[currRegionIndex], firstValue=False, 
                                             evaluatePoint=True, evaluateIndex=0, evaluateAction=agentAction)
                 #Remove the value since it is no longer needed
                 currRegionSubset.pop(0)
                 
-                if currRegionIndex == 0 and currSplit == 0:
-                    print(agentResults)
                 agentRt, _ = agentResults[-1]
-                print(goalIndex, len(regionalAgentResults[currRegionIndex]))
 
                 distanceFromGoal = regionRt[currRegionIndex][goalIndex] - agentRt
                 #Add the result to current grouping
                 currGroup.append((agentResults, distanceFromGoal))
             
-            regionEvaluationGroups[currRegionIndex].append((currSplit, (startIndex, goalIndex-1, goalIndex), currGroup))
+            if ignoreCurrentValues == False:
+                regionEvaluationGroups[currRegionIndex].append(((startIndex, goalIndex), currGroup))
 
     print("----")    
-    print(len(regionEvaluationGroups))
-    print(len(regionEvaluationGroups[1]))
-    print(regionEvaluationGroups[0][82])
+
+    regionalGroupResults = []
+    
+    #Compare the original agent action, with the newer attempts
+    for currRegionIndex in range(len(regionalAgentResults)):
+        currRegionGroupResults = []
+        
+        for currGroupIndex in range(len(regionEvaluationGroups[currRegionIndex])):
+            #Get the information about the current group
+            indexs, group = regionEvaluationGroups[currRegionIndex][currGroupIndex]
+            startIndex, goalIndex = indexs
+            
+            #Get the distance of the original attempt
+            agentRt, _ = regionalAgentResults[currRegionIndex][goalIndex]
+            agentRtDifference = regionRt[currRegionIndex][goalIndex] - agentRt
+
+            if agentRtDifference < 0:
+                agentRtDifference = -agentRtDifference
+            
+            mostImpactfulPoints = None
+            prevDifference = 0
+            #Go through the eval point results and compare to the original result
+            #to find which is the most impactful
+            for currIndex in range((goalIndex - 1) - startIndex):
+                currGroupDifference = group[currIndex][1]
+                if currGroupDifference < 0:
+                    currGroupDifference = -currGroupDifference
                 
+                if prevDifference < currGroupDifference > agentRtDifference:
+                    if currGroupDifference == prevDifference:
+                        mostImpactfulPoints.append(currIndex)
+                    else:
+                        prevDifference = currGroupDifference
+                        mostImpactfulPoints = [currIndex]
 
-    # ! Then iterate through each group:
-
-        # ! Remove the action for the current point that was used to get to the next point
+            currRegionGroupResults.append((mostImpactfulPoints, prevDifference))
         
-        # ! Determine how close the agent was able to get to the goal value, and store this value
-        
-        # ! Repeat until all values within the group have been re-run by the agent under these conditions
+        regionalGroupResults.append(currRegionGroupResults)
+                
+    for currRegion in regionalGroupResults[32]:
+        #for currGroup in currRegion:
+        print(currRegion)
     
     #Using these values from the groups, determine which of the points had the largest impact on achieving the goal value
     #this will be done by the determining which end value is the largest. After all, if the changing of an action at a certain point
     #can be overcome by later actions, then the effect of that point is rather minimal.
+
+    """
+    When implementing tree agents:
+
+    Have it so that rather than one action is listed for the agentRt value, it is a complete list of the actions it chose to the max depth of the search.
+    This way, when it comes to evaluating it, it can occur in the same way as the Greedy Agent. With the twist being that rather than only one action for a given point being prevented,
+    it is instead the sequences of actions that lead to it choosing the current action that cannot be done for the current point.
+    Meaning that it would be prevented from one action per level it searches ahead.
+
+    """
     
 if __name__ == "__main__":
     sys.exit(main())
