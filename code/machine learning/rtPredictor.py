@@ -417,7 +417,7 @@ def main():
             prevDifference = 0
             #Go through the eval point results and compare to the original result
             #to find which is the most impactful
-            for currIndex in range((goalIndex - 1) - startIndex):
+            for currIndex in range((goalIndex) - startIndex):
                 currGroupDifference = group[currIndex][1]
                 if currGroupDifference < 0:
                     currGroupDifference = -currGroupDifference
@@ -433,7 +433,7 @@ def main():
         
         regionalGroupResults.append(currRegionGroupResults)
                 
-    for currRegion in regionalGroupResults[32]:
+    for currRegion in regionalGroupResults[0]:
         #for currGroup in currRegion:
         print(currRegion)
     
