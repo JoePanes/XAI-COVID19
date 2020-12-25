@@ -52,8 +52,7 @@ splitList = []
 regionalIndexList = rtPart.getRegionalIndexs(currData)
 
 for currStartIndex, currEndIndex in regionalIndexList:
-    if int(currData[currStartIndex]["Regions"]) < 12: 
-        splitList.append(currData[currStartIndex:currEndIndex])
+    splitList.append(currData[currStartIndex:currEndIndex])
 
 numProcesses = 10
 

@@ -1,0 +1,962 @@
+Total errors 960
+
+11/11/2020 | Temperature                              | Wales
+11/11/2020 | Humidity                                 | Wales
+12/11/2020 | Temperature                              | Wales
+12/11/2020 | Humidity                                 | Wales
+13/11/2020 | Temperature                              | Wales
+13/11/2020 | Humidity                                 | Wales
+14/11/2020 | Temperature                              | Wales
+14/11/2020 | Humidity                                 | Wales
+15/11/2020 | Temperature                              | Wales
+15/11/2020 | Humidity                                 | Wales
+16/11/2020 | Temperature                              | Wales
+16/11/2020 | Humidity                                 | Wales
+17/11/2020 | Temperature                              | Wales
+17/11/2020 | Humidity                                 | Wales
+18/11/2020 | Temperature                              | Wales
+18/11/2020 | Humidity                                 | Wales
+19/11/2020 | Temperature                              | Wales
+19/11/2020 | Humidity                                 | Wales
+20/11/2020 | Temperature                              | Wales
+20/11/2020 | Humidity                                 | Wales
+21/11/2020 | Temperature                              | Wales
+21/11/2020 | Humidity                                 | Wales
+22/11/2020 | Temperature                              | Wales
+22/11/2020 | Humidity                                 | Wales
+23/11/2020 | Temperature                              | Wales
+23/11/2020 | Humidity                                 | Wales
+24/11/2020 | Temperature                              | Wales
+24/11/2020 | Humidity                                 | Wales
+25/11/2020 | Temperature                              | Wales
+25/11/2020 | Humidity                                 | Wales
+26/11/2020 | Temperature                              | Wales
+26/11/2020 | Humidity                                 | Wales
+27/11/2020 | Temperature                              | Wales
+27/11/2020 | Humidity                                 | Wales
+28/11/2020 | Temperature                              | Wales
+28/11/2020 | Humidity                                 | Wales
+29/11/2020 | Temperature                              | Wales
+29/11/2020 | Humidity                                 | Wales
+30/11/2020 | Temperature                              | Wales
+30/11/2020 | Humidity                                 | Wales
+01/12/2020 | Temperature                              | Wales
+01/12/2020 | Humidity                                 | Wales
+02/12/2020 | Temperature                              | Wales
+02/12/2020 | Humidity                                 | Wales
+03/12/2020 | Temperature                              | Wales
+03/12/2020 | Humidity                                 | Wales
+04/12/2020 | Temperature                              | Wales
+04/12/2020 | Humidity                                 | Wales
+05/12/2020 | Temperature                              | Wales
+05/12/2020 | Humidity                                 | Wales
+06/12/2020 | Temperature                              | Wales
+06/12/2020 | Humidity                                 | Wales
+07/12/2020 | Temperature                              | Wales
+07/12/2020 | Humidity                                 | Wales
+08/12/2020 | Temperature                              | Wales
+08/12/2020 | Humidity                                 | Wales
+09/12/2020 | Temperature                              | Wales
+09/12/2020 | Humidity                                 | Wales
+10/12/2020 | Temperature                              | Wales
+10/12/2020 | Humidity                                 | Wales
+11/12/2020 | Temperature                              | Wales
+11/12/2020 | Humidity                                 | Wales
+12/12/2020 | Temperature                              | Wales
+12/12/2020 | Humidity                                 | Wales
+13/12/2020 | Temperature                              | Wales
+13/12/2020 | Humidity                                 | Wales
+14/12/2020 | Temperature                              | Wales
+14/12/2020 | Humidity                                 | Wales
+15/12/2020 | Temperature                              | Wales
+15/12/2020 | Humidity                                 | Wales
+16/12/2020 | Temperature                              | Wales
+16/12/2020 | Humidity                                 | Wales
+17/12/2020 | Temperature                              | Wales
+17/12/2020 | Humidity                                 | Wales
+18/12/2020 | Temperature                              | Wales
+18/12/2020 | Humidity                                 | Wales
+19/12/2020 | Temperature                              | Wales
+19/12/2020 | Humidity                                 | Wales
+20/12/2020 | Temperature                              | Wales
+20/12/2020 | Humidity                                 | Wales
+11/11/2020 | Temperature                              | Scotland
+11/11/2020 | Humidity                                 | Scotland
+12/11/2020 | Temperature                              | Scotland
+12/11/2020 | Humidity                                 | Scotland
+13/11/2020 | Temperature                              | Scotland
+13/11/2020 | Humidity                                 | Scotland
+14/11/2020 | Temperature                              | Scotland
+14/11/2020 | Humidity                                 | Scotland
+15/11/2020 | Temperature                              | Scotland
+15/11/2020 | Humidity                                 | Scotland
+16/11/2020 | Temperature                              | Scotland
+16/11/2020 | Humidity                                 | Scotland
+17/11/2020 | Temperature                              | Scotland
+17/11/2020 | Humidity                                 | Scotland
+18/11/2020 | Temperature                              | Scotland
+18/11/2020 | Humidity                                 | Scotland
+19/11/2020 | Temperature                              | Scotland
+19/11/2020 | Humidity                                 | Scotland
+20/11/2020 | Temperature                              | Scotland
+20/11/2020 | Humidity                                 | Scotland
+21/11/2020 | Temperature                              | Scotland
+21/11/2020 | Humidity                                 | Scotland
+22/11/2020 | Temperature                              | Scotland
+22/11/2020 | Humidity                                 | Scotland
+23/11/2020 | Temperature                              | Scotland
+23/11/2020 | Humidity                                 | Scotland
+24/11/2020 | Temperature                              | Scotland
+24/11/2020 | Humidity                                 | Scotland
+25/11/2020 | Temperature                              | Scotland
+25/11/2020 | Humidity                                 | Scotland
+26/11/2020 | Temperature                              | Scotland
+26/11/2020 | Humidity                                 | Scotland
+27/11/2020 | Temperature                              | Scotland
+27/11/2020 | Humidity                                 | Scotland
+28/11/2020 | Temperature                              | Scotland
+28/11/2020 | Humidity                                 | Scotland
+29/11/2020 | Temperature                              | Scotland
+29/11/2020 | Humidity                                 | Scotland
+30/11/2020 | Temperature                              | Scotland
+30/11/2020 | Humidity                                 | Scotland
+01/12/2020 | Temperature                              | Scotland
+01/12/2020 | Humidity                                 | Scotland
+02/12/2020 | Temperature                              | Scotland
+02/12/2020 | Humidity                                 | Scotland
+03/12/2020 | Temperature                              | Scotland
+03/12/2020 | Humidity                                 | Scotland
+04/12/2020 | Temperature                              | Scotland
+04/12/2020 | Humidity                                 | Scotland
+05/12/2020 | Temperature                              | Scotland
+05/12/2020 | Humidity                                 | Scotland
+06/12/2020 | Temperature                              | Scotland
+06/12/2020 | Humidity                                 | Scotland
+07/12/2020 | Temperature                              | Scotland
+07/12/2020 | Humidity                                 | Scotland
+08/12/2020 | Temperature                              | Scotland
+08/12/2020 | Humidity                                 | Scotland
+09/12/2020 | Temperature                              | Scotland
+09/12/2020 | Humidity                                 | Scotland
+10/12/2020 | Temperature                              | Scotland
+10/12/2020 | Humidity                                 | Scotland
+11/12/2020 | Temperature                              | Scotland
+11/12/2020 | Humidity                                 | Scotland
+12/12/2020 | Temperature                              | Scotland
+12/12/2020 | Humidity                                 | Scotland
+13/12/2020 | Temperature                              | Scotland
+13/12/2020 | Humidity                                 | Scotland
+14/12/2020 | Temperature                              | Scotland
+14/12/2020 | Humidity                                 | Scotland
+15/12/2020 | Temperature                              | Scotland
+15/12/2020 | Humidity                                 | Scotland
+16/12/2020 | Temperature                              | Scotland
+16/12/2020 | Humidity                                 | Scotland
+17/12/2020 | Temperature                              | Scotland
+17/12/2020 | Humidity                                 | Scotland
+18/12/2020 | Temperature                              | Scotland
+18/12/2020 | Humidity                                 | Scotland
+19/12/2020 | Temperature                              | Scotland
+19/12/2020 | Humidity                                 | Scotland
+20/12/2020 | Temperature                              | Scotland
+20/12/2020 | Humidity                                 | Scotland
+11/11/2020 | Temperature                              | Northern Ireland
+11/11/2020 | Humidity                                 | Northern Ireland
+12/11/2020 | Temperature                              | Northern Ireland
+12/11/2020 | Humidity                                 | Northern Ireland
+13/11/2020 | Temperature                              | Northern Ireland
+13/11/2020 | Humidity                                 | Northern Ireland
+14/11/2020 | Temperature                              | Northern Ireland
+14/11/2020 | Humidity                                 | Northern Ireland
+15/11/2020 | Temperature                              | Northern Ireland
+15/11/2020 | Humidity                                 | Northern Ireland
+16/11/2020 | Temperature                              | Northern Ireland
+16/11/2020 | Humidity                                 | Northern Ireland
+17/11/2020 | Temperature                              | Northern Ireland
+17/11/2020 | Humidity                                 | Northern Ireland
+18/11/2020 | Temperature                              | Northern Ireland
+18/11/2020 | Humidity                                 | Northern Ireland
+19/11/2020 | Temperature                              | Northern Ireland
+19/11/2020 | Humidity                                 | Northern Ireland
+20/11/2020 | Temperature                              | Northern Ireland
+20/11/2020 | Humidity                                 | Northern Ireland
+21/11/2020 | Temperature                              | Northern Ireland
+21/11/2020 | Humidity                                 | Northern Ireland
+22/11/2020 | Temperature                              | Northern Ireland
+22/11/2020 | Humidity                                 | Northern Ireland
+23/11/2020 | Temperature                              | Northern Ireland
+23/11/2020 | Humidity                                 | Northern Ireland
+24/11/2020 | Temperature                              | Northern Ireland
+24/11/2020 | Humidity                                 | Northern Ireland
+25/11/2020 | Temperature                              | Northern Ireland
+25/11/2020 | Humidity                                 | Northern Ireland
+26/11/2020 | Temperature                              | Northern Ireland
+26/11/2020 | Humidity                                 | Northern Ireland
+27/11/2020 | Temperature                              | Northern Ireland
+27/11/2020 | Humidity                                 | Northern Ireland
+28/11/2020 | Temperature                              | Northern Ireland
+28/11/2020 | Humidity                                 | Northern Ireland
+29/11/2020 | Temperature                              | Northern Ireland
+29/11/2020 | Humidity                                 | Northern Ireland
+30/11/2020 | Temperature                              | Northern Ireland
+30/11/2020 | Humidity                                 | Northern Ireland
+01/12/2020 | Temperature                              | Northern Ireland
+01/12/2020 | Humidity                                 | Northern Ireland
+02/12/2020 | Temperature                              | Northern Ireland
+02/12/2020 | Humidity                                 | Northern Ireland
+03/12/2020 | Temperature                              | Northern Ireland
+03/12/2020 | Humidity                                 | Northern Ireland
+04/12/2020 | Temperature                              | Northern Ireland
+04/12/2020 | Humidity                                 | Northern Ireland
+05/12/2020 | Temperature                              | Northern Ireland
+05/12/2020 | Humidity                                 | Northern Ireland
+06/12/2020 | Temperature                              | Northern Ireland
+06/12/2020 | Humidity                                 | Northern Ireland
+07/12/2020 | Temperature                              | Northern Ireland
+07/12/2020 | Humidity                                 | Northern Ireland
+08/12/2020 | Temperature                              | Northern Ireland
+08/12/2020 | Humidity                                 | Northern Ireland
+09/12/2020 | Temperature                              | Northern Ireland
+09/12/2020 | Humidity                                 | Northern Ireland
+10/12/2020 | Temperature                              | Northern Ireland
+10/12/2020 | Humidity                                 | Northern Ireland
+11/12/2020 | Temperature                              | Northern Ireland
+11/12/2020 | Humidity                                 | Northern Ireland
+12/12/2020 | Temperature                              | Northern Ireland
+12/12/2020 | Humidity                                 | Northern Ireland
+13/12/2020 | Temperature                              | Northern Ireland
+13/12/2020 | Humidity                                 | Northern Ireland
+14/12/2020 | Temperature                              | Northern Ireland
+14/12/2020 | Humidity                                 | Northern Ireland
+15/12/2020 | Temperature                              | Northern Ireland
+15/12/2020 | Humidity                                 | Northern Ireland
+16/12/2020 | Temperature                              | Northern Ireland
+16/12/2020 | Humidity                                 | Northern Ireland
+17/12/2020 | Temperature                              | Northern Ireland
+17/12/2020 | Humidity                                 | Northern Ireland
+18/12/2020 | Temperature                              | Northern Ireland
+18/12/2020 | Humidity                                 | Northern Ireland
+19/12/2020 | Temperature                              | Northern Ireland
+19/12/2020 | Humidity                                 | Northern Ireland
+20/12/2020 | Temperature                              | Northern Ireland
+20/12/2020 | Humidity                                 | Northern Ireland
+11/11/2020 | Temperature                              | Yorkshire and The Humber
+11/11/2020 | Humidity                                 | Yorkshire and The Humber
+12/11/2020 | Temperature                              | Yorkshire and The Humber
+12/11/2020 | Humidity                                 | Yorkshire and The Humber
+13/11/2020 | Temperature                              | Yorkshire and The Humber
+13/11/2020 | Humidity                                 | Yorkshire and The Humber
+14/11/2020 | Temperature                              | Yorkshire and The Humber
+14/11/2020 | Humidity                                 | Yorkshire and The Humber
+15/11/2020 | Temperature                              | Yorkshire and The Humber
+15/11/2020 | Humidity                                 | Yorkshire and The Humber
+16/11/2020 | Temperature                              | Yorkshire and The Humber
+16/11/2020 | Humidity                                 | Yorkshire and The Humber
+17/11/2020 | Temperature                              | Yorkshire and The Humber
+17/11/2020 | Humidity                                 | Yorkshire and The Humber
+18/11/2020 | Temperature                              | Yorkshire and The Humber
+18/11/2020 | Humidity                                 | Yorkshire and The Humber
+19/11/2020 | Temperature                              | Yorkshire and The Humber
+19/11/2020 | Humidity                                 | Yorkshire and The Humber
+20/11/2020 | Temperature                              | Yorkshire and The Humber
+20/11/2020 | Humidity                                 | Yorkshire and The Humber
+21/11/2020 | Temperature                              | Yorkshire and The Humber
+21/11/2020 | Humidity                                 | Yorkshire and The Humber
+22/11/2020 | Temperature                              | Yorkshire and The Humber
+22/11/2020 | Humidity                                 | Yorkshire and The Humber
+23/11/2020 | Temperature                              | Yorkshire and The Humber
+23/11/2020 | Humidity                                 | Yorkshire and The Humber
+24/11/2020 | Temperature                              | Yorkshire and The Humber
+24/11/2020 | Humidity                                 | Yorkshire and The Humber
+25/11/2020 | Temperature                              | Yorkshire and The Humber
+25/11/2020 | Humidity                                 | Yorkshire and The Humber
+26/11/2020 | Temperature                              | Yorkshire and The Humber
+26/11/2020 | Humidity                                 | Yorkshire and The Humber
+27/11/2020 | Temperature                              | Yorkshire and The Humber
+27/11/2020 | Humidity                                 | Yorkshire and The Humber
+28/11/2020 | Temperature                              | Yorkshire and The Humber
+28/11/2020 | Humidity                                 | Yorkshire and The Humber
+29/11/2020 | Temperature                              | Yorkshire and The Humber
+29/11/2020 | Humidity                                 | Yorkshire and The Humber
+30/11/2020 | Temperature                              | Yorkshire and The Humber
+30/11/2020 | Humidity                                 | Yorkshire and The Humber
+01/12/2020 | Temperature                              | Yorkshire and The Humber
+01/12/2020 | Humidity                                 | Yorkshire and The Humber
+02/12/2020 | Temperature                              | Yorkshire and The Humber
+02/12/2020 | Humidity                                 | Yorkshire and The Humber
+03/12/2020 | Temperature                              | Yorkshire and The Humber
+03/12/2020 | Humidity                                 | Yorkshire and The Humber
+04/12/2020 | Temperature                              | Yorkshire and The Humber
+04/12/2020 | Humidity                                 | Yorkshire and The Humber
+05/12/2020 | Temperature                              | Yorkshire and The Humber
+05/12/2020 | Humidity                                 | Yorkshire and The Humber
+06/12/2020 | Temperature                              | Yorkshire and The Humber
+06/12/2020 | Humidity                                 | Yorkshire and The Humber
+07/12/2020 | Temperature                              | Yorkshire and The Humber
+07/12/2020 | Humidity                                 | Yorkshire and The Humber
+08/12/2020 | Temperature                              | Yorkshire and The Humber
+08/12/2020 | Humidity                                 | Yorkshire and The Humber
+09/12/2020 | Temperature                              | Yorkshire and The Humber
+09/12/2020 | Humidity                                 | Yorkshire and The Humber
+10/12/2020 | Temperature                              | Yorkshire and The Humber
+10/12/2020 | Humidity                                 | Yorkshire and The Humber
+11/12/2020 | Temperature                              | Yorkshire and The Humber
+11/12/2020 | Humidity                                 | Yorkshire and The Humber
+12/12/2020 | Temperature                              | Yorkshire and The Humber
+12/12/2020 | Humidity                                 | Yorkshire and The Humber
+13/12/2020 | Temperature                              | Yorkshire and The Humber
+13/12/2020 | Humidity                                 | Yorkshire and The Humber
+14/12/2020 | Temperature                              | Yorkshire and The Humber
+14/12/2020 | Humidity                                 | Yorkshire and The Humber
+15/12/2020 | Temperature                              | Yorkshire and The Humber
+15/12/2020 | Humidity                                 | Yorkshire and The Humber
+16/12/2020 | Temperature                              | Yorkshire and The Humber
+16/12/2020 | Humidity                                 | Yorkshire and The Humber
+17/12/2020 | Temperature                              | Yorkshire and The Humber
+17/12/2020 | Humidity                                 | Yorkshire and The Humber
+18/12/2020 | Temperature                              | Yorkshire and The Humber
+18/12/2020 | Humidity                                 | Yorkshire and The Humber
+19/12/2020 | Temperature                              | Yorkshire and The Humber
+19/12/2020 | Humidity                                 | Yorkshire and The Humber
+20/12/2020 | Temperature                              | Yorkshire and The Humber
+20/12/2020 | Humidity                                 | Yorkshire and The Humber
+11/11/2020 | Temperature                              | West Midlands
+11/11/2020 | Humidity                                 | West Midlands
+12/11/2020 | Temperature                              | West Midlands
+12/11/2020 | Humidity                                 | West Midlands
+13/11/2020 | Temperature                              | West Midlands
+13/11/2020 | Humidity                                 | West Midlands
+14/11/2020 | Temperature                              | West Midlands
+14/11/2020 | Humidity                                 | West Midlands
+15/11/2020 | Temperature                              | West Midlands
+15/11/2020 | Humidity                                 | West Midlands
+16/11/2020 | Temperature                              | West Midlands
+16/11/2020 | Humidity                                 | West Midlands
+17/11/2020 | Temperature                              | West Midlands
+17/11/2020 | Humidity                                 | West Midlands
+18/11/2020 | Temperature                              | West Midlands
+18/11/2020 | Humidity                                 | West Midlands
+19/11/2020 | Temperature                              | West Midlands
+19/11/2020 | Humidity                                 | West Midlands
+20/11/2020 | Temperature                              | West Midlands
+20/11/2020 | Humidity                                 | West Midlands
+21/11/2020 | Temperature                              | West Midlands
+21/11/2020 | Humidity                                 | West Midlands
+22/11/2020 | Temperature                              | West Midlands
+22/11/2020 | Humidity                                 | West Midlands
+23/11/2020 | Temperature                              | West Midlands
+23/11/2020 | Humidity                                 | West Midlands
+24/11/2020 | Temperature                              | West Midlands
+24/11/2020 | Humidity                                 | West Midlands
+25/11/2020 | Temperature                              | West Midlands
+25/11/2020 | Humidity                                 | West Midlands
+26/11/2020 | Temperature                              | West Midlands
+26/11/2020 | Humidity                                 | West Midlands
+27/11/2020 | Temperature                              | West Midlands
+27/11/2020 | Humidity                                 | West Midlands
+28/11/2020 | Temperature                              | West Midlands
+28/11/2020 | Humidity                                 | West Midlands
+29/11/2020 | Temperature                              | West Midlands
+29/11/2020 | Humidity                                 | West Midlands
+30/11/2020 | Temperature                              | West Midlands
+30/11/2020 | Humidity                                 | West Midlands
+01/12/2020 | Temperature                              | West Midlands
+01/12/2020 | Humidity                                 | West Midlands
+02/12/2020 | Temperature                              | West Midlands
+02/12/2020 | Humidity                                 | West Midlands
+03/12/2020 | Temperature                              | West Midlands
+03/12/2020 | Humidity                                 | West Midlands
+04/12/2020 | Temperature                              | West Midlands
+04/12/2020 | Humidity                                 | West Midlands
+05/12/2020 | Temperature                              | West Midlands
+05/12/2020 | Humidity                                 | West Midlands
+06/12/2020 | Temperature                              | West Midlands
+06/12/2020 | Humidity                                 | West Midlands
+07/12/2020 | Temperature                              | West Midlands
+07/12/2020 | Humidity                                 | West Midlands
+08/12/2020 | Temperature                              | West Midlands
+08/12/2020 | Humidity                                 | West Midlands
+09/12/2020 | Temperature                              | West Midlands
+09/12/2020 | Humidity                                 | West Midlands
+10/12/2020 | Temperature                              | West Midlands
+10/12/2020 | Humidity                                 | West Midlands
+11/12/2020 | Temperature                              | West Midlands
+11/12/2020 | Humidity                                 | West Midlands
+12/12/2020 | Temperature                              | West Midlands
+12/12/2020 | Humidity                                 | West Midlands
+13/12/2020 | Temperature                              | West Midlands
+13/12/2020 | Humidity                                 | West Midlands
+14/12/2020 | Temperature                              | West Midlands
+14/12/2020 | Humidity                                 | West Midlands
+15/12/2020 | Temperature                              | West Midlands
+15/12/2020 | Humidity                                 | West Midlands
+16/12/2020 | Temperature                              | West Midlands
+16/12/2020 | Humidity                                 | West Midlands
+17/12/2020 | Temperature                              | West Midlands
+17/12/2020 | Humidity                                 | West Midlands
+18/12/2020 | Temperature                              | West Midlands
+18/12/2020 | Humidity                                 | West Midlands
+19/12/2020 | Temperature                              | West Midlands
+19/12/2020 | Humidity                                 | West Midlands
+20/12/2020 | Temperature                              | West Midlands
+20/12/2020 | Humidity                                 | West Midlands
+11/11/2020 | Temperature                              | South West
+11/11/2020 | Humidity                                 | South West
+12/11/2020 | Temperature                              | South West
+12/11/2020 | Humidity                                 | South West
+13/11/2020 | Temperature                              | South West
+13/11/2020 | Humidity                                 | South West
+14/11/2020 | Temperature                              | South West
+14/11/2020 | Humidity                                 | South West
+15/11/2020 | Temperature                              | South West
+15/11/2020 | Humidity                                 | South West
+16/11/2020 | Temperature                              | South West
+16/11/2020 | Humidity                                 | South West
+17/11/2020 | Temperature                              | South West
+17/11/2020 | Humidity                                 | South West
+18/11/2020 | Temperature                              | South West
+18/11/2020 | Humidity                                 | South West
+19/11/2020 | Temperature                              | South West
+19/11/2020 | Humidity                                 | South West
+20/11/2020 | Temperature                              | South West
+20/11/2020 | Humidity                                 | South West
+21/11/2020 | Temperature                              | South West
+21/11/2020 | Humidity                                 | South West
+22/11/2020 | Temperature                              | South West
+22/11/2020 | Humidity                                 | South West
+23/11/2020 | Temperature                              | South West
+23/11/2020 | Humidity                                 | South West
+24/11/2020 | Temperature                              | South West
+24/11/2020 | Humidity                                 | South West
+25/11/2020 | Temperature                              | South West
+25/11/2020 | Humidity                                 | South West
+26/11/2020 | Temperature                              | South West
+26/11/2020 | Humidity                                 | South West
+27/11/2020 | Temperature                              | South West
+27/11/2020 | Humidity                                 | South West
+28/11/2020 | Temperature                              | South West
+28/11/2020 | Humidity                                 | South West
+29/11/2020 | Temperature                              | South West
+29/11/2020 | Humidity                                 | South West
+30/11/2020 | Temperature                              | South West
+30/11/2020 | Humidity                                 | South West
+01/12/2020 | Temperature                              | South West
+01/12/2020 | Humidity                                 | South West
+02/12/2020 | Temperature                              | South West
+02/12/2020 | Humidity                                 | South West
+03/12/2020 | Temperature                              | South West
+03/12/2020 | Humidity                                 | South West
+04/12/2020 | Temperature                              | South West
+04/12/2020 | Humidity                                 | South West
+05/12/2020 | Temperature                              | South West
+05/12/2020 | Humidity                                 | South West
+06/12/2020 | Temperature                              | South West
+06/12/2020 | Humidity                                 | South West
+07/12/2020 | Temperature                              | South West
+07/12/2020 | Humidity                                 | South West
+08/12/2020 | Temperature                              | South West
+08/12/2020 | Humidity                                 | South West
+09/12/2020 | Temperature                              | South West
+09/12/2020 | Humidity                                 | South West
+10/12/2020 | Temperature                              | South West
+10/12/2020 | Humidity                                 | South West
+11/12/2020 | Temperature                              | South West
+11/12/2020 | Humidity                                 | South West
+12/12/2020 | Temperature                              | South West
+12/12/2020 | Humidity                                 | South West
+13/12/2020 | Temperature                              | South West
+13/12/2020 | Humidity                                 | South West
+14/12/2020 | Temperature                              | South West
+14/12/2020 | Humidity                                 | South West
+15/12/2020 | Temperature                              | South West
+15/12/2020 | Humidity                                 | South West
+16/12/2020 | Temperature                              | South West
+16/12/2020 | Humidity                                 | South West
+17/12/2020 | Temperature                              | South West
+17/12/2020 | Humidity                                 | South West
+18/12/2020 | Temperature                              | South West
+18/12/2020 | Humidity                                 | South West
+19/12/2020 | Temperature                              | South West
+19/12/2020 | Humidity                                 | South West
+20/12/2020 | Temperature                              | South West
+20/12/2020 | Humidity                                 | South West
+11/11/2020 | Temperature                              | South East
+11/11/2020 | Humidity                                 | South East
+12/11/2020 | Temperature                              | South East
+12/11/2020 | Humidity                                 | South East
+13/11/2020 | Temperature                              | South East
+13/11/2020 | Humidity                                 | South East
+14/11/2020 | Temperature                              | South East
+14/11/2020 | Humidity                                 | South East
+15/11/2020 | Temperature                              | South East
+15/11/2020 | Humidity                                 | South East
+16/11/2020 | Temperature                              | South East
+16/11/2020 | Humidity                                 | South East
+17/11/2020 | Temperature                              | South East
+17/11/2020 | Humidity                                 | South East
+18/11/2020 | Temperature                              | South East
+18/11/2020 | Humidity                                 | South East
+19/11/2020 | Temperature                              | South East
+19/11/2020 | Humidity                                 | South East
+20/11/2020 | Temperature                              | South East
+20/11/2020 | Humidity                                 | South East
+21/11/2020 | Temperature                              | South East
+21/11/2020 | Humidity                                 | South East
+22/11/2020 | Temperature                              | South East
+22/11/2020 | Humidity                                 | South East
+23/11/2020 | Temperature                              | South East
+23/11/2020 | Humidity                                 | South East
+24/11/2020 | Temperature                              | South East
+24/11/2020 | Humidity                                 | South East
+25/11/2020 | Temperature                              | South East
+25/11/2020 | Humidity                                 | South East
+26/11/2020 | Temperature                              | South East
+26/11/2020 | Humidity                                 | South East
+27/11/2020 | Temperature                              | South East
+27/11/2020 | Humidity                                 | South East
+28/11/2020 | Temperature                              | South East
+28/11/2020 | Humidity                                 | South East
+29/11/2020 | Temperature                              | South East
+29/11/2020 | Humidity                                 | South East
+30/11/2020 | Temperature                              | South East
+30/11/2020 | Humidity                                 | South East
+01/12/2020 | Temperature                              | South East
+01/12/2020 | Humidity                                 | South East
+02/12/2020 | Temperature                              | South East
+02/12/2020 | Humidity                                 | South East
+03/12/2020 | Temperature                              | South East
+03/12/2020 | Humidity                                 | South East
+04/12/2020 | Temperature                              | South East
+04/12/2020 | Humidity                                 | South East
+05/12/2020 | Temperature                              | South East
+05/12/2020 | Humidity                                 | South East
+06/12/2020 | Temperature                              | South East
+06/12/2020 | Humidity                                 | South East
+07/12/2020 | Temperature                              | South East
+07/12/2020 | Humidity                                 | South East
+08/12/2020 | Temperature                              | South East
+08/12/2020 | Humidity                                 | South East
+09/12/2020 | Temperature                              | South East
+09/12/2020 | Humidity                                 | South East
+10/12/2020 | Temperature                              | South East
+10/12/2020 | Humidity                                 | South East
+11/12/2020 | Temperature                              | South East
+11/12/2020 | Humidity                                 | South East
+12/12/2020 | Temperature                              | South East
+12/12/2020 | Humidity                                 | South East
+13/12/2020 | Temperature                              | South East
+13/12/2020 | Humidity                                 | South East
+14/12/2020 | Temperature                              | South East
+14/12/2020 | Humidity                                 | South East
+15/12/2020 | Temperature                              | South East
+15/12/2020 | Humidity                                 | South East
+16/12/2020 | Temperature                              | South East
+16/12/2020 | Humidity                                 | South East
+17/12/2020 | Temperature                              | South East
+17/12/2020 | Humidity                                 | South East
+18/12/2020 | Temperature                              | South East
+18/12/2020 | Humidity                                 | South East
+19/12/2020 | Temperature                              | South East
+19/12/2020 | Humidity                                 | South East
+20/12/2020 | Temperature                              | South East
+20/12/2020 | Humidity                                 | South East
+11/11/2020 | Temperature                              | North West
+11/11/2020 | Humidity                                 | North West
+12/11/2020 | Temperature                              | North West
+12/11/2020 | Humidity                                 | North West
+13/11/2020 | Temperature                              | North West
+13/11/2020 | Humidity                                 | North West
+14/11/2020 | Temperature                              | North West
+14/11/2020 | Humidity                                 | North West
+15/11/2020 | Temperature                              | North West
+15/11/2020 | Humidity                                 | North West
+16/11/2020 | Temperature                              | North West
+16/11/2020 | Humidity                                 | North West
+17/11/2020 | Temperature                              | North West
+17/11/2020 | Humidity                                 | North West
+18/11/2020 | Temperature                              | North West
+18/11/2020 | Humidity                                 | North West
+19/11/2020 | Temperature                              | North West
+19/11/2020 | Humidity                                 | North West
+20/11/2020 | Temperature                              | North West
+20/11/2020 | Humidity                                 | North West
+21/11/2020 | Temperature                              | North West
+21/11/2020 | Humidity                                 | North West
+22/11/2020 | Temperature                              | North West
+22/11/2020 | Humidity                                 | North West
+23/11/2020 | Temperature                              | North West
+23/11/2020 | Humidity                                 | North West
+24/11/2020 | Temperature                              | North West
+24/11/2020 | Humidity                                 | North West
+25/11/2020 | Temperature                              | North West
+25/11/2020 | Humidity                                 | North West
+26/11/2020 | Temperature                              | North West
+26/11/2020 | Humidity                                 | North West
+27/11/2020 | Temperature                              | North West
+27/11/2020 | Humidity                                 | North West
+28/11/2020 | Temperature                              | North West
+28/11/2020 | Humidity                                 | North West
+29/11/2020 | Temperature                              | North West
+29/11/2020 | Humidity                                 | North West
+30/11/2020 | Temperature                              | North West
+30/11/2020 | Humidity                                 | North West
+01/12/2020 | Temperature                              | North West
+01/12/2020 | Humidity                                 | North West
+02/12/2020 | Temperature                              | North West
+02/12/2020 | Humidity                                 | North West
+03/12/2020 | Temperature                              | North West
+03/12/2020 | Humidity                                 | North West
+04/12/2020 | Temperature                              | North West
+04/12/2020 | Humidity                                 | North West
+05/12/2020 | Temperature                              | North West
+05/12/2020 | Humidity                                 | North West
+06/12/2020 | Temperature                              | North West
+06/12/2020 | Humidity                                 | North West
+07/12/2020 | Temperature                              | North West
+07/12/2020 | Humidity                                 | North West
+08/12/2020 | Temperature                              | North West
+08/12/2020 | Humidity                                 | North West
+09/12/2020 | Temperature                              | North West
+09/12/2020 | Humidity                                 | North West
+10/12/2020 | Temperature                              | North West
+10/12/2020 | Humidity                                 | North West
+11/12/2020 | Temperature                              | North West
+11/12/2020 | Humidity                                 | North West
+12/12/2020 | Temperature                              | North West
+12/12/2020 | Humidity                                 | North West
+13/12/2020 | Temperature                              | North West
+13/12/2020 | Humidity                                 | North West
+14/12/2020 | Temperature                              | North West
+14/12/2020 | Humidity                                 | North West
+15/12/2020 | Temperature                              | North West
+15/12/2020 | Humidity                                 | North West
+16/12/2020 | Temperature                              | North West
+16/12/2020 | Humidity                                 | North West
+17/12/2020 | Temperature                              | North West
+17/12/2020 | Humidity                                 | North West
+18/12/2020 | Temperature                              | North West
+18/12/2020 | Humidity                                 | North West
+19/12/2020 | Temperature                              | North West
+19/12/2020 | Humidity                                 | North West
+20/12/2020 | Temperature                              | North West
+20/12/2020 | Humidity                                 | North West
+11/11/2020 | Temperature                              | North East
+11/11/2020 | Humidity                                 | North East
+12/11/2020 | Temperature                              | North East
+12/11/2020 | Humidity                                 | North East
+13/11/2020 | Temperature                              | North East
+13/11/2020 | Humidity                                 | North East
+14/11/2020 | Temperature                              | North East
+14/11/2020 | Humidity                                 | North East
+15/11/2020 | Temperature                              | North East
+15/11/2020 | Humidity                                 | North East
+16/11/2020 | Temperature                              | North East
+16/11/2020 | Humidity                                 | North East
+17/11/2020 | Temperature                              | North East
+17/11/2020 | Humidity                                 | North East
+18/11/2020 | Temperature                              | North East
+18/11/2020 | Humidity                                 | North East
+19/11/2020 | Temperature                              | North East
+19/11/2020 | Humidity                                 | North East
+20/11/2020 | Temperature                              | North East
+20/11/2020 | Humidity                                 | North East
+21/11/2020 | Temperature                              | North East
+21/11/2020 | Humidity                                 | North East
+22/11/2020 | Temperature                              | North East
+22/11/2020 | Humidity                                 | North East
+23/11/2020 | Temperature                              | North East
+23/11/2020 | Humidity                                 | North East
+24/11/2020 | Temperature                              | North East
+24/11/2020 | Humidity                                 | North East
+25/11/2020 | Temperature                              | North East
+25/11/2020 | Humidity                                 | North East
+26/11/2020 | Temperature                              | North East
+26/11/2020 | Humidity                                 | North East
+27/11/2020 | Temperature                              | North East
+27/11/2020 | Humidity                                 | North East
+28/11/2020 | Temperature                              | North East
+28/11/2020 | Humidity                                 | North East
+29/11/2020 | Temperature                              | North East
+29/11/2020 | Humidity                                 | North East
+30/11/2020 | Temperature                              | North East
+30/11/2020 | Humidity                                 | North East
+01/12/2020 | Temperature                              | North East
+01/12/2020 | Humidity                                 | North East
+02/12/2020 | Temperature                              | North East
+02/12/2020 | Humidity                                 | North East
+03/12/2020 | Temperature                              | North East
+03/12/2020 | Humidity                                 | North East
+04/12/2020 | Temperature                              | North East
+04/12/2020 | Humidity                                 | North East
+05/12/2020 | Temperature                              | North East
+05/12/2020 | Humidity                                 | North East
+06/12/2020 | Temperature                              | North East
+06/12/2020 | Humidity                                 | North East
+07/12/2020 | Temperature                              | North East
+07/12/2020 | Humidity                                 | North East
+08/12/2020 | Temperature                              | North East
+08/12/2020 | Humidity                                 | North East
+09/12/2020 | Temperature                              | North East
+09/12/2020 | Humidity                                 | North East
+10/12/2020 | Temperature                              | North East
+10/12/2020 | Humidity                                 | North East
+11/12/2020 | Temperature                              | North East
+11/12/2020 | Humidity                                 | North East
+12/12/2020 | Temperature                              | North East
+12/12/2020 | Humidity                                 | North East
+13/12/2020 | Temperature                              | North East
+13/12/2020 | Humidity                                 | North East
+14/12/2020 | Temperature                              | North East
+14/12/2020 | Humidity                                 | North East
+15/12/2020 | Temperature                              | North East
+15/12/2020 | Humidity                                 | North East
+16/12/2020 | Temperature                              | North East
+16/12/2020 | Humidity                                 | North East
+17/12/2020 | Temperature                              | North East
+17/12/2020 | Humidity                                 | North East
+18/12/2020 | Temperature                              | North East
+18/12/2020 | Humidity                                 | North East
+19/12/2020 | Temperature                              | North East
+19/12/2020 | Humidity                                 | North East
+20/12/2020 | Temperature                              | North East
+20/12/2020 | Humidity                                 | North East
+11/11/2020 | Temperature                              | London
+11/11/2020 | Humidity                                 | London
+12/11/2020 | Temperature                              | London
+12/11/2020 | Humidity                                 | London
+13/11/2020 | Temperature                              | London
+13/11/2020 | Humidity                                 | London
+14/11/2020 | Temperature                              | London
+14/11/2020 | Humidity                                 | London
+15/11/2020 | Temperature                              | London
+15/11/2020 | Humidity                                 | London
+16/11/2020 | Temperature                              | London
+16/11/2020 | Humidity                                 | London
+17/11/2020 | Temperature                              | London
+17/11/2020 | Humidity                                 | London
+18/11/2020 | Temperature                              | London
+18/11/2020 | Humidity                                 | London
+19/11/2020 | Temperature                              | London
+19/11/2020 | Humidity                                 | London
+20/11/2020 | Temperature                              | London
+20/11/2020 | Humidity                                 | London
+21/11/2020 | Temperature                              | London
+21/11/2020 | Humidity                                 | London
+22/11/2020 | Temperature                              | London
+22/11/2020 | Humidity                                 | London
+23/11/2020 | Temperature                              | London
+23/11/2020 | Humidity                                 | London
+24/11/2020 | Temperature                              | London
+24/11/2020 | Humidity                                 | London
+25/11/2020 | Temperature                              | London
+25/11/2020 | Humidity                                 | London
+26/11/2020 | Temperature                              | London
+26/11/2020 | Humidity                                 | London
+27/11/2020 | Temperature                              | London
+27/11/2020 | Humidity                                 | London
+28/11/2020 | Temperature                              | London
+28/11/2020 | Humidity                                 | London
+29/11/2020 | Temperature                              | London
+29/11/2020 | Humidity                                 | London
+30/11/2020 | Temperature                              | London
+30/11/2020 | Humidity                                 | London
+01/12/2020 | Temperature                              | London
+01/12/2020 | Humidity                                 | London
+02/12/2020 | Temperature                              | London
+02/12/2020 | Humidity                                 | London
+03/12/2020 | Temperature                              | London
+03/12/2020 | Humidity                                 | London
+04/12/2020 | Temperature                              | London
+04/12/2020 | Humidity                                 | London
+05/12/2020 | Temperature                              | London
+05/12/2020 | Humidity                                 | London
+06/12/2020 | Temperature                              | London
+06/12/2020 | Humidity                                 | London
+07/12/2020 | Temperature                              | London
+07/12/2020 | Humidity                                 | London
+08/12/2020 | Temperature                              | London
+08/12/2020 | Humidity                                 | London
+09/12/2020 | Temperature                              | London
+09/12/2020 | Humidity                                 | London
+10/12/2020 | Temperature                              | London
+10/12/2020 | Humidity                                 | London
+11/12/2020 | Temperature                              | London
+11/12/2020 | Humidity                                 | London
+12/12/2020 | Temperature                              | London
+12/12/2020 | Humidity                                 | London
+13/12/2020 | Temperature                              | London
+13/12/2020 | Humidity                                 | London
+14/12/2020 | Temperature                              | London
+14/12/2020 | Humidity                                 | London
+15/12/2020 | Temperature                              | London
+15/12/2020 | Humidity                                 | London
+16/12/2020 | Temperature                              | London
+16/12/2020 | Humidity                                 | London
+17/12/2020 | Temperature                              | London
+17/12/2020 | Humidity                                 | London
+18/12/2020 | Temperature                              | London
+18/12/2020 | Humidity                                 | London
+19/12/2020 | Temperature                              | London
+19/12/2020 | Humidity                                 | London
+20/12/2020 | Temperature                              | London
+20/12/2020 | Humidity                                 | London
+11/11/2020 | Temperature                              | East of England
+11/11/2020 | Humidity                                 | East of England
+12/11/2020 | Temperature                              | East of England
+12/11/2020 | Humidity                                 | East of England
+13/11/2020 | Temperature                              | East of England
+13/11/2020 | Humidity                                 | East of England
+14/11/2020 | Temperature                              | East of England
+14/11/2020 | Humidity                                 | East of England
+15/11/2020 | Temperature                              | East of England
+15/11/2020 | Humidity                                 | East of England
+16/11/2020 | Temperature                              | East of England
+16/11/2020 | Humidity                                 | East of England
+17/11/2020 | Temperature                              | East of England
+17/11/2020 | Humidity                                 | East of England
+18/11/2020 | Temperature                              | East of England
+18/11/2020 | Humidity                                 | East of England
+19/11/2020 | Temperature                              | East of England
+19/11/2020 | Humidity                                 | East of England
+20/11/2020 | Temperature                              | East of England
+20/11/2020 | Humidity                                 | East of England
+21/11/2020 | Temperature                              | East of England
+21/11/2020 | Humidity                                 | East of England
+22/11/2020 | Temperature                              | East of England
+22/11/2020 | Humidity                                 | East of England
+23/11/2020 | Temperature                              | East of England
+23/11/2020 | Humidity                                 | East of England
+24/11/2020 | Temperature                              | East of England
+24/11/2020 | Humidity                                 | East of England
+25/11/2020 | Temperature                              | East of England
+25/11/2020 | Humidity                                 | East of England
+26/11/2020 | Temperature                              | East of England
+26/11/2020 | Humidity                                 | East of England
+27/11/2020 | Temperature                              | East of England
+27/11/2020 | Humidity                                 | East of England
+28/11/2020 | Temperature                              | East of England
+28/11/2020 | Humidity                                 | East of England
+29/11/2020 | Temperature                              | East of England
+29/11/2020 | Humidity                                 | East of England
+30/11/2020 | Temperature                              | East of England
+30/11/2020 | Humidity                                 | East of England
+01/12/2020 | Temperature                              | East of England
+01/12/2020 | Humidity                                 | East of England
+02/12/2020 | Temperature                              | East of England
+02/12/2020 | Humidity                                 | East of England
+03/12/2020 | Temperature                              | East of England
+03/12/2020 | Humidity                                 | East of England
+04/12/2020 | Temperature                              | East of England
+04/12/2020 | Humidity                                 | East of England
+05/12/2020 | Temperature                              | East of England
+05/12/2020 | Humidity                                 | East of England
+06/12/2020 | Temperature                              | East of England
+06/12/2020 | Humidity                                 | East of England
+07/12/2020 | Temperature                              | East of England
+07/12/2020 | Humidity                                 | East of England
+08/12/2020 | Temperature                              | East of England
+08/12/2020 | Humidity                                 | East of England
+09/12/2020 | Temperature                              | East of England
+09/12/2020 | Humidity                                 | East of England
+10/12/2020 | Temperature                              | East of England
+10/12/2020 | Humidity                                 | East of England
+11/12/2020 | Temperature                              | East of England
+11/12/2020 | Humidity                                 | East of England
+12/12/2020 | Temperature                              | East of England
+12/12/2020 | Humidity                                 | East of England
+13/12/2020 | Temperature                              | East of England
+13/12/2020 | Humidity                                 | East of England
+14/12/2020 | Temperature                              | East of England
+14/12/2020 | Humidity                                 | East of England
+15/12/2020 | Temperature                              | East of England
+15/12/2020 | Humidity                                 | East of England
+16/12/2020 | Temperature                              | East of England
+16/12/2020 | Humidity                                 | East of England
+17/12/2020 | Temperature                              | East of England
+17/12/2020 | Humidity                                 | East of England
+18/12/2020 | Temperature                              | East of England
+18/12/2020 | Humidity                                 | East of England
+19/12/2020 | Temperature                              | East of England
+19/12/2020 | Humidity                                 | East of England
+20/12/2020 | Temperature                              | East of England
+20/12/2020 | Humidity                                 | East of England
+11/11/2020 | Temperature                              | East Midlands
+11/11/2020 | Humidity                                 | East Midlands
+12/11/2020 | Temperature                              | East Midlands
+12/11/2020 | Humidity                                 | East Midlands
+13/11/2020 | Temperature                              | East Midlands
+13/11/2020 | Humidity                                 | East Midlands
+14/11/2020 | Temperature                              | East Midlands
+14/11/2020 | Humidity                                 | East Midlands
+15/11/2020 | Temperature                              | East Midlands
+15/11/2020 | Humidity                                 | East Midlands
+16/11/2020 | Temperature                              | East Midlands
+16/11/2020 | Humidity                                 | East Midlands
+17/11/2020 | Temperature                              | East Midlands
+17/11/2020 | Humidity                                 | East Midlands
+18/11/2020 | Temperature                              | East Midlands
+18/11/2020 | Humidity                                 | East Midlands
+19/11/2020 | Temperature                              | East Midlands
+19/11/2020 | Humidity                                 | East Midlands
+20/11/2020 | Temperature                              | East Midlands
+20/11/2020 | Humidity                                 | East Midlands
+21/11/2020 | Temperature                              | East Midlands
+21/11/2020 | Humidity                                 | East Midlands
+22/11/2020 | Temperature                              | East Midlands
+22/11/2020 | Humidity                                 | East Midlands
+23/11/2020 | Temperature                              | East Midlands
+23/11/2020 | Humidity                                 | East Midlands
+24/11/2020 | Temperature                              | East Midlands
+24/11/2020 | Humidity                                 | East Midlands
+25/11/2020 | Temperature                              | East Midlands
+25/11/2020 | Humidity                                 | East Midlands
+26/11/2020 | Temperature                              | East Midlands
+26/11/2020 | Humidity                                 | East Midlands
+27/11/2020 | Temperature                              | East Midlands
+27/11/2020 | Humidity                                 | East Midlands
+28/11/2020 | Temperature                              | East Midlands
+28/11/2020 | Humidity                                 | East Midlands
+29/11/2020 | Temperature                              | East Midlands
+29/11/2020 | Humidity                                 | East Midlands
+30/11/2020 | Temperature                              | East Midlands
+30/11/2020 | Humidity                                 | East Midlands
+01/12/2020 | Temperature                              | East Midlands
+01/12/2020 | Humidity                                 | East Midlands
+02/12/2020 | Temperature                              | East Midlands
+02/12/2020 | Humidity                                 | East Midlands
+03/12/2020 | Temperature                              | East Midlands
+03/12/2020 | Humidity                                 | East Midlands
+04/12/2020 | Temperature                              | East Midlands
+04/12/2020 | Humidity                                 | East Midlands
+05/12/2020 | Temperature                              | East Midlands
+05/12/2020 | Humidity                                 | East Midlands
+06/12/2020 | Temperature                              | East Midlands
+06/12/2020 | Humidity                                 | East Midlands
+07/12/2020 | Temperature                              | East Midlands
+07/12/2020 | Humidity                                 | East Midlands
+08/12/2020 | Temperature                              | East Midlands
+08/12/2020 | Humidity                                 | East Midlands
+09/12/2020 | Temperature                              | East Midlands
+09/12/2020 | Humidity                                 | East Midlands
+10/12/2020 | Temperature                              | East Midlands
+10/12/2020 | Humidity                                 | East Midlands
+11/12/2020 | Temperature                              | East Midlands
+11/12/2020 | Humidity                                 | East Midlands
+12/12/2020 | Temperature                              | East Midlands
+12/12/2020 | Humidity                                 | East Midlands
+13/12/2020 | Temperature                              | East Midlands
+13/12/2020 | Humidity                                 | East Midlands
+14/12/2020 | Temperature                              | East Midlands
+14/12/2020 | Humidity                                 | East Midlands
+15/12/2020 | Temperature                              | East Midlands
+15/12/2020 | Humidity                                 | East Midlands
+16/12/2020 | Temperature                              | East Midlands
+16/12/2020 | Humidity                                 | East Midlands
+17/12/2020 | Temperature                              | East Midlands
+17/12/2020 | Humidity                                 | East Midlands
+18/12/2020 | Temperature                              | East Midlands
+18/12/2020 | Humidity                                 | East Midlands
+19/12/2020 | Temperature                              | East Midlands
+19/12/2020 | Humidity                                 | East Midlands
+20/12/2020 | Temperature                              | East Midlands
+20/12/2020 | Humidity                                 | East Midlands
