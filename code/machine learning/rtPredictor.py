@@ -23,28 +23,7 @@ REGIONS = {
     9 : "Yorkshire and the Humber",
     10 : "Northern Ireland",
     11 : "Scotland",
-    12 : "Blaenau gwent",
-    13 : "Caerphilly",
-    14 : "Monmouthshire",
-    15 : "Newport",
-    16 : "Torfaen",
-    17 : "Conwy",
-    18 : "Denbighshire",
-    19 : "Flintshire",
-    20 : "Gwynedd",
-    21 : "Isle of Anglesey",
-    22 : "Wrexham",
-    23 : "Cardiff",
-    24 : "Vale of Glamorgan",
-    25 : "Bridgend",
-    26 : "Merthyr Tydfil",
-    27 :"Rhondda Cynon Taf",
-    28 : "Carmarthenshire",
-    29 :"Ceredigion",
-    30 : "Pembrokeshire",
-    31 : "Powys",
-    32 : "Neath Port Talbot",
-    33 : "Swansea",
+    12 : "Wales",
 }
 
 filePath = "../../data/core/uk/Rt/uk_Rt.csv"
@@ -330,28 +309,49 @@ def createGraph(origRt, agentRt, regionNo):
     plt.savefig(f"../../images/Rt/machine learning/rt/{regionNo+1}.png")
     plt.close()
 
+def runAgent(potentialActionLists, regionRt, agentType="greedy"):
+    """
+    Given the actions lists that the agent can take for each region, have it try to match
+    as closely as possible to the actual Rt as it can.
 
-def main():
-    regionRt = readFile("uk",filePath)
-
-    rtValueChange = getRtValueChange(regionRt)
-
-    rtValueChange = convertRtValues(rtValueChange)
-
-    regionalPotentialActionLists = getPotentialActionLists(rtValueChange)
+    INPUTS:
+        :param potentialActionLists: List of lists, containing the potential alterations the agent can make for each region
+        :param regionRt: List of lists, containing the Rt values for each day within each region
+        :param agentType: String, which type of agent will be use to try and mimic the Rt value
+    
+    OUTPUT:
+        returns the results of running the agent on each region within the dataset
+    """
     regionalAgentResults = []
     for currIndex in range(len(regionRt)):
-        currRegionActionList = regionalPotentialActionLists[currIndex]
+        currActionList = potentialActionLists[currIndex]
         currRegionRt = regionRt[currIndex]
 
-        
-        agentResults = greedyAgent(currRegionRt, currRegionActionList)
+        if agentType.lower() == "greedy":
+            agentResults = greedyAgent(currRegionRt, currActionList)
 
         agentRt = [currRt for currRt, _ in agentResults]
 
         createGraph(currRegionRt, agentRt, currIndex)
         regionalAgentResults.append(agentResults)
+        
+    return regionalAgentResults
 
+def runEvaluationAgent(potentialActionLists, regionRt, regionalAgentResults, agentType="greedy"):
+    """
+    Determine how effective the agent's attempt to mimic the Rt is through re-running the agent, but this time,
+    removing the actions that it took from its decision making.
+
+    INPUTS:
+        :param potentialActionLists: List of lists, containing the potential alterations the agent can make for each region
+        :param regionRt: List of lists, containing the Rt values for each day within each region
+        :param regionalAgentResults: List of lists, containing all information relating to the actions of the original agent (see runAgent())
+        :param agentType: String, which type of agent will be use to try and mimic the Rt value
+    
+    OUTPUTS:
+        returns a list of lists containing tuples within which it contains the range of indexes that the current group covers,
+                and the result for each point after denying it the action originally taken.
+    """
     regionEvaluationGroups = [[] for _ in regionRt]
 
     #For each region, get the start and end index for each group, along with the index of the goal value
@@ -379,8 +379,9 @@ def main():
                 #Due to this being the start val, replace with the agent Rt
                 currRegionSubset[0] = agentRt
 
-                agentResults = greedyAgent(currRegionSubset, regionalPotentialActionLists[currRegionIndex], firstValue=False, 
-                                            evaluatePoint=True, evaluateIndex=0, evaluateAction=agentAction)
+                if agentType.lower() == "greedy":
+                    agentResults = greedyAgent(currRegionSubset, potentialActionLists[currRegionIndex], firstValue=False, 
+                                                evaluatePoint=True, evaluateIndex=0, evaluateAction=agentAction)
                 #Remove the value since it is no longer needed
                 currRegionSubset.pop(0)
                 
@@ -393,17 +394,30 @@ def main():
             if ignoreCurrentValues == False:
                 regionEvaluationGroups[currRegionIndex].append(((startIndex, goalIndex), currGroup))
 
-    print("----")    
+    return regionEvaluationGroups
 
+def evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluationGroups):
+    """
+    Using the results of the evaluation agent and the original agent, find which point within the group
+    provided the most impactful change on the evaluation agents attempt to reach the goal index.
+
+    Where most impactful refers to the idea that if the denial of an action or actions from a specific point
+    results in a adversely (larger) effected difference from the goal value (original Rt value).
+
+    INPUTS:
+        :param regionRt: List of lists, containing the Rt values for each day within each region
+        :param regionalAgentResults: List of lists, containing all information relating to the original agent's actions (see runAgent())
+        :param regionalEvaluationGroups: List of lists, containing all the information relating to the evaluation agent's actions (see runEvaluationAgent())
+    """
     regionalGroupResults = []
     
     #Compare the original agent action, with the newer attempts
     for currRegionIndex in range(len(regionalAgentResults)):
         currRegionGroupResults = []
         
-        for currGroupIndex in range(len(regionEvaluationGroups[currRegionIndex])):
+        for currGroupIndex in range(len(regionalEvaluationGroups[currRegionIndex])):
             #Get the information about the current group
-            indexs, group = regionEvaluationGroups[currRegionIndex][currGroupIndex]
+            indexs, group = regionalEvaluationGroups[currRegionIndex][currGroupIndex]
             startIndex, goalIndex = indexs
             
             #Get the distance of the original attempt
@@ -412,26 +426,50 @@ def main():
 
             if agentRtDifference < 0:
                 agentRtDifference = -agentRtDifference
-            
-            mostImpactfulPoints = None
-            prevDifference = 0
-            #Go through the eval point results and compare to the original result
-            #to find which is the most impactful
-            for currIndex in range((goalIndex) - startIndex):
-                currGroupDifference = group[currIndex][1]
-                if currGroupDifference < 0:
-                    currGroupDifference = -currGroupDifference
                 
-                if prevDifference < currGroupDifference > agentRtDifference:
-                    if currGroupDifference == prevDifference:
-                        mostImpactfulPoints.append(currIndex)
-                    else:
-                        prevDifference = currGroupDifference
-                        mostImpactfulPoints = [currIndex]
+            currentlyImpactfulPoints = []
+            prevDifference = 0
 
-            currRegionGroupResults.append((mostImpactfulPoints, prevDifference))
+            for currIndex in range(goalIndex - startIndex):
+                currEvalAgentsDifference = group[currIndex][1]
+                if currEvalAgentsDifference < 0:
+                    currEvalAgentsDifference = -currEvalAgentsDifference
+
+                #Reduce the evaluation agents Rt difference with the original's
+                agentDifference = currEvalAgentsDifference - agentRtDifference
+
+                if agentDifference < 0:
+                    agentDifference = -agentDifference
+                
+                if prevDifference < agentDifference:
+                    prevDifference = agentDifference
+                    currentlyImpactfulPoints = [currIndex]
+                
+                elif prevDifference == agentDifference:
+                    currentlyImpactfulPoints.append(currIndex)
+
+            currRegionGroupResults.append((currentlyImpactfulPoints, prevDifference))
         
         regionalGroupResults.append(currRegionGroupResults)
+    
+    return regionalGroupResults
+
+def main():
+    regionRt = readFile("uk",filePath)
+
+    rtValueChange = getRtValueChange(regionRt)
+
+    rtValueChange = convertRtValues(rtValueChange)
+
+    regionalPotentialActionLists = getPotentialActionLists(rtValueChange)
+    
+    regionalAgentResults = runAgent(regionalPotentialActionLists, regionRt)
+
+    print("----") 
+
+    regionalEvaluationGroups = runEvaluationAgent(regionalPotentialActionLists, regionRt, regionalAgentResults)
+
+    regionalGroupResults = evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluationGroups)
                 
     for currRegion in regionalGroupResults[0]:
         #for currGroup in currRegion:
