@@ -11,7 +11,7 @@ from copy import deepcopy
 
 QUANTILE_NO = 8
 GROUP_SIZE = 3
-MAX_DEPTH = GROUP_SIZE - 1
+MAX_DEPTH = GROUP_SIZE
 
 REGIONS = {
     1 : "East Midlands",
@@ -51,7 +51,6 @@ class Node:
 
         self.currVal = prevRt + action
         self.cumulativeDifference = None
-        self.cost = None
         #Just something to make returning to the currently expanded node easier to find
         #when backtracking up the tree
         self.isExpandedPoint = False
@@ -63,10 +62,8 @@ class Node:
 
         if parent != None:
             self.cumulativeDifference = parent.cumulativeDifference + currDifference
-            self.cost = parent.cost + 1
         else:
             self.cumulativeDifference = currDifference
-            self.cost = 0
 
 
 def readFile(dataset, filePath):
@@ -372,136 +369,58 @@ def treeSearch(regionRt, potentialActions):
     INPUTS:
         :param regionRt: List of floats, the regional data that will be explored by the tree search
         :param potentialActions: List of floats, containing floats to be used to alter the Rt value of the previous point
-        
     
     OUTPUT:
         returns a list of tuples, containing the Rt value and the index for the action that resulted in said Rt value
     """
     agentRtValues = []
-    expandedStates = []
-    leafState = []
 
-    currPoint = 1
-    currDepth = 0
+    #Iterate over the current region's data, using the current point as the root for the search
     for currRootIndex in range(len(regionRt)):
+        toBeExploredNodes = []
+        childNodes = []
+        
         #Set up the inital point that we are finding the action for
-        root = Node(regionRt[currRootIndex], 0, 0, regionRt[currRootIndex])
+        if currRootIndex == 0:
+            root = Node(regionRt[currRootIndex], 0, 0, regionRt[currRootIndex])
+        else:
+            root = Node(regionRt[currRootIndex], 0, 0, currentNode.currVal)            
+
         root.isExpandedPoint = True
 
         #Get child nodes of the root
         for actionIndex in range(len(potentialActions)):
             action = potentialActions[actionIndex]
 
-            expandedStates.append(Node(regionRt[root.cost], action, actionIndex, root.currVal, root))
+            toBeExploredNodes.append(Node(regionRt[currRootIndex], action, actionIndex, root.currVal, root))
         
-        #Explore the child nodes to the max depth
-        while MAX_DEPTH > currDepth or currPoint + currDepth >= len(regionRt):
-            currDepth += 1
-            print("--boop---")
+        currDepth = 1
 
-            while len(expandedStates) > 0:
-                currentNode = expandedStates.pop(0)
-                print(len(expandedStates)," | ", len(leafState))
+        #Explore to max depth or until end of the region
+        while MAX_DEPTH > currDepth and currRootIndex + currDepth <= len(regionRt) - 1:
+            
+            while len(toBeExploredNodes) > 0:
+                currentNode = toBeExploredNodes.pop(0)
                 
                 for actionIndex in range(len(potentialActions)):
                     action = potentialActions[actionIndex]
-                    leafState.append(Node(regionRt[currPoint + currentNode.cost + 1], action, actionIndex, currentNode.currVal, currentNode))
-            #Once all child nodes of the current level have been expanded, swap    
-            expandedStates, leafState = leafState, expandedStates
-            leafState = []
+                    childNodes.append(Node(regionRt[currRootIndex + currDepth], action, actionIndex, currentNode.currVal, currentNode))
+            
+            #Once all explored, prepare childNodes to be explored
+            toBeExploredNodes, childNodes = childNodes, toBeExploredNodes
+            
+            currDepth += 1
 
-        expandedStates.sort(key=getCumulativeDifference)
-        currentNode = expandedStates.pop(0)
+        toBeExploredNodes.sort(key=getCumulativeDifference)
+        currentNode = toBeExploredNodes.pop(0)
 
         while currentNode.parent.isExpandedPoint is False:
             currentNode = currentNode.parent
         
         agentRtValues.append((currentNode.currVal, currentNode.actionIndex))
-    
-    print(agentRtValues)
-    print(currentNode.cumulativeDifference)
-    print(currentNode.currVal)
 
     return agentRtValues
-
-    """
-    1. It needs to iterate over the entire region
     
-    2. While doing so, it needs to use the point prior to the current as the root
-
-    3. Stop expanding nodes when it has fully expanded the max depth from the initial node
-        3.1 Once it reaches this state it needs to only make its decision based upon the nodes at the max depth
-            all other nodes should be removed through the process of expansion, rather than needing to be removed
-            afterwards.
-
-
-    Where each O is a point within the dataset:
-
-    O - O - O - O - O
-    
-    The first point in the dataset is the root, since there is no proceeding point,
-    nothing is done to it.
-    [] - O - O - O - O
-
-    We're looking at finding which move it make from the root to the next point
-    []-> O - O - O - O
-                /\
-        With a depth of 3, we would be expanding ahead to here
-    
-    Expand the node, such that we have a queue of potential action that can be performed on the current state,
-    leading to various levels of how close each will lead to the desired Rt value (the original).
-        0
-      /
-    [] - 0 - O - O - O
-      \  
-        0
-
-    Expand these point and so on, until the max depth is reached
-           0 ...
-          /
-         0 - 0 ...
-        /  \
-       /     0 ...
-      /      0 ...
-     |      /
-    [] -- 0 - 0 ... - O
-     |      \
-      \      0 ...
-       \    0 ...
-        \ /
-         0 - 0 ...   
-          \
-            0 ...
-
-    Once expanded to the max depth, retain only the nodes at the max-depth, all intermediate nodes should be not present, this is due to the end nodes then being sorted,
-    based upon the cumulative difference in the Rt value over the course of the chosen actions to the current node. 
-    
-    Then, the end node that has the least cumulative difference is selected from all the end nodes and proceed to backtrack to the root from the chosen end node to conclude on which action
-    should be taken.
-    
-            
-       -<-0--<--0-
-      /            \
-    []               <-0--<-0
-      
-      /\
-    This action would be selected
-
-    Store the result of this decision making, then proceed to the next point
-        1
-    [] ->- [X] - O - O - O
-    
-    Now, using the result of previous steps, we move the root node one point forward
-        1
-    [] ->- [X] - O - O - O
-
-    Repeat the previous steps until all points within the region have been run through with the agent
-        1       0       2       1
-    [] ->- [0] ->- [0] ->- [0] ->- [0]
-
-    """
-
-
 def runAgent(potentialActionLists, regionRt, agentType="greedy"):
     """
     Given the actions lists that the agent can take for each region, have it try to match
@@ -520,13 +439,12 @@ def runAgent(potentialActionLists, regionRt, agentType="greedy"):
         currActionList = potentialActionLists[currIndex]
         currRegionRt = regionRt[currIndex]
 
-        print(len(currActionList))
         if agentType.lower() == "greedy":
             agentResults = greedyAgent(currRegionRt, currActionList)
         
         elif agentType.lower() == "tree":
             agentResults = treeSearch(currRegionRt, currActionList)
-        print(agentResults)
+
         agentRt = [currRt for currRt, _ in agentResults]
 
         createGraph(currRegionRt, agentRt, currIndex, agentType)
@@ -661,6 +579,7 @@ def main():
     regionalPotentialActionLists = getPotentialActionLists(rtValueChange)
     
     regionalAgentResults = runAgent(regionalPotentialActionLists, regionRt, "tree")
+    regionalAgentResults = runAgent(regionalPotentialActionLists, regionRt)
 
     print("----") 
     """
