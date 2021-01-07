@@ -54,9 +54,9 @@ class Node:
         #Just something to make returning to the currently expanded node easier to find
         #when backtracking up the tree
         self.isExpandedPoint = False
-        
-        currDifference = self.currVal - origRt
 
+        currDifference = self.currVal - origRt
+        
         if currDifference < 0:
             currDifference = -currDifference
 
@@ -264,7 +264,6 @@ def greedyAgent(currRegion, actionList, firstValue=True, evaluatePoint=False, ev
 
         agentRtValues.append((currRegion[currRtIndex], currBestIndex))
         
-    
     return agentRtValues
 
 def evaluatePotentialActions(prevPoint, currPoint, potentialActionList):
@@ -365,13 +364,15 @@ def getCumulativeDifference(element):
     """
     return element.cumulativeDifference
 
-def treeSearch(regionRt, potentialActions):
+def treeSearch(regionRt, potentialActions, isEvaluationAgent=False, originalAction=None):
     """
     Performs a tree search out the MAX_DEPTH to select the best (according to the heuristic) action to take
 
     INPUTS:
         :param regionRt: List of floats, the regional data that will be explored by the tree search
         :param potentialActions: List of floats, containing floats to be used to alter the Rt value of the previous point
+        :param isEvaluationAgent: Boolean, whether the current use of the function is for evaluating a previous run
+        :param originalAction: Integer, the index of the original agent action within the potential action list
     
     OUTPUT:
         returns a list of tuples, containing the Rt value and the index for the action that resulted in said Rt value
@@ -393,6 +394,8 @@ def treeSearch(regionRt, potentialActions):
 
         #Get child nodes of the root
         for actionIndex in range(len(potentialActions)):
+            if isEvaluationAgent and actionIndex == originalAction:
+                continue
             action = potentialActions[actionIndex]
 
             toBeExploredNodes.append(Node(regionRt[currRootIndex], action, actionIndex, root.currVal, root))
@@ -421,6 +424,10 @@ def treeSearch(regionRt, potentialActions):
             currentNode = currentNode.parent
         
         agentRtValues.append((currentNode.currVal, currentNode.actionIndex))
+        
+        #If evaluating, then only run for the first point, not following points
+        if isEvaluationAgent:
+            break
 
     return agentRtValues
     
@@ -480,26 +487,38 @@ def runEvaluationAgent(potentialActionLists, regionRt, regionalAgentResults, age
             #Split the Rt values into k sized groups
             startIndex = currGroupIndex * GROUP_SIZE
             goalIndex = currGroupIndex * GROUP_SIZE + GROUP_SIZE
+
+            if goalIndex >= len(regionalAgentResults[currRegionIndex]):
+                continue
             
             #Gather the current groups data
-            currRegionSubset = regionRt[currRegionIndex][startIndex:goalIndex+1]
-            
+            currRegionSubset = regionRt[currRegionIndex][startIndex:goalIndex + 1]
+
             ignoreCurrentValues = False
+
+            noIterations = range(len(currRegionSubset)-1)
             
-            for currIndex in range(len(currRegionSubset)-1):
+            for currIndex in noIterations:
                 #Don't run on the last elements of the region if they don't fit neatly
-                if goalIndex > len(regionalAgentResults[currRegionIndex])-1:
+                if agentType == "greedy" and goalIndex > len(regionalAgentResults[currRegionIndex])-1:
                     ignoreCurrentValues = True
                     break
-
-                agentRt, agentAction = regionalAgentResults[currRegionIndex][currIndex]
+                elif agentType == "tree" and goalIndex + currIndex > len(regionalAgentResults[currRegionIndex])-1:
+                    break
+                
+                agentRt, agentAction = regionalAgentResults[currRegionIndex][startIndex + currIndex]
                 
                 #Due to this being the start val, replace with the agent Rt
                 currRegionSubset[0] = agentRt
 
                 if agentType.lower() == "greedy":
                     agentResults = greedyAgent(currRegionSubset, potentialActionLists[currRegionIndex], firstValue=False, 
-                                                evaluatePoint=True, evaluateAction=agentAction)
+                                               evaluatePoint=True, evaluateAction=agentAction)
+
+                elif agentType.lower() == "tree":
+                    agentResults = treeSearch(currRegionSubset, potentialActionLists[currRegionIndex], True, agentAction)
+
+                    currRegionSubset.append(regionRt[currRegionIndex][goalIndex + currIndex])
                 #Remove the value since it is no longer needed
                 currRegionSubset.pop(0)
                 
@@ -526,6 +545,10 @@ def evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluation
         :param regionRt: List of lists, containing the Rt values for each day within each region
         :param regionalAgentResults: List of lists, containing all information relating to the original agent's actions (see runAgent())
         :param regionalEvaluationGroups: List of lists, containing all the information relating to the evaluation agent's actions (see runEvaluationAgent())
+
+    OUTPUT:
+        returns a list of tuples, where each tuple contains (which point(s) in the group had a large impact on Rt, the difference in value between original and evaluation
+                agent results, when it reached the goal value)
     """
     regionalGroupResults = []
     
@@ -540,6 +563,7 @@ def evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluation
             
             #Get the distance of the original attempt
             agentRt, _ = regionalAgentResults[currRegionIndex][goalIndex]
+
             agentRtDifference = regionRt[currRegionIndex][goalIndex] - agentRt
 
             if agentRtDifference < 0:
@@ -547,8 +571,10 @@ def evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluation
             currentlyImpactfulPoints = []
             prevDifference = 0
 
-            for currIndex in range(goalIndex - startIndex):
+            for currIndex in range(len(group)):
+                print(currIndex)
                 currEvalAgentsDifference = group[currIndex][1]
+                
                 if currEvalAgentsDifference < 0:
                     currEvalAgentsDifference = -currEvalAgentsDifference
 
@@ -558,10 +584,10 @@ def evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluation
                 if agentDifference < 0:
                     agentDifference = -agentDifference
                 
+                #Determine if point(s) is/are impactful
                 if prevDifference < agentDifference:
                     prevDifference = agentDifference
                     currentlyImpactfulPoints = [currIndex]
-                
                 elif prevDifference == agentDifference:
                     currentlyImpactfulPoints.append(currIndex)
 
@@ -581,19 +607,25 @@ def main():
 
     regionalPotentialActionLists = getPotentialActionLists(rtValueChange)
     
-    regionalAgentResults = runAgent(regionalPotentialActionLists, regionRt, "tree")
-    regionalAgentResults = runAgent(regionalPotentialActionLists, regionRt)
+    regionalAgentResultsTree = runAgent(regionalPotentialActionLists, regionRt, "tree")
+    regionalAgentResultsGreed = runAgent(regionalPotentialActionLists, regionRt)
 
     print("----") 
-    """
-    regionalEvaluationGroups = runEvaluationAgent(regionalPotentialActionLists, regionRt, regionalAgentResults)
 
-    regionalGroupResults = evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluationGroups)
+    regionalEvaluationGroupsGreed = runEvaluationAgent(regionalPotentialActionLists, regionRt, regionalAgentResultsGreed)
+    regionalGroupResultsGreed = evalutateAgentPerformance(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed)
+    
+    regionalEvaluationGroupsTree = runEvaluationAgent(regionalPotentialActionLists, regionRt, regionalAgentResultsTree, "tree")
+    regionalGroupResultsTree = evalutateAgentPerformance(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree)
                 
-    for currRegion in regionalGroupResults[11]:
+    for currRegion in regionalGroupResultsGreed[2]:
         #for currGroup in currRegion:
         print(currRegion)
-    """
+    print("----")
+
+    for currRegion in regionalGroupResultsTree[2]:
+        #for currGroup in currRegion:
+        print(currRegion)
 
     """
     For tree search algorithm:
