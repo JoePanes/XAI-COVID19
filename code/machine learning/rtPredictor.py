@@ -210,7 +210,7 @@ def getPotentialActionLists(rtValueChange):
         
     return regionalPotentialActionLists
 
-def greedyAgent(currRegion, actionList, firstValue=True, evaluatePoint=False, evaluateIndex=None, evaluateAction=None):
+def greedyAgent(currRegion, actionList, firstValue=True, evaluatePoint=False, evaluateAction=None):
     """
     A greedy implementation for the agent to try and mimic as closely the
     movements of the Rt values.
@@ -219,7 +219,6 @@ def greedyAgent(currRegion, actionList, firstValue=True, evaluatePoint=False, ev
         :param currRegion: List of floats, of the current region's Rt values
         :param actionList: List of floats, the changes in value that the agent will be able to use.
         :param evaluatePoint: Boolean, whether the agent is being used to evaluate the impact of a point
-        :param evaluateIndex: Integer, the index of the point that is being evaluated
         :param evaluateAction: Integer, the index for the action originally taken that needs to be ignored at the evaluatePoint
 
     OUTPUTS:
@@ -227,6 +226,8 @@ def greedyAgent(currRegion, actionList, firstValue=True, evaluatePoint=False, ev
     """
     agentRtValues = []
 
+    currRegion = deepcopy(currRegion)
+    
     if evaluatePoint:
         iterations = range(1, len(currRegion))
     else:
@@ -234,7 +235,7 @@ def greedyAgent(currRegion, actionList, firstValue=True, evaluatePoint=False, ev
 
     for currRtIndex in iterations:
         removedAction = False
-        if evaluatePoint != True or currRtIndex-1 != evaluateIndex:
+        if evaluatePoint != True or currRtIndex-1 != 0:
             actionListResults = prepareCurrentActionResults(currRegion, currRtIndex, actionList, firstValue)
         else:
             evalActionList = deepcopy(actionList)
@@ -243,7 +244,7 @@ def greedyAgent(currRegion, actionList, firstValue=True, evaluatePoint=False, ev
             removedAction = True
             
             actionListResults = prepareCurrentActionResults(currRegion, currRtIndex, evalActionList, firstValue)        
-
+        
         if firstValue:
             firstValue = False
             
@@ -256,8 +257,12 @@ def greedyAgent(currRegion, actionList, firstValue=True, evaluatePoint=False, ev
         #Correct so that compatible with original action list 
         if removedAction and currBestIndex >= evaluateAction:
             currBestIndex += 1
+        
+        #Introduce the action taken into the data
+        if currRtIndex > 0:
+            currRegion[currRtIndex] = currRegion[currRtIndex-1] + actionList[currBestIndex]
 
-        agentRtValues.append((currRegion[currRtIndex-1] + actionList[currBestIndex], currBestIndex))
+        agentRtValues.append((currRegion[currRtIndex], currBestIndex))
         
     
     return agentRtValues
@@ -278,7 +283,7 @@ def evaluatePotentialActions(prevPoint, currPoint, potentialActionList):
     """
     actionListResults = []
     for currAction in potentialActionList:
-        actionListResults.append(prevPoint + currAction - currPoint)
+        actionListResults.append((prevPoint + currAction) - currPoint)
     
     return actionListResults
 
@@ -297,9 +302,7 @@ def prepareCurrentActionResults(currRegion, currRtIndex, actionList, firstValue=
         returns a list of the resultant action of applying the current actions to the current point
     """
     if firstValue != True:
-        actionListResults = evaluatePotentialActions(currRegion[currRtIndex-1], 
-        currRegion[currRtIndex], 
-        actionList)
+        actionListResults = evaluatePotentialActions(currRegion[currRtIndex-1], currRegion[currRtIndex], actionList)
     else:
         actionListResults = evaluatePotentialActions(currRegion[currRtIndex], currRegion[currRtIndex], actionList)  
     
@@ -496,7 +499,7 @@ def runEvaluationAgent(potentialActionLists, regionRt, regionalAgentResults, age
 
                 if agentType.lower() == "greedy":
                     agentResults = greedyAgent(currRegionSubset, potentialActionLists[currRegionIndex], firstValue=False, 
-                                                evaluatePoint=True, evaluateIndex=0, evaluateAction=agentAction)
+                                                evaluatePoint=True, evaluateAction=agentAction)
                 #Remove the value since it is no longer needed
                 currRegionSubset.pop(0)
                 
