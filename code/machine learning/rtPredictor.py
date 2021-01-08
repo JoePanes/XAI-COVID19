@@ -572,7 +572,6 @@ def evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluation
             prevDifference = 0
 
             for currIndex in range(len(group)):
-                print(currIndex)
                 currEvalAgentsDifference = group[currIndex][1]
                 
                 if currEvalAgentsDifference < 0:
@@ -627,26 +626,6 @@ def main():
         #for currGroup in currRegion:
         print(currRegion)
 
-    """
-    For tree search algorithm:
-    
-    Have it so that the metric used for deciding what is the best move is based upon the cumulative result of adding the difference in Rt value
-    between the dataset and the potential actions.
-    Where this can be seen as the cost, whereby the aim is to find a series of actions that result in the minimal total cumululative difference.
-    Other ways focusing achieving the best goal value or max depth value, without regard for the intermediate will be useless.
-
-    Handle evaluation in the same way as the Greedy agent, where only one action is prevented in the decision making process, with the same method of steping forward
-    to progress through the points and use the previous agent Rt value as a starting point.
-
-    Due to the need to look deeper, insure that there are an extra Depth - 1 elements at the end or to the end of the list
-
-    Insure that the algorithm is either flexible enough to handle reaching the end of the file during earlier levels of its search, or that there is a method of adjusting the depth as needed
-    to accomodate this event.
-
-    Use the group size as the depth for the trees (or atleast be dependent on it)?
-
-    Like in the A* search use a sort with a key to find the best series of actions
-    """
     
 if __name__ == "__main__":
     sys.exit(main())
