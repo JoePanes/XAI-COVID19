@@ -52,12 +52,16 @@ def processControlMeasures(processedData):
             if previousDateIndex > 0:
 
                 for currControlMeasure in CONTROL_MEASURES:
-                    val = int(processedData[previousDateIndex].get(currControlMeasure))
+                    try:
+                        val = int(processedData[previousDateIndex].get(currControlMeasure))
+                    except:
+                        continue
                     typeOfControlMeasure =CONTROL_MEASURES.get(currControlMeasure)
                     
                     values = typeOfControlMeasure[1]
 
                     currLevel = int(processedData[currRowIndex][currControlMeasure])
+                    
                     noZeros = 0
 
                     if typeOfControlMeasure[0].lower() == "trinary":
@@ -93,7 +97,10 @@ def processControlMeasures(processedData):
         newRow = deepcopy(processedData[currRowIndex])
 
         for currControlMeasure in CONTROL_MEASURES:
-            newRow.pop(currControlMeasure)
+            try:
+                newRow.pop(currControlMeasure)
+            except:
+                continue
         
         newData.append(newRow)
 
@@ -127,15 +134,17 @@ def writeFile(dataset, fileName, containRt = False):
             myWriter.writerow(row)
 
 
+region = "jp"
+filepath = FILE_PATH_CORE + f"/ox/raw/{region}.csv"
 
-filepath = FILE_PATH_CORE + "/ox/raw/uk.csv"
+oxDataset =  readFile("eu", filepath)
 
-ukOxDataset =  readFile("eu", filepath)
-
-controlUkOk = processControlMeasures(ukOxDataset)
-keys = controlUkOk[0].values()
+keys = oxDataset[0].values()
 
 for currKey in keys:
     print(currKey)
 
-writeFile(controlUkOk,"processed_uk")
+
+controlUkOk = processControlMeasures(oxDataset)
+
+writeFile(controlUkOk,f"processed_{region}")
