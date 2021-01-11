@@ -12,6 +12,7 @@ from copy import deepcopy
 QUANTILE_NO = 8
 GROUP_SIZE = 3
 MAX_DEPTH = GROUP_SIZE
+NUM_PROCESSES = 10
 
 REGIONS = {
     1 : "East Midlands",
@@ -264,6 +265,21 @@ def greedyAgent(currRegion, actionList, firstValue=True, evaluatePoint=False, ev
         
     return agentRtValues
 
+def mapGreedyAgent(regionalRtAndActionList):
+    """
+    The method of utililsing the map function, and unpacking the information stored within the singular variable
+    so that it can be used by the main greedyAgent() function.
+
+    INPUT:
+        :param regionalRtAndActionList: Tuple, containing all of the Rt values for the current region, the action list for the current region and
+                                               information for the Greedy Agent function.
+
+    OUTPUT:
+        returns the result of the main Greedy agent function.
+    """
+    currRegion, actionList, firstValue, evaluatePoint, evaluateAction = regionalRtAndActionList
+    return greedyAgent(currRegion, actionList, firstValue, evaluatePoint, evaluateAction)
+
 def evaluatePotentialActions(prevPoint, currPoint, potentialActionList):
     """
     Look through each of the potential actions, and return a list of how close they are
@@ -428,6 +444,23 @@ def treeSearch(regionRt, potentialActions, isEvaluationAgent=False, originalActi
             break
 
     return agentRtValues
+
+def mapTreeSearch(regionalRtAndActionList):
+    """
+    The method of utililsing the map function, and unpacking the information stored within the singular variable
+    so that it can be used by the main treeSearch() function.
+
+    INPUT:
+        :param regionalRtAndActionList: Tuple, containing all of the Rt values for the current region, the action list for the current region and
+                                               information for the tree function.
+
+    OUTPUT:
+        returns the result of the main Greedy agent function.
+    """   
+
+    currRegion, potentialActions, isEvaluationAgent, originalAction = regionalRtAndActionList
+
+    return treeSearch(currRegion, potentialActions, isEvaluationAgent, originalAction)
     
 def runAgent(potentialActionLists, regionRt, agentType="greedy"):
     """
@@ -442,23 +475,43 @@ def runAgent(potentialActionLists, regionRt, agentType="greedy"):
     OUTPUT:
         returns the results of running the agent on each region within the dataset
     """
-    regionalAgentResults = []
+    regionalRtAndActionList = []
+    
+    #Prepare data for map function
     for currIndex in range(len(regionRt)):
         currActionList = potentialActionLists[currIndex]
         currRegionRt = regionRt[currIndex]
-
+        
+        agentInfo = [currRegionRt, currActionList]
+        #Based upon what Agent is being used, store the relevant information for its use
         if agentType.lower() == "greedy":
-            agentResults = greedyAgent(currRegionRt, currActionList)
+            #firstValue
+            agentInfo.append(True)
+            #evaluatePoint
+            agentInfo.append(False)
+            #evaluateAction
+            agentInfo.append(None)
         
         elif agentType.lower() == "tree":
-            agentResults = treeSearch(currRegionRt, currActionList)
+            #isEvaluationAgent
+            agentInfo.append(False)
+            #originalAction
+            agentInfo.append(None)
+        regionalRtAndActionList.append(tuple(agentInfo))        
+    
+    if agentType.lower() == "greedy":
+        with multiprocessing.Pool(NUM_PROCESSES) as p:
+            agentResults = p.map(mapGreedyAgent, regionalRtAndActionList)
+    
+    elif agentType.lower() == "tree":
+        with multiprocessing.Pool(NUM_PROCESSES) as p:
+            agentResults = p.map(mapTreeSearch, regionalRtAndActionList)
 
-        agentRt = [currRt for currRt, _ in agentResults]
-
-        createGraph(currRegionRt, agentRt, currIndex, agentType)
-        regionalAgentResults.append(agentResults)
-        
-    return regionalAgentResults
+    for currIndex in range(len(agentResults)):
+        agentRt = [currRt for currRt, _ in agentResults[currIndex]]
+        createGraph(regionRt[currIndex], agentRt, currIndex, agentType)
+    
+    return agentResults
 
 def runEvaluationAgent(potentialActionLists, regionRt, regionalAgentResults, agentType="greedy"):
     """
@@ -497,7 +550,7 @@ def runEvaluationAgent(potentialActionLists, regionRt, regionalAgentResults, age
             elif agentType == "tree" and goalIndex + GROUP_SIZE > len(regionalAgentResults[currRegionIndex])-1:
                 break
 
-            for currIndex in noIterations: 
+            for currIndex in noIterations:
                 agentRt, agentAction = regionalAgentResults[currRegionIndex][startIndex + currIndex]
                 
                 #Due to this being the start val, replace with the agent Rt
@@ -582,7 +635,7 @@ def evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluation
     
     return regionalGroupResults
 
-def writeFile(regionRt, regionalAgentResults, regionalEvaluationResults, regionalGroupResults, agentType):
+def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regionalGroupResults, agentType):
     """
     Take in all of the results from the two runs of the Agent and write the desired parts to a 
     .csv file for further use elsewhere.
@@ -597,7 +650,13 @@ def writeFile(regionRt, regionalAgentResults, regionalEvaluationResults, regiona
     OUTPUT:
         returns nothing, but creates a .csv file containing the formatted data
     """
-    pass
+
+    labels = ["Region No", "Group No", "Goal Rt", "Agent Action to Goal", "Agent Difference", "Eval Agent Difference"]
+
+    for num in range(GROUP_SIZE):
+        labels.insert(1, f"Impactful Point {num}")
+
+    print(labels)
 
 
 def main():
@@ -631,6 +690,6 @@ def main():
     for currRegion in regionalGroupResultsTree[0]:
         #for currGroup in currRegion:
         print(currRegion)
-
+    
 if __name__ == "__main__":
     sys.exit(main())
