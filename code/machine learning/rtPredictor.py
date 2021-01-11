@@ -1,7 +1,7 @@
 import sys
 import multiprocessing
+import csv
 
-from csv import DictReader
 from pandas import qcut
 from pandas import DataFrame
 from statistics import mean
@@ -79,7 +79,7 @@ def readFile(dataset, filePath):
     compiledData = []
 
     with open(filePath, "r") as dataFile:
-        myReader = DictReader(dataFile)
+        myReader = csv.DictReader(dataFile)
         currInsertionIndex = 0
         firstIteration = True
         prevRegionNo = None
@@ -485,26 +485,19 @@ def runEvaluationAgent(potentialActionLists, regionRt, regionalAgentResults, age
             #Split the Rt values into k sized groups
             startIndex = currGroupIndex * GROUP_SIZE
             goalIndex = currGroupIndex * GROUP_SIZE + GROUP_SIZE
-
-            if goalIndex >= len(regionalAgentResults[currRegionIndex]):
-                continue
             
             #Gather the current groups data
             currRegionSubset = regionRt[currRegionIndex][startIndex:goalIndex + 1]
 
-            ignoreCurrentValues = False
-
             noIterations = range(len(currRegionSubset)-1)
             
-            for currIndex in noIterations:
-                #Don't run on the last elements of the region if they don't fit neatly
-                if agentType == "greedy" and goalIndex > len(regionalAgentResults[currRegionIndex])-1:
-                    ignoreCurrentValues = True
-                    break
-                elif agentType == "tree" and goalIndex + currIndex > len(regionalAgentResults[currRegionIndex])-1:
-                    ignoreCurrentValues = True
-                    break
-                
+            #Don't run on the last elements of the region if they don't fit neatly
+            if agentType == "greedy" and goalIndex > len(regionalAgentResults[currRegionIndex])-1:
+                break
+            elif agentType == "tree" and goalIndex + GROUP_SIZE > len(regionalAgentResults[currRegionIndex])-1:
+                break
+
+            for currIndex in noIterations: 
                 agentRt, agentAction = regionalAgentResults[currRegionIndex][startIndex + currIndex]
                 
                 #Due to this being the start val, replace with the agent Rt
@@ -527,8 +520,7 @@ def runEvaluationAgent(potentialActionLists, regionRt, regionalAgentResults, age
                 #Add the result to current grouping
                 currGroup.append((agentResults, distanceFromGoal))
             
-            if ignoreCurrentValues == False:
-                regionEvaluationGroups[currRegionIndex].append(((startIndex, goalIndex), currGroup))
+            regionEvaluationGroups[currRegionIndex].append(((startIndex, goalIndex), currGroup))
 
     return regionEvaluationGroups
 
@@ -565,22 +557,14 @@ def evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluation
 
             agentRtDifference = regionRt[currRegionIndex][goalIndex] - agentRt
 
-            if agentRtDifference < 0:
-                agentRtDifference = -agentRtDifference
             currentlyImpactfulPoints = []
             prevDifference = 0
 
             for currIndex in range(len(group)):
                 currEvalAgentsDifference = group[currIndex][1]
                 
-                if currEvalAgentsDifference < 0:
-                    currEvalAgentsDifference = -currEvalAgentsDifference
-
                 #Reduce the evaluation agents Rt difference with the original's
-                agentDifference = currEvalAgentsDifference - agentRtDifference
-
-                if agentDifference < 0:
-                    agentDifference = -agentDifference
+                agentDifference = abs(currEvalAgentsDifference - agentRtDifference)
                 
                 #Determine if point(s) is/are impactful
                 if prevDifference < agentDifference:
@@ -589,16 +573,37 @@ def evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluation
                 elif prevDifference == agentDifference:
                     currentlyImpactfulPoints.append(currIndex)
 
-            currRegionGroupResults.append((currentlyImpactfulPoints, prevDifference))
+            if len(currentlyImpactfulPoints) < GROUP_SIZE:
+                currRegionGroupResults.append((currentlyImpactfulPoints, prevDifference))
+            else:
+                currRegionGroupResults.append((None, 0))
         
         regionalGroupResults.append(currRegionGroupResults)
     
     return regionalGroupResults
 
+def writeFile(regionRt, regionalAgentResults, regionalEvaluationResults, regionalGroupResults, agentType):
+    """
+    Take in all of the results from the two runs of the Agent and write the desired parts to a 
+    .csv file for further use elsewhere.
+
+    INPUTS:
+        :param regionRt: List of lists, containing the Rt values for each day for each region
+        :param regionalAgentResults: List of lists, containing the results of the agents attempts to mimic regionRt
+        :param regionalEvaluationResults: List of lists, groups results of re-running the agent and restricting actions
+        :param regionalGroupResults: List of tuples, the result of further comparison of the previous variables in order to determine the most impactful points
+        :param agentType: String, the name of the agent currently being used
+
+    OUTPUT:
+        returns nothing, but creates a .csv file containing the formatted data
+    """
+    pass
+
+
 def main():
     filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
 
-    regionRt = readFile("uk",filePath)
+    regionRt = readFile("uk", filePath)
 
     rtValueChange = getRtValueChange(regionRt)
 
@@ -617,15 +622,15 @@ def main():
     regionalEvaluationGroupsTree = runEvaluationAgent(regionalPotentialActionLists, regionRt, regionalAgentResultsTree, "tree")
     regionalGroupResultsTree = evalutateAgentPerformance(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree)
     print("-Greedy-")      
-    for currRegion in regionalGroupResultsGreed[2]:
+    
+    for currRegion in regionalGroupResultsGreed[0]:
         #for currGroup in currRegion:
         print(currRegion)
     print("-Tree-")
 
-    for currRegion in regionalGroupResultsTree[2]:
+    for currRegion in regionalGroupResultsTree[0]:
         #for currGroup in currRegion:
         print(currRegion)
 
-    
 if __name__ == "__main__":
     sys.exit(main())
