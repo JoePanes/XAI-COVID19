@@ -28,8 +28,6 @@ REGIONS = {
     12 : "Wales",
 }
 
-filePath = "../../data/core/uk/Rt/uk_Rt.csv"
-
 class Node:
     def __init__(self, origRt, action, actionIndex, prevRt, parent = None):
         """
@@ -504,6 +502,7 @@ def runEvaluationAgent(potentialActionLists, regionRt, regionalAgentResults, age
                     ignoreCurrentValues = True
                     break
                 elif agentType == "tree" and goalIndex + currIndex > len(regionalAgentResults[currRegionIndex])-1:
+                    ignoreCurrentValues = True
                     break
                 
                 agentRt, agentAction = regionalAgentResults[currRegionIndex][startIndex + currIndex]
@@ -597,6 +596,7 @@ def evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluation
     return regionalGroupResults
 
 def main():
+    filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
 
     regionRt = readFile("uk",filePath)
 
@@ -616,11 +616,11 @@ def main():
     
     regionalEvaluationGroupsTree = runEvaluationAgent(regionalPotentialActionLists, regionRt, regionalAgentResultsTree, "tree")
     regionalGroupResultsTree = evalutateAgentPerformance(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree)
-                
+    print("-Greedy-")      
     for currRegion in regionalGroupResultsGreed[2]:
         #for currGroup in currRegion:
         print(currRegion)
-    print("----")
+    print("-Tree-")
 
     for currRegion in regionalGroupResultsTree[2]:
         #for currGroup in currRegion:

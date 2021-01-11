@@ -15,7 +15,7 @@ The order of operation in which the folders are used are as follows:
             \           /
          ___________________
         |                   |    At this stage, any strings have been mapped to a their numerical equivalent, and fields that offer highly variable numbers 
-        |     processed     |    have been discretized.
+        |    unprocessed    |    have been discretized.
         |___________________|
             |           |
           __|           |__

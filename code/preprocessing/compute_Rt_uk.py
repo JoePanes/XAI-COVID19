@@ -31,8 +31,8 @@ def setControlMeasures():
     return controlMeasures
 
 class computeRtUK(computeRt):
-    INPUT_FILE = "/processed/uk_mlTable_0_0.csv"
-    OUTPUT_FILE = "/Rt/uk_Rt.csv"
+    INPUT_FILE = "/1. unprocessed/uk_data.csv"
+    OUTPUT_FILE = "/2. Rt/uk_Rt.csv"
     OUTPUT_ERROR = "/uk/errors/"
 
     CONTROL_MEASURES = setControlMeasures()

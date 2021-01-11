@@ -51,8 +51,8 @@ def setupCategoriedFields():
 class processFeaturesEU(processFeatures):
     CATEGORISED_FIELDS = setupCategoriedFields()
 
-    INPUT_FILE = "/eu/raw/eu_data.csv"
-    OUTPUT_FILE = "/eu/processed/eu_mlTable_0_0.csv"
+    INPUT_FILE = "/eu/0. raw/eu_data.csv"
+    OUTPUT_FILE = "/eu/1. unprocessed/eu_data.csv"
     OUTPUT_ERROR = "/eu/errors/"
 
     def getRecordsRegion(self, row):

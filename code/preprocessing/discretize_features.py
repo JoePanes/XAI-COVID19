@@ -86,7 +86,7 @@ if __name__ == "__main__":
         dataset = input("UK or EU dataset? ").lower()
 
     if dataset == "uk" or dataset == "eu":
-        filePath = f"{FILE_PATH}{dataset}/Rt/{dataset}_Rt.csv"
+        filePath = f"{FILE_PATH}{dataset}/2. Rt/{dataset}_Rt.csv"
         
         rtData = readFile(dataset, filePath)
         #Get the data needed to perform K-means discretizing on
@@ -176,7 +176,7 @@ if __name__ == "__main__":
             fieldNames[field] = field
         
         #Save result
-        with open(f"{FILE_PATH}{dataset}/final/{dataset}_final.csv", "w") as optFile:
+        with open(f"{FILE_PATH}{dataset}/3. final/{dataset}_final.csv", "w") as optFile:
             myWriter = csv.DictWriter(optFile, fieldNames)
             myWriter.writerow(fieldNames)
 
@@ -219,6 +219,6 @@ if __name__ == "__main__":
         #Write to a text file
         time = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
         
-        descriptor = open(f"{FILE_PATH}{dataset}/final/description_{time}.txt", "x")
+        descriptor = open(f"{FILE_PATH}{dataset}/3. final/description_{time}.txt", "x")
         descriptor.write(outputText)
     exit()

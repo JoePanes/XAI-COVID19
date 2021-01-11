@@ -438,7 +438,7 @@ class computeRt():
         newData = self.processControlMeasures(processedData)
 
         #Log the current dataset before further processing
-        self.writeFile(newData, "/Rt/after_control_measures.csv")
+        self.writeFile(newData, "/2. Rt/after_control_measures.csv")
 
         regionalIndexList = self.getRegionalIndexs(newData)
         

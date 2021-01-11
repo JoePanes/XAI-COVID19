@@ -49,8 +49,8 @@ class processFeaturesUK(processFeatures):
 
     CATEGORISED_FIELDS = setupCategoriedFields()
     
-    INPUT_FILE = "/uk/raw/uk_data.csv"
-    OUTPUT_FILE = "/uk/processed/uk_mlTable_0_0.csv"
+    INPUT_FILE = "/uk/0. raw/uk_data.csv"
+    OUTPUT_FILE = "/uk/1. unprocessed/uk_data.csv"
     OUTPUT_ERROR = "/uk/errors/"
     
     NOT_WANTED_FIELDS = {
