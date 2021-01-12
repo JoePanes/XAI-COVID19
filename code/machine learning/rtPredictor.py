@@ -472,8 +472,19 @@ def mapTreeSearch(regionalRtAndActionList):
     """   
 
     currRegion, potentialActions, isEvaluationAgent, originalAction = regionalRtAndActionList
+    if isEvaluationAgent == False:
+        return treeSearch(currRegion, potentialActions, isEvaluationAgent, originalAction)
+    else:
+        regionEvaluationResults = []
+        
+        for currGroup in range(len(currRegion)):
+            groupResults = []
+            for currPoint in range(len(currRegion[currGroup])):
+                groupResults.append(treeSearch(currRegion[currGroup][currPoint], potentialActions, isEvaluationAgent, originalAction[currGroup][currPoint]))
 
-    return treeSearch(currRegion, potentialActions, isEvaluationAgent, originalAction)
+            regionEvaluationResults.append(groupResults)
+
+        return regionEvaluationResults
     
 def runAgent(potentialActionLists, regionRt, agentType="greedy"):
     """
@@ -570,8 +581,10 @@ def runEvaluationAgent(potentialActionLists, regionRt, regionalAgentResults, age
                 currRegionSubset[0] = agentRt
                 currGroup.append(deepcopy(currRegionSubset))
                 currGroupActions.append(agentAction)
+                
                 if agentType.lower() == "tree":
                     currRegionSubset.append(regionRt[currRegionIndex][goalIndex + currIndex])
+                
                 #Remove the value since it is no longer needed
                 currRegionSubset.pop(0)
 
@@ -709,7 +722,7 @@ def main():
 
     regionalPotentialActionLists = getPotentialActionLists(rtValueChange)
     
-    #regionalAgentResultsTree = runAgent(regionalPotentialActionLists, regionRt, "tree")
+    regionalAgentResultsTree = runAgent(regionalPotentialActionLists, regionRt, "tree")
     regionalAgentResultsGreed = runAgent(regionalPotentialActionLists, regionRt)
 
     print("----") 
@@ -717,8 +730,8 @@ def main():
     regionalEvaluationGroupsGreed = runEvaluationAgent(regionalPotentialActionLists, regionRt, regionalAgentResultsGreed)
     regionalGroupResultsGreed = evalutateAgentPerformance(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed)
     
-    #regionalEvaluationGroupsTree = runEvaluationAgent(regionalPotentialActionLists, regionRt, regionalAgentResultsTree, "tree")
-    #regionalGroupResultsTree = evalutateAgentPerformance(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree)
+    regionalEvaluationGroupsTree = runEvaluationAgent(regionalPotentialActionLists, regionRt, regionalAgentResultsTree, "tree")
+    regionalGroupResultsTree = evalutateAgentPerformance(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree)
     print("-Greedy-")      
     
     for currRegion in regionalGroupResultsGreed[0]:
@@ -726,9 +739,9 @@ def main():
         print(currRegion)
     print("-Tree-")
 
-    #for currRegion in regionalGroupResultsTree[0]:
+    for currRegion in regionalGroupResultsTree[0]:
         #for currGroup in currRegion:
-    #    print(currRegion)
+        print(currRegion)
     
 if __name__ == "__main__":
     sys.exit(main())
