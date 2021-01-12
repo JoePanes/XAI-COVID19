@@ -571,7 +571,7 @@ def runEvaluationAgent(potentialActionLists, regionRt, regionalAgentResults, age
             #Don't run on the last elements of the region if they don't fit neatly
             if agentType == "greedy" and goalIndex > len(regionalAgentResults[currRegionIndex])-1:
                 break
-            elif agentType == "tree" and goalIndex + GROUP_SIZE > len(regionalAgentResults[currRegionIndex])-1:
+            elif agentType == "tree" and goalIndex + GROUP_SIZE > len(regionalAgentResults[currRegionIndex]):
                 break
 
             for currIndex in noIterations:
@@ -662,27 +662,38 @@ def evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluation
 
             agentRtDifference = regionRt[currRegionIndex][goalIndex] - agentRt
 
-            currentlyImpactfulPoints = []
-            prevDifference = 0
+            pointImpact = []
+            differenceTotal = 0
+            firstRun = True
 
             for currIndex in range(len(group)):
                 currEvalAgentsDifference = group[currIndex][1]
                 
                 #Reduce the evaluation agents Rt difference with the original's
                 agentDifference = abs(currEvalAgentsDifference - agentRtDifference)
-                
-                #Determine if point(s) is/are impactful
-                if prevDifference < agentDifference:
-                    prevDifference = agentDifference
-                    currentlyImpactfulPoints = [currIndex]
-                elif prevDifference == agentDifference:
-                    currentlyImpactfulPoints.append(currIndex)
 
-            if len(currentlyImpactfulPoints) < GROUP_SIZE:
-                currRegionGroupResults.append((currentlyImpactfulPoints, prevDifference))
-            else:
-                currRegionGroupResults.append((None, 0))
-        
+                currPoint = 0
+                if firstRun:
+                    pointImpact = [[agentDifference, [currIndex]]]
+                    firstRun = False
+                    continue
+
+                #Rank the impact of the points
+                while currPoint < len(pointImpact) and pointImpact[currPoint][0] > agentDifference:
+                    currPoint += 1
+                
+                if currPoint == len(pointImpact):
+                    pointImpact.append([agentDifference, [currIndex]])
+                
+                elif pointImpact[currPoint][0] < agentDifference:
+                    pointImpact.insert(currPoint, [agentDifference, [currIndex]])
+                
+                elif pointImpact[currPoint][0] == agentDifference:
+                    pointImpact[currPoint][1].append(currIndex)
+
+                differenceTotal += agentDifference
+                                     
+            currRegionGroupResults.append(pointImpact)
         regionalGroupResults.append(currRegionGroupResults)
     
     return regionalGroupResults
