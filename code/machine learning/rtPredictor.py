@@ -238,7 +238,7 @@ def greedyAgent(currRegion, actionList, firstValue=True, evaluatePoint=False, ev
             actionListResults = prepareCurrentActionResults(currRegion, currRtIndex, actionList, firstValue)
         else:
             evalActionList = deepcopy(actionList)
-            
+
             evalActionList.pop(evaluateAction)
             removedAction = True
             
@@ -278,7 +278,20 @@ def mapGreedyAgent(regionalRtAndActionList):
         returns the result of the main Greedy agent function.
     """
     currRegion, actionList, firstValue, evaluatePoint, evaluateAction = regionalRtAndActionList
-    return greedyAgent(currRegion, actionList, firstValue, evaluatePoint, evaluateAction)
+
+    if evaluatePoint == False:
+        return greedyAgent(currRegion, actionList, firstValue, evaluatePoint, evaluateAction)
+    else:
+        regionEvaluationResults = []
+        
+        for currGroup in range(len(currRegion)):
+            groupResults = []
+            for currPoint in range(len(currRegion[currGroup])):
+                groupResults.append(greedyAgent(currRegion[currGroup][currPoint], actionList, firstValue, evaluatePoint, evaluateAction[currGroup][currPoint]))
+
+            regionEvaluationResults.append(groupResults)
+
+        return regionEvaluationResults
 
 def evaluatePotentialActions(prevPoint, currPoint, potentialActionList):
     """
@@ -487,16 +500,10 @@ def runAgent(potentialActionLists, regionRt, agentType="greedy"):
         if agentType.lower() == "greedy":
             #firstValue
             agentInfo.append(True)
-            #evaluatePoint
-            agentInfo.append(False)
-            #evaluateAction
-            agentInfo.append(None)
+
+        agentInfo.append(False)
+        agentInfo.append(None)
         
-        elif agentType.lower() == "tree":
-            #isEvaluationAgent
-            agentInfo.append(False)
-            #originalAction
-            agentInfo.append(None)
         regionalRtAndActionList.append(tuple(agentInfo))        
     
     if agentType.lower() == "greedy":
@@ -528,17 +535,23 @@ def runEvaluationAgent(potentialActionLists, regionRt, regionalAgentResults, age
         returns a list of lists containing tuples within which it contains the range of indexes that the current group covers,
                 and the result for each point after denying it the action originally taken.
     """
-    regionEvaluationGroups = [[] for _ in regionRt]
-
+    regionalRtAndActionList = []
+    regionalIndexes = []
     #For each region, get the start and end index for each group, along with the index of the goal value
     for currRegionIndex in range(len(regionalAgentResults)):
-        
+        currRegion = []
+        currRegionActions = []
+        currRegionIndexes = []
+
         for currGroupIndex in range(int(len(regionalAgentResults[currRegionIndex]) / GROUP_SIZE)):
             currGroup = []
+            currGroupActions = []
             #Split the Rt values into k sized groups
             startIndex = currGroupIndex * GROUP_SIZE
             goalIndex = currGroupIndex * GROUP_SIZE + GROUP_SIZE
             
+            
+
             #Gather the current groups data
             currRegionSubset = regionRt[currRegionIndex][startIndex:goalIndex + 1]
 
@@ -555,27 +568,53 @@ def runEvaluationAgent(potentialActionLists, regionRt, regionalAgentResults, age
                 
                 #Due to this being the start val, replace with the agent Rt
                 currRegionSubset[0] = agentRt
-
-                if agentType.lower() == "greedy":
-                    agentResults = greedyAgent(currRegionSubset, potentialActionLists[currRegionIndex], firstValue=False, 
-                                               evaluatePoint=True, evaluateAction=agentAction)
-
-                elif agentType.lower() == "tree":
-                    agentResults = treeSearch(currRegionSubset, potentialActionLists[currRegionIndex], True, agentAction)
-
+                currGroup.append(deepcopy(currRegionSubset))
+                currGroupActions.append(agentAction)
+                if agentType.lower() == "tree":
                     currRegionSubset.append(regionRt[currRegionIndex][goalIndex + currIndex])
                 #Remove the value since it is no longer needed
                 currRegionSubset.pop(0)
-                
-                agentRt, _ = agentResults[-1]
 
-                distanceFromGoal = regionRt[currRegionIndex][goalIndex] - agentRt
-                #Add the result to current grouping
-                currGroup.append((agentResults, distanceFromGoal))
+            currRegion.append(currGroup)
+            currRegionActions.append(currGroupActions)
+            currRegionIndexes.append((startIndex, goalIndex))
+        
+        regionalIndexes.append(currRegionIndexes)
+
+
+        agentInfo = [currRegion, potentialActionLists[currRegionIndex]]
+        #Based upon what Agent is being used, store the relevant information for its use
+        agentInfo.append(True)
+
+        if agentType.lower() == "greedy":
+            agentInfo.append(True)
             
-            regionEvaluationGroups[currRegionIndex].append(((startIndex, goalIndex), currGroup))
+        agentInfo.append(currRegionActions)
+        regionalRtAndActionList.append(tuple(agentInfo))
 
-    return regionEvaluationGroups
+    if agentType.lower() == "greedy":
+        with multiprocessing.Pool(NUM_PROCESSES) as p:
+            agentResults = p.map(mapGreedyAgent, regionalRtAndActionList)
+    
+    elif agentType.lower() == "tree":
+        with multiprocessing.Pool(NUM_PROCESSES) as p:
+            agentResults = p.map(mapTreeSearch, regionalRtAndActionList)
+
+    #After parrallel processing, make some final additions to the results
+    for currRegion in range(len(agentResults)):
+        for currGroup in range(len(agentResults[currRegion])):
+            for currPoint in range(len(agentResults[currRegion][currGroup])):
+
+                goalRt, _ = agentResults[currRegion][currGroup][currPoint][-1]
+
+                _, goalIndex = regionalIndexes[currRegion][currGroup]
+                
+                distanceFromGoal = regionRt[currRegion][goalIndex] - goalRt
+                agentResults[currRegion][currGroup][currPoint] = (agentResults[currRegion][currGroup][currPoint], distanceFromGoal)
+
+            agentResults[currRegion][currGroup] = (regionalIndexes[currRegion][currGroup], agentResults[currRegion][currGroup])
+
+    return agentResults
 
 def evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluationGroups):
     """
@@ -670,7 +709,7 @@ def main():
 
     regionalPotentialActionLists = getPotentialActionLists(rtValueChange)
     
-    regionalAgentResultsTree = runAgent(regionalPotentialActionLists, regionRt, "tree")
+    #regionalAgentResultsTree = runAgent(regionalPotentialActionLists, regionRt, "tree")
     regionalAgentResultsGreed = runAgent(regionalPotentialActionLists, regionRt)
 
     print("----") 
@@ -678,8 +717,8 @@ def main():
     regionalEvaluationGroupsGreed = runEvaluationAgent(regionalPotentialActionLists, regionRt, regionalAgentResultsGreed)
     regionalGroupResultsGreed = evalutateAgentPerformance(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed)
     
-    regionalEvaluationGroupsTree = runEvaluationAgent(regionalPotentialActionLists, regionRt, regionalAgentResultsTree, "tree")
-    regionalGroupResultsTree = evalutateAgentPerformance(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree)
+    #regionalEvaluationGroupsTree = runEvaluationAgent(regionalPotentialActionLists, regionRt, regionalAgentResultsTree, "tree")
+    #regionalGroupResultsTree = evalutateAgentPerformance(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree)
     print("-Greedy-")      
     
     for currRegion in regionalGroupResultsGreed[0]:
@@ -687,9 +726,9 @@ def main():
         print(currRegion)
     print("-Tree-")
 
-    for currRegion in regionalGroupResultsTree[0]:
+    #for currRegion in regionalGroupResultsTree[0]:
         #for currGroup in currRegion:
-        print(currRegion)
+    #    print(currRegion)
     
 if __name__ == "__main__":
     sys.exit(main())
