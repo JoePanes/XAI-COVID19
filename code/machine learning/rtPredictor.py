@@ -724,11 +724,15 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
     labels = ["Region No", "Group No"]
 
     for num in range(GROUP_SIZE):
-        labels.append(f"Impactful Point {num + 1} Rt Difference")
-        labels.append(f"Impactful Point {num + 1} Percentage")
+        labels.append(f"Point Impact {num + 1}")
+        labels.append(f"Point Impact {num + 1} Percentage")
+        labels.append(f"Point {num + 1 } to Point {num + 2} (Orig vs Agent) Rt Difference")
     
-    labels += ["Orig Agent Action to Goal", "Eval Agent Action to Goal", "Orig Agent Difference", "Eval Agent Difference"]
+    for num in range(GROUP_SIZE):
+        labels.append(f"Point {num + 1} Most Impactful?")
+    labels += ["Orig Agent Action to Goal", "Orig Agent Difference"]
     outputList = []
+
     for currRegionIndex in range(len(regionalGroupResults)):
         for currGroupIndex in range(len(regionalGroupResults[currRegionIndex])):
             currRow = {}
@@ -736,23 +740,32 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
             currRow["Region No"] = currRegionIndex + 1
             currRow["Group No"] = currGroupIndex+ 1
             
-            mostImpactfulPointIndex = None
+            mostImpactfulPointIndex = True
+            for point in range(GROUP_SIZE):
+                currRow[f"Point {point + 1} Most Impactful?"] = 0 
+
 
             for currImpactPoint in regionalGroupResults[currRegionIndex][currGroupIndex]:
-                for currPointIndex in currImpactPoint[1]:
-                    if mostImpactfulPointIndex == None:
-                        mostImpactfulPointIndex = currPointIndex
-                    currRow[f"Impactful Point {currPointIndex+1} Rt Difference"] = currImpactPoint[0]
-                    currRow[f"Impactful Point {currPointIndex+1} Percentage"] = currImpactPoint[2]
-            
+                for whichPoint in currImpactPoint[1]:
+                    if mostImpactfulPointIndex and currImpactPoint[2] > 0:
+                        currRow[f"Point {whichPoint + 1} Most Impactful?"] = 1
+                    currRow[f"Point Impact {whichPoint+1}"] = currImpactPoint[0]
+                    currRow[f"Point Impact {whichPoint+1} Percentage"] = currImpactPoint[2]
+                
+                mostImpactfulPointIndex = False
 
             indexs, group = regionalEvaluationResults[currRegionIndex][currGroupIndex]
-            _, goalIndex = indexs
+            startIndex, goalIndex = indexs
 
-            agentResults, distanceFromGoal = group[mostImpactfulPointIndex]
-            
-            currRow["Eval Agent Action to Goal"] = agentResults[0][1]
-            currRow["Eval Agent Difference"] = distanceFromGoal
+            for currPoint in range(GROUP_SIZE):
+                #Calculate the difference in Rt value for the original data, and the agent
+                pointDiffOrig = regionRt[currRegionIndex][startIndex + currPoint + 1] - regionRt[currRegionIndex][startIndex + currPoint]
+
+                currPointAgentRt = regionalAgentResults[currRegionIndex][startIndex + currPoint][0]
+                nextPointAgentRt = regionalAgentResults[currRegionIndex][startIndex + currPoint + 1][0]
+                pointDiffAgent = nextPointAgentRt - currPointAgentRt
+
+                currRow[f"Point {currPoint + 1 } to Point {currPoint + 2} (Orig vs Agent) Rt Difference"] = pointDiffOrig - pointDiffAgent
             
             agentRt, action = regionalAgentResults[currRegionIndex][goalIndex]
 
@@ -810,6 +823,7 @@ def main():
         print(currRegion)
 
     saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, "tree")
+    saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, "greedy")
     
 if __name__ == "__main__":
     sys.exit(main())
