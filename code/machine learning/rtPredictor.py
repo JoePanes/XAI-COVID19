@@ -671,7 +671,9 @@ def evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluation
                 
                 #Reduce the evaluation agents Rt difference with the original's
                 agentDifference = abs(currEvalAgentsDifference - agentRtDifference)
-
+                
+                differenceTotal += agentDifference
+                
                 currPoint = 0
                 if firstRun:
                     pointImpact = [[agentDifference, [currIndex]]]
@@ -691,8 +693,13 @@ def evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluation
                 elif pointImpact[currPoint][0] == agentDifference:
                     pointImpact[currPoint][1].append(currIndex)
 
-                differenceTotal += agentDifference
-                                     
+            #Enumerate the impact of each point in relation to their difference
+            for currPoint in range(len(pointImpact)):
+                if pointImpact[currPoint][0] > 0:
+                    currPercent = round((pointImpact[currPoint][0] / float(differenceTotal))  * 100)
+                    pointImpact[currPoint].append(int(currPercent))
+                else:
+                    pointImpact[currPoint].append(0)
             currRegionGroupResults.append(pointImpact)
         regionalGroupResults.append(currRegionGroupResults)
     
@@ -743,16 +750,18 @@ def main():
     
     regionalEvaluationGroupsTree = runEvaluationAgent(regionalPotentialActionLists, regionRt, regionalAgentResultsTree, "tree")
     regionalGroupResultsTree = evalutateAgentPerformance(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree)
-    print("-Greedy-")      
     
+    print("-Greedy-")      
     for currRegion in regionalGroupResultsGreed[0]:
         #for currGroup in currRegion:
         print(currRegion)
+    
     print("-Tree-")
-
     for currRegion in regionalGroupResultsTree[0]:
         #for currGroup in currRegion:
         print(currRegion)
+
+    saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, "tree")
     
 if __name__ == "__main__":
     sys.exit(main())
