@@ -721,12 +721,60 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
         returns nothing, but creates a .csv file containing the formatted data
     """
 
-    labels = ["Region No", "Group No", "Goal Rt", "Agent Action to Goal", "Agent Difference", "Eval Agent Difference"]
+    labels = ["Region No", "Group No"]
 
     for num in range(GROUP_SIZE):
-        labels.insert(1, f"Impactful Point {num}")
+        labels.append(f"Impactful Point {num + 1} Rt Difference")
+        labels.append(f"Impactful Point {num + 1} Percentage")
+    
+    labels += ["Orig Agent Action to Goal", "Eval Agent Action to Goal", "Orig Agent Difference", "Eval Agent Difference"]
+    outputList = []
+    for currRegionIndex in range(len(regionalGroupResults)):
+        for currGroupIndex in range(len(regionalGroupResults[currRegionIndex])):
+            currRow = {}
 
-    print(labels)
+            currRow["Region No"] = currRegionIndex + 1
+            currRow["Group No"] = currGroupIndex+ 1
+            
+            mostImpactfulPointIndex = None
+
+            for currImpactPoint in regionalGroupResults[currRegionIndex][currGroupIndex]:
+                for currPointIndex in currImpactPoint[1]:
+                    if mostImpactfulPointIndex == None:
+                        mostImpactfulPointIndex = currPointIndex
+                    currRow[f"Impactful Point {currPointIndex+1} Rt Difference"] = currImpactPoint[0]
+                    currRow[f"Impactful Point {currPointIndex+1} Percentage"] = currImpactPoint[2]
+            
+
+            indexs, group = regionalEvaluationResults[currRegionIndex][currGroupIndex]
+            _, goalIndex = indexs
+
+            agentResults, distanceFromGoal = group[mostImpactfulPointIndex]
+            
+            currRow["Eval Agent Action to Goal"] = agentResults[0][1]
+            currRow["Eval Agent Difference"] = distanceFromGoal
+            
+            agentRt, action = regionalAgentResults[currRegionIndex][goalIndex]
+
+            currRow["Orig Agent Action to Goal"] = action
+            currRow["Orig Agent Difference"] = regionRt[currRegionIndex][goalIndex] - agentRt
+
+            outputList.append(currRow)
+
+    with open("../../data/core/" + "uk/predictor/" + agentType + ".csv", "w") as optFile:
+            
+        outputLabels = {}
+        for currFieldName in labels:
+            outputLabels[currFieldName] = currFieldName
+        
+        myWriter = csv.DictWriter(optFile, outputLabels)
+        
+        myWriter.writerow(outputLabels)
+        
+        for row in outputList:
+            myWriter.writerow(row)
+
+
 
 
 def main():
