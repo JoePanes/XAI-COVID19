@@ -1,13 +1,22 @@
 import sys
 import multiprocessing
 import csv
+import os
 
 from pandas import qcut
 from pandas import DataFrame
+from pandas import read_csv
 from statistics import mean
 from matplotlib import pyplot as plt
 from copy import deepcopy
-
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+from random import randint
+#For the LSTM
+"""from keras.models import Sequential
+from keras.layers import Dense
+from keras.layers import LSTM
+from keras.layers import Dropout"""
 
 QUANTILE_NO = 8
 GROUP_SIZE = 3
@@ -718,9 +727,9 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
         :param agentType: String, the name of the agent currently being used
 
     OUTPUT:
-        returns nothing, but creates a .csv file containing the formatted data
+        returns the filepath for the newly created .csv containing the formatted data
     """
-
+    filePath = "../../data/core/" + "uk/predictor/" + agentType + ".csv"
     labels = ["Region No", "Group No"]
 
     for num in range(GROUP_SIZE):
@@ -730,7 +739,7 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
     
     for num in range(GROUP_SIZE):
         labels.append(f"Point {num + 1} Most Impactful?")
-    labels += ["Orig Agent Action to Goal", "Orig Agent Difference"]
+    labels += ["Agent Action to Goal", "Agent Difference"]
     outputList = []
 
     for currRegionIndex in range(len(regionalGroupResults)):
@@ -769,12 +778,12 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
             
             agentRt, action = regionalAgentResults[currRegionIndex][goalIndex]
 
-            currRow["Orig Agent Action to Goal"] = action
-            currRow["Orig Agent Difference"] = regionRt[currRegionIndex][goalIndex] - agentRt
+            currRow["Agent Action to Goal"] = action
+            currRow["Agent Difference"] = regionRt[currRegionIndex][goalIndex] - agentRt
 
             outputList.append(currRow)
 
-    with open("../../data/core/" + "uk/predictor/" + agentType + ".csv", "w") as optFile:
+    with open(filePath, "w") as optFile:
             
         outputLabels = {}
         for currFieldName in labels:
@@ -786,12 +795,58 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
         
         for row in outputList:
             myWriter.writerow(row)
+    
+    return filePath
 
+def prepareData(filePath):
+    """
+    Read in a .csv file, then prepare the data for use with Long-Short-Term Memory
 
+    INPUT:
+        :param filePath: String, the location of the .csv file to be used 
+    OUTPUT:
+        returns four separate Pandas Dataframes, these are the training set, test set, and their corresponding most impactful.
+    """
+    compiledData = read_csv(filePath)
 
+    splitTrainData, splitTestData = train_test_split(compiledData, test_size=0.2)
+    
+    #Perform feature scaling
+    scaler = MinMaxScaler()
+
+    dataHeaders = list(splitTrainData.columns.values)
+    #Remove Region No and Group No from feature scaling list
+    dataHeaders.pop(0)
+    dataHeaders.pop(0)
+    
+    goalLabels = []
+
+    for num in range(GROUP_SIZE):
+        goalLabels.append(f"Point {num + 1} Most Impactful?")
+
+    scalingColumns = []
+    for currHeaderIndex in range(len(dataHeaders)):
+        #Ignore the binary most impactful columns
+        if dataHeaders[currHeaderIndex][-1:] == "?":
+            continue
+        else:
+            print(dataHeaders[currHeaderIndex])
+            scalingColumns.append(dataHeaders[currHeaderIndex])
+    
+    splitTrainData[scalingColumns] = scaler.fit_transform(splitTrainData[scalingColumns])
+    splitTestData[scalingColumns] = scaler.transform(splitTestData[scalingColumns])
+
+    #Split the data
+    trainingData = splitTrainData.drop(["Group No",] + goalLabels, axis=1)
+    trainingImpact = splitTrainData[goalLabels]
+
+    testData = splitTestData.drop(["Group No",] + goalLabels, axis=1)
+    testImpact = splitTestData[goalLabels]
+
+    return trainingData, trainingImpact, testData, testImpact
 
 def main():
-    filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
+    """filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
 
     regionRt = readFile("uk", filePath)
 
@@ -822,8 +877,10 @@ def main():
         #for currGroup in currRegion:
         print(currRegion)
 
-    saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, "tree")
-    saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, "greedy")
+    filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, "tree")
+    filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, "greedy")"""
     
+    prepareData("../../data/core/" + "uk/predictor/tree.csv")
+
 if __name__ == "__main__":
     sys.exit(main())
