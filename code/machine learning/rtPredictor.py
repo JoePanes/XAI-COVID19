@@ -3,20 +3,24 @@ import multiprocessing
 import csv
 import os
 
+import numpy as np
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM
+from tensorflow.keras.layers import Dropout
+from tensorflow.keras.layers import Dense
+
 from pandas import qcut
 from pandas import DataFrame
 from pandas import read_csv
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+
 from statistics import mean
 from matplotlib import pyplot as plt
 from copy import deepcopy
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
 from random import randint
-#For the LSTM
-"""from keras.models import Sequential
-from keras.layers import Dense
-from keras.layers import LSTM
-from keras.layers import Dropout"""
 
 QUANTILE_NO = 8
 GROUP_SIZE = 3
@@ -804,17 +808,27 @@ def prepareData(filePath):
 
     INPUT:
         :param filePath: String, the location of the .csv file to be used 
+    
     OUTPUT:
         returns four separate Pandas Dataframes, these are the training set, test set, and their corresponding most impactful.
     """
     compiledData = read_csv(filePath)
 
-    splitTrainData, splitTestData = train_test_split(compiledData, test_size=0.2)
-    
-    #Perform feature scaling
-    scaler = MinMaxScaler()
+    maxGroupNo = findGroupNoCutoff(compiledData)
 
+    #Remove Group Nos that don't exist in all regions
+    rowsToDrop = []
+    for index, row in compiledData.iterrows():
+        if int(row["Group No"]) > maxGroupNo:
+            rowsToDrop.append(index)
+
+    compiledData.drop(rowsToDrop, inplace=True)
+
+    splitTrainData, splitTestData = train_test_split(compiledData, test_size=0.2)
+
+    #Get ready to perform feature scaling
     dataHeaders = list(splitTrainData.columns.values)
+    
     #Remove Region No and Group No from feature scaling list
     dataHeaders.pop(0)
     dataHeaders.pop(0)
@@ -830,11 +844,12 @@ def prepareData(filePath):
         if dataHeaders[currHeaderIndex][-1:] == "?":
             continue
         else:
-            print(dataHeaders[currHeaderIndex])
             scalingColumns.append(dataHeaders[currHeaderIndex])
-    
-    splitTrainData[scalingColumns] = scaler.fit_transform(splitTrainData[scalingColumns])
-    splitTestData[scalingColumns] = scaler.transform(splitTestData[scalingColumns])
+
+    scaler = MinMaxScaler()
+
+    scaler.fit_transform(splitTrainData[scalingColumns])
+    scaler.transform(splitTestData[scalingColumns])
 
     #Split the data
     trainingData = splitTrainData.drop(["Group No",] + goalLabels, axis=1)
@@ -845,6 +860,81 @@ def prepareData(filePath):
 
     return trainingData, trainingImpact, testData, testImpact
 
+def findGroupNoCutoff(dataframe):
+    """
+    From the dataframe:
+        1. Determine where the border points between each region in the data
+        2. Using the end points, get the last Group No in each region
+        3. Find the largest Group No that exists in all regions
+    INPUT:
+        :param dataframe: Pandas Dataframe, containing the data after having run the evaluation step on the predictor
+
+    OUTPUT:
+        returns an integer of the largest Group No
+    """
+    #Find where one region ends, and the next begins
+    currStartIndexNo = None
+    currRegion = None
+    regionalRangeList = []
+    for index, row in dataframe.iterrows():
+        
+        if currRegion != row["Region No"]:
+            if currRegion != None:
+                regionalRangeList.append((currStartIndexNo, index-1))
+            
+            currRegion = row["Region No"]
+            currStartIndexNo = index
+
+    #It misses (due to the if) one region at the end, therefore, add it on
+    currIndex = regionalRangeList[-1][1]
+    regionalRangeList.append((currIndex + 1, len(dataframe.index)-1))
+
+    #Based upon the regional start and end points, get the last Group No of each region
+    groupLengths = []
+    dataframeGroupCol = dataframe["Group No"]
+    for _, end in regionalRangeList:
+        groupLengths.append(int(dataframeGroupCol[end]))
+
+    #Find the smallest-largest point, that exists in all regions
+    return min(groupLengths)
+
+def runLSTM(trainingData, trainingImpact, testData, testImpact):
+    """
+    Runs the LSTM Recurrent Neural Network on the split dataset
+
+    INPUTS:
+        :param trainingData: Pandas Dataframe, contains the feature scaled data
+        :param trainingImpact: Pandas Dataframe, contains the binary columns for Most Impactful Points?
+        :param testData: Pandas Dataframe, contains the feature scaled data
+        :param testImpact: Pandas Dataframe, contains the binary columns for Most Impactful Points?
+    """
+
+    trainingDataNP, trainingImpactNP = trainingData.to_numpy(), trainingImpact.to_numpy()
+    testDataNP, testImpactNP = testData.to_numpy(), testImpact.to_numpy()
+
+    print("-----------")
+    len(trainingDataNP)
+    print(len(trainingData.index))
+    print(len(trainingDataNP))
+    print(trainingDataNP.shape)
+    print(trainingDataNP[0])
+    print("-----------")
+    model = Sequential()
+    model.add(LSTM(128,input_shape=trainingDataNP.shape, activation="relu", return_sequences=True))
+    model.add(Dropout(0.2))
+
+    model.add(LSTM(128, activation="relu"))
+    model.add(Dropout(0.2))
+
+    model.add(Dense(32, activation="relu"))
+    model.add(Dropout(0.2))
+
+    model.add(Dense(GROUP_SIZE, activation="softmax"))
+
+    model.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+
+    model.fit(trainingDataNP, trainingImpactNP, epochs=3, validation_data=(testDataNP, testImpactNP), batch_size=10)
+    
 def main():
     """filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
 
@@ -880,7 +970,8 @@ def main():
     filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, "tree")
     filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, "greedy")"""
     
-    prepareData("../../data/core/" + "uk/predictor/tree.csv")
+    trainingData, trainingImpact, testData, testImpact = prepareData("../../data/core/" + "uk/predictor/tree.csv")
+    runLSTM(trainingData, trainingImpact, testData, testImpact)
 
 if __name__ == "__main__":
     sys.exit(main())
