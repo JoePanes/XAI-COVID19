@@ -407,7 +407,7 @@ class computeRt():
             
             if currRegion != self.getRegion(dataset[currIndex]):
                 if currRegion != None:
-                    regionalRangeList.append((currStartIndexNo, currIndex))
+                    regionalRangeList.append((currStartIndexNo, currIndex-1))
                 
                 currRegion = self.getRegion(dataset[currIndex])
                 currStartIndexNo = currIndex
@@ -415,7 +415,7 @@ class computeRt():
         
         #It misses (due to the if) one region at the end, therefore, add it on
         currIndex = regionalRangeList[-1][1]
-        regionalRangeList.append((currIndex + 1, len(dataset)))
+        regionalRangeList.append((currIndex + 1, len(dataset)-1))
 
         return regionalRangeList
 
