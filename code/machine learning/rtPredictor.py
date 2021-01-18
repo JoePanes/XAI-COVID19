@@ -718,7 +718,7 @@ def evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluation
     
     return regionalGroupResults
 
-def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regionalGroupResults, agentType):
+def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regionalGroupResults, regionalActionLists, agentType):
     """
     Take in all of the results from the two runs of the Agent and write the desired parts to a 
     .csv file for further use elsewhere.
@@ -728,64 +728,54 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
         :param regionalAgentResults: List of lists, containing the results of the agents attempts to mimic regionRt
         :param regionalEvaluationResults: List of lists, groups results of re-running the agent and restricting actions
         :param regionalGroupResults: List of tuples, the result of further comparison of the previous variables in order to determine the most impactful points
+        :param regionalActionLists: List of lists, the potential actions that could be taken by the agent for each of the regions
         :param agentType: String, the name of the agent currently being used
 
     OUTPUT:
         returns the filepath for the newly created .csv containing the formatted data
     """
     filePath = "../../data/core/" + "uk/predictor/" + agentType + ".csv"
-    labels = ["Region No", "Group No"]
+    labels = ["Region No", "Group No", "Current Point (Orig) Rt", "Current Point (Agent) Rt", "Current Point (Orig vs Agent) Rt Difference", 
+              "Agent Action to Next Point (Index)", "Agent Action to Next Point (Value)", "Point Impact", "Point Impact Percentage", "Most Impactful?",]
 
-    for num in range(GROUP_SIZE):
-        labels.append(f"Point Impact {num + 1}")
-        labels.append(f"Point Impact {num + 1} Percentage")
-        labels.append(f"Point {num + 1 } to Point {num + 2} (Orig vs Agent) Rt Difference")
-    
-    for num in range(GROUP_SIZE):
-        labels.append(f"Point {num + 1} Most Impactful?")
-    labels += ["Agent Action to Goal", "Agent Difference"]
     outputList = []
 
     for currRegionIndex in range(len(regionalGroupResults)):
         for currGroupIndex in range(len(regionalGroupResults[currRegionIndex])):
-            currRow = {}
+            for currIndex in range(GROUP_SIZE):
+                currRow = {}
 
-            currRow["Region No"] = currRegionIndex + 1
-            currRow["Group No"] = currGroupIndex+ 1
-            
-            mostImpactfulPointIndex = True
-            for point in range(GROUP_SIZE):
-                currRow[f"Point {point + 1} Most Impactful?"] = 0 
-
-
-            for currImpactPoint in regionalGroupResults[currRegionIndex][currGroupIndex]:
-                for whichPoint in currImpactPoint[1]:
-                    if mostImpactfulPointIndex and currImpactPoint[2] > 0:
-                        currRow[f"Point {whichPoint + 1} Most Impactful?"] = 1
-                    currRow[f"Point Impact {whichPoint+1}"] = currImpactPoint[0]
-                    currRow[f"Point Impact {whichPoint+1} Percentage"] = currImpactPoint[2]
+                currRow["Region No"] = currRegionIndex + 1
+                currRow["Group No"] = currGroupIndex+ 1
                 
-                mostImpactfulPointIndex = False
+                group = regionalGroupResults[currRegionIndex][currGroupIndex]
+                for currImpactPointIndex in range(len(group)):
+                    if currIndex in group[currImpactPointIndex][1]:
+                        if currImpactPointIndex == 0:
+                            currRow["Most Impactful?"] = 1
+                        else:
+                            currRow["Most Impactful?"] = 0
 
-            indexs, group = regionalEvaluationResults[currRegionIndex][currGroupIndex]
-            startIndex, goalIndex = indexs
+                        currRow[f"Point Impact"] = group[currImpactPointIndex][0]
+                        currRow[f"Point Impact Percentage"] = group[currImpactPointIndex][2]
+                        break                
 
-            for currPoint in range(GROUP_SIZE):
+                indexs, group = regionalEvaluationResults[currRegionIndex][currGroupIndex]
+                startIndex, goalIndex = indexs
+
                 #Calculate the difference in Rt value for the original data, and the agent
-                pointDiffOrig = regionRt[currRegionIndex][startIndex + currPoint + 1] - regionRt[currRegionIndex][startIndex + currPoint]
+                pointOrig = regionRt[currRegionIndex][startIndex + currIndex]
 
-                currPointAgentRt = regionalAgentResults[currRegionIndex][startIndex + currPoint][0]
-                nextPointAgentRt = regionalAgentResults[currRegionIndex][startIndex + currPoint + 1][0]
-                pointDiffAgent = nextPointAgentRt - currPointAgentRt
+                agentRt, action = regionalAgentResults[currRegionIndex][startIndex + currIndex]
+                
+                currRow["Current Point (Orig) Rt"] = pointOrig
+                currRow["Current Point (Agent) Rt"] = agentRt
+                currRow["Current Point (Orig vs Agent) Rt Difference"] = abs(pointOrig - agentRt)
+                
+                currRow["Agent Action to Next Point (Index)"] = action
+                currRow["Agent Action to Next Point (Value)"] = regionalActionLists[currRegionIndex][action]
 
-                currRow[f"Point {currPoint + 1 } to Point {currPoint + 2} (Orig vs Agent) Rt Difference"] = pointDiffOrig - pointDiffAgent
-            
-            agentRt, action = regionalAgentResults[currRegionIndex][goalIndex]
-
-            currRow["Agent Action to Goal"] = action
-            currRow["Agent Difference"] = regionRt[currRegionIndex][goalIndex] - agentRt
-
-            outputList.append(currRow)
+                outputList.append(currRow)
 
     with open(filePath, "w") as optFile:
             
@@ -919,8 +909,11 @@ def runLSTM(trainingData, trainingImpact, testData, testImpact):
     print(trainingDataNP.shape)
     print(trainingDataNP[0])
     print("-----------")
+    trainingDataNP = np.reshape(trainingDataNP, (trainingDataNP.shape[0], 1, trainingDataNP.shape[1]))
+    testDataNP = np.reshape(testDataNP, (testDataNP.shape[0], 1, testDataNP.shape[1]))
+
     model = Sequential()
-    model.add(LSTM(128,input_shape=trainingDataNP.shape, activation="relu", return_sequences=True))
+    model.add(LSTM(128,input_shape=(883, 12), activation="relu", return_sequences=True))
     model.add(Dropout(0.2))
 
     model.add(LSTM(128, activation="relu"))
@@ -936,7 +929,7 @@ def runLSTM(trainingData, trainingImpact, testData, testImpact):
     model.fit(trainingDataNP, trainingImpactNP, epochs=3, validation_data=(testDataNP, testImpactNP), batch_size=10)
     
 def main():
-    """filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
+    filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
 
     regionRt = readFile("uk", filePath)
 
@@ -967,11 +960,11 @@ def main():
         #for currGroup in currRegion:
         print(currRegion)
 
-    filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, "tree")
-    filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, "greedy")"""
+    filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree")
+    filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy")
     
-    trainingData, trainingImpact, testData, testImpact = prepareData("../../data/core/" + "uk/predictor/tree.csv")
-    runLSTM(trainingData, trainingImpact, testData, testImpact)
+    """trainingData, trainingImpact, testData, testImpact = prepareData("../../data/core/" + "uk/predictor/tree.csv")
+    runLSTM(trainingData, trainingImpact, testData, testImpact)"""
 
 if __name__ == "__main__":
     sys.exit(main())
