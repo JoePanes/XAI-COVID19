@@ -60,8 +60,12 @@ def processControlMeasures(processedData):
                     
                     values = typeOfControlMeasure[1]
 
-                    currLevel = int(processedData[currRowIndex][currControlMeasure])
-                    
+                    try:
+                        currLevel = int(processedData[currRowIndex][currControlMeasure])
+                    except:
+                        print(currRowIndex, " | ", currControlMeasure)
+                        exit()
+                        
                     noZeros = 0
 
                     if typeOfControlMeasure[0].lower() == "trinary":
@@ -134,8 +138,8 @@ def writeFile(dataset, fileName, containRt = False):
             myWriter.writerow(row)
 
 
-region = "jp"
-filepath = FILE_PATH_CORE + f"/ox/raw/{region}.csv"
+region = "sz"
+filepath = FILE_PATH_CORE + f"ox/raw/{region}.csv"
 
 oxDataset =  readFile("eu", filepath)
 
