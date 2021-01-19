@@ -404,7 +404,7 @@ def getCumulativeDifference(element):
     """
     return element.cumulativeDifference
 
-def treeSearch(regionRt, potentialActions, isEvaluationAgent=False, originalAction=None):
+def treeSearch(regionRt, potentialActions, isEvaluationAgent=False, originalAction=None, depthReduction=None):
     """
     Performs a tree search out the MAX_DEPTH to select the best (according to the heuristic) action to take
 
@@ -413,6 +413,7 @@ def treeSearch(regionRt, potentialActions, isEvaluationAgent=False, originalActi
         :param potentialActions: List of floats, containing floats to be used to alter the Rt value of the previous point
         :param isEvaluationAgent: Boolean, whether the current use of the function is for evaluating a previous run
         :param originalAction: Integer, the index of the original agent action within the potential action list
+        :param depthReduction: Integer, the amount to reduce the depth by in order to stop at the goal index during evaluation
     
     OUTPUT:
         returns a list of tuples, containing the Rt value and the index for the action that resulted in said Rt value
@@ -441,9 +442,12 @@ def treeSearch(regionRt, potentialActions, isEvaluationAgent=False, originalActi
             toBeExploredNodes.append(Node(regionRt[currRootIndex], action, actionIndex, root.currVal, root))
         
         currDepth = 1
+        maxDepth = MAX_DEPTH
+        if depthReduction != None:
+            maxDepth = MAX_DEPTH - depthReduction
 
         #Explore to max depth or until end of the region
-        while MAX_DEPTH > currDepth and currRootIndex + currDepth <= len(regionRt) - 1:
+        while maxDepth > currDepth and currRootIndex + currDepth <= len(regionRt) - 1:
             
             while len(toBeExploredNodes) > 0:
                 currentNode = toBeExploredNodes.pop(0)
@@ -486,14 +490,15 @@ def mapTreeSearch(regionalRtAndActionList):
 
     currRegion, potentialActions, isEvaluationAgent, originalAction = regionalRtAndActionList
     if isEvaluationAgent == False:
-        return treeSearch(currRegion, potentialActions, isEvaluationAgent, originalAction)
+        return treeSearch(currRegion, potentialActions)
     else:
         regionEvaluationResults = []
         
         for currGroup in range(len(currRegion)):
             groupResults = []
+
             for currPoint in range(len(currRegion[currGroup])):
-                groupResults.append(treeSearch(currRegion[currGroup][currPoint], potentialActions, isEvaluationAgent, originalAction[currGroup][currPoint]))
+                groupResults.append(treeSearch(currRegion[currGroup][currPoint], potentialActions, isEvaluationAgent, originalAction[currGroup][currPoint], currPoint))
 
             regionEvaluationResults.append(groupResults)
 
@@ -524,8 +529,10 @@ def runAgent(potentialActionLists, regionRt, agentType="greedy"):
         if agentType.lower() == "greedy":
             #firstValue
             agentInfo.append(True)
-
+        
+        #isEvaluationAgent
         agentInfo.append(False)
+        #Action
         agentInfo.append(None)
         
         regionalRtAndActionList.append(tuple(agentInfo))        
@@ -594,9 +601,6 @@ def runEvaluationAgent(potentialActionLists, regionRt, regionalAgentResults, age
                 currRegionSubset[0] = agentRt
                 currGroup.append(deepcopy(currRegionSubset))
                 currGroupActions.append(agentAction)
-                
-                if agentType.lower() == "tree":
-                    currRegionSubset.append(regionRt[currRegionIndex][goalIndex + currIndex])
                 
                 #Remove the value since it is no longer needed
                 currRegionSubset.pop(0)
@@ -736,7 +740,9 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
     """
     filePath = "../../data/core/" + "uk/predictor/" + agentType + ".csv"
     labels = ["Region No", "Group No", "Current Point (Orig) Rt", "Current Point (Agent) Rt", "Current Point (Orig vs Agent) Rt Difference", 
-              "Agent Action to Next Point (Index)", "Agent Action to Next Point (Value)", "Point Impact", "Point Impact Percentage", "Most Impactful?",]
+              "Agent Action to Next Point (Index)", "Agent Action to Next Point (Value)", "Point Impact", "Point Impact Percentage", "Goal Point (Orig) Rt", 
+              "Goal Point (Agent) Rt", "Goal Point (Eval) Rt", "Goal Point (Orig vs Agent) Rt Difference", "Goal Point (Orig vs Eval) Rt Difference",
+              "Goal Point (Agent vs Eval) Rt Difference", "Most Impactful?",]
 
     outputList = []
 
@@ -765,16 +771,27 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
 
                 #Calculate the difference in Rt value for the original data, and the agent
                 pointOrig = regionRt[currRegionIndex][startIndex + currIndex]
+                goalOrig = regionRt[currRegionIndex][goalIndex]
 
                 agentRt, action = regionalAgentResults[currRegionIndex][startIndex + currIndex]
                 
                 currRow["Current Point (Orig) Rt"] = pointOrig
                 currRow["Current Point (Agent) Rt"] = agentRt
-                currRow["Current Point (Orig vs Agent) Rt Difference"] = abs(pointOrig - agentRt)
+                currRow["Current Point (Orig vs Agent) Rt Difference"] = pointOrig - agentRt
                 
                 currRow["Agent Action to Next Point (Index)"] = action
                 currRow["Agent Action to Next Point (Value)"] = regionalActionLists[currRegionIndex][action]
 
+                currGroupGoal = group[currIndex]
+                goalAgentRt = regionalAgentResults[currRegionIndex][goalIndex][0]
+                
+                currRow["Goal Point (Orig) Rt"] = goalOrig
+                currRow["Goal Point (Agent) Rt"] = goalAgentRt
+                currRow["Goal Point (Eval) Rt"] = goalOrig + currGroupGoal[1]
+
+                currRow["Goal Point (Orig vs Agent) Rt Difference"] = goalOrig - goalAgentRt
+                currRow["Goal Point (Orig vs Eval) Rt Difference"] = currGroupGoal[1]
+                currRow["Goal Point (Agent vs Eval) Rt Difference"] = goalAgentRt - (goalOrig + currGroupGoal[1])
                 outputList.append(currRow)
 
     with open(filePath, "w") as optFile:
@@ -949,16 +966,6 @@ def main():
     
     regionalEvaluationGroupsTree = runEvaluationAgent(regionalPotentialActionLists, regionRt, regionalAgentResultsTree, "tree")
     regionalGroupResultsTree = evalutateAgentPerformance(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree)
-    
-    print("-Greedy-")      
-    for currRegion in regionalGroupResultsGreed[0]:
-        #for currGroup in currRegion:
-        print(currRegion)
-    
-    print("-Tree-")
-    for currRegion in regionalGroupResultsTree[0]:
-        #for currGroup in currRegion:
-        print(currRegion)
 
     filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree")
     filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy")
