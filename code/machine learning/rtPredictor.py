@@ -9,6 +9,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM
 from tensorflow.keras.layers import Dropout
 from tensorflow.keras.layers import Dense
+from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 
 from pandas import qcut
 from pandas import DataFrame
@@ -740,9 +741,9 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
     """
     filePath = "../../data/core/" + "uk/predictor/" + agentType + ".csv"
     labels = ["Region No", "Group No", "Current Point (Orig) Rt", "Current Point (Agent) Rt", "Current Point (Orig vs Agent) Rt Difference", 
-              "Agent Action to Next Point (Index)", "Agent Action to Next Point (Value)", "Point Impact", "Point Impact Percentage", "Goal Point (Orig) Rt", 
+              "Agent Action to Next Point (Index)", "Agent Action to Next Point (Value)",  "Goal Point (Orig) Rt", 
               "Goal Point (Agent) Rt", "Goal Point (Eval) Rt", "Goal Point (Orig vs Agent) Rt Difference", "Goal Point (Orig vs Eval) Rt Difference",
-              "Goal Point (Agent vs Eval) Rt Difference", "Most Impactful?",]
+              "Goal Point (Agent vs Eval) Rt Difference", "Point Impact", "Point Impact Percentage", "Most Impactful?",]
 
     outputList = []
 
@@ -817,7 +818,7 @@ def prepareData(filePath):
         :param filePath: String, the location of the .csv file to be used 
     
     OUTPUT:
-        returns four separate Pandas Dataframes, these are the training set, test set, and their corresponding most impactful.
+        returns four separate numpy arrays, these are the training set, test set, and their corresponding most impactful.
     """
     compiledData = read_csv(filePath)
 
@@ -831,27 +832,10 @@ def prepareData(filePath):
 
     compiledData.drop(rowsToDrop, inplace=True)
 
-    splitTrainData, splitTestData = train_test_split(compiledData, test_size=0.2)
+    splitTrainData, splitTestData = train_test_split(compiledData, test_size=0.2, shuffle=False)
 
     #Get ready to perform feature scaling
-    dataHeaders = list(splitTrainData.columns.values)
-    
-    #Remove Region No and Group No from feature scaling list
-    dataHeaders.pop(0)
-    dataHeaders.pop(0)
-    
-    goalLabels = []
-
-    for num in range(GROUP_SIZE):
-        goalLabels.append(f"Point {num + 1} Most Impactful?")
-
-    scalingColumns = []
-    for currHeaderIndex in range(len(dataHeaders)):
-        #Ignore the binary most impactful columns
-        if dataHeaders[currHeaderIndex][-1:] == "?":
-            continue
-        else:
-            scalingColumns.append(dataHeaders[currHeaderIndex])
+    scalingColumns = list(splitTrainData.columns.values[2:-1])
 
     scaler = MinMaxScaler()
 
@@ -859,11 +843,26 @@ def prepareData(filePath):
     scaler.transform(splitTestData[scalingColumns])
 
     #Split the data
-    trainingData = splitTrainData.drop(["Group No",] + goalLabels, axis=1)
-    trainingImpact = splitTrainData[goalLabels]
+    trainingData = splitTrainData.drop(["Group No", "Most Impactful?"], axis=1)
+    trainingImpact = splitTrainData["Most Impactful?"]
 
-    testData = splitTestData.drop(["Group No",] + goalLabels, axis=1)
-    testImpact = splitTestData[goalLabels]
+    testData = splitTestData.drop(["Group No", "Most Impactful?",], axis=1)
+    testImpact = splitTestData["Most Impactful?"]
+
+    trainingData, trainingImpact = trainingData.to_numpy(), trainingImpact.to_numpy()
+    testData, testImpact = testData.to_numpy(), testImpact.to_numpy()
+
+    trainingData = np.reshape(trainingData, (trainingData.shape[0], 1, trainingData.shape[1]))
+    testData = np.reshape(testData, (testData.shape[0], 1, testData.shape[1]))
+
+    #shapedDataNP = TimeseriesGenerator(trainingDataNP, trainingImpactNP, length=GROUP_SIZE, batch_size=1)
+    
+    print("-----------")    
+    print(trainingData.shape)
+    print(trainingData[0])
+    #print(shapedDataNP[0].shape)
+    #print(shapedDataNP[1])
+    print("-----------")
 
     return trainingData, trainingImpact, testData, testImpact
 
@@ -910,27 +909,14 @@ def runLSTM(trainingData, trainingImpact, testData, testImpact):
     Runs the LSTM Recurrent Neural Network on the split dataset
 
     INPUTS:
-        :param trainingData: Pandas Dataframe, contains the feature scaled data
-        :param trainingImpact: Pandas Dataframe, contains the binary columns for Most Impactful Points?
-        :param testData: Pandas Dataframe, contains the feature scaled data
-        :param testImpact: Pandas Dataframe, contains the binary columns for Most Impactful Points?
+        :param trainingData: 3D Numpy Array, contains the feature scaled data
+        :param trainingImpact: 3D Numpy Array, contains the binary columns for Most Impactful Points?
+        :param testData: 3D Numpy Array, contains the feature scaled data
+        :param testImpact: 3D Numpy Array, contains the binary columns for Most Impactful Points?
     """
 
-    trainingDataNP, trainingImpactNP = trainingData.to_numpy(), trainingImpact.to_numpy()
-    testDataNP, testImpactNP = testData.to_numpy(), testImpact.to_numpy()
-
-    print("-----------")
-    len(trainingDataNP)
-    print(len(trainingData.index))
-    print(len(trainingDataNP))
-    print(trainingDataNP.shape)
-    print(trainingDataNP[0])
-    print("-----------")
-    trainingDataNP = np.reshape(trainingDataNP, (trainingDataNP.shape[0], 1, trainingDataNP.shape[1]))
-    testDataNP = np.reshape(testDataNP, (testDataNP.shape[0], 1, testDataNP.shape[1]))
-
     model = Sequential()
-    model.add(LSTM(128,input_shape=(883, 12), activation="relu", return_sequences=True))
+    model.add(LSTM(128, activation="relu", return_sequences=True))
     model.add(Dropout(0.2))
 
     model.add(LSTM(128, activation="relu"))
@@ -939,14 +925,14 @@ def runLSTM(trainingData, trainingImpact, testData, testImpact):
     model.add(Dense(32, activation="relu"))
     model.add(Dropout(0.2))
 
-    model.add(Dense(GROUP_SIZE, activation="softmax"))
+    model.add(Dense(2, activation="softmax"))
 
     model.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
-    model.fit(trainingDataNP, trainingImpactNP, epochs=3, validation_data=(testDataNP, testImpactNP), batch_size=10)
+    model.fit(trainingData, trainingImpact, epochs=100, validation_data=(testData, testImpact), batch_size=GROUP_SIZE)
     
 def main():
-    filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
+    """filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
 
     regionRt = readFile("uk", filePath)
 
@@ -968,10 +954,10 @@ def main():
     regionalGroupResultsTree = evalutateAgentPerformance(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree)
 
     filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree")
-    filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy")
+    filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy")"""
     
-    """trainingData, trainingImpact, testData, testImpact = prepareData("../../data/core/" + "uk/predictor/tree.csv")
-    runLSTM(trainingData, trainingImpact, testData, testImpact)"""
+    trainingData, trainingImpact, testData, testImpact = prepareData("../../data/core/" + "uk/predictor/tree.csv")
+    runLSTM(trainingData, trainingImpact, testData, testImpact)
 
 if __name__ == "__main__":
     sys.exit(main())
