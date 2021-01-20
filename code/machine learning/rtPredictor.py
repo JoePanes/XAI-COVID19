@@ -15,14 +15,15 @@ from pandas import qcut
 from pandas import DataFrame
 from pandas import read_csv
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split 
 from sklearn.preprocessing import MinMaxScaler
+
+from random import randint
+from random import shuffle
 
 from statistics import mean
 from matplotlib import pyplot as plt
 from copy import deepcopy
-from random import randint
-
 QUANTILE_NO = 8
 GROUP_SIZE = 3
 MAX_DEPTH = GROUP_SIZE
@@ -831,38 +832,143 @@ def prepareData(filePath):
             rowsToDrop.append(index)
 
     compiledData.drop(rowsToDrop, inplace=True)
+    #Convert the 2D dataframe into a 3D dataframe
+    currChunkNo = 1
+    currChunkAmount = 0
+    chunkData = {}
+    chunkImpact = {}
 
-    splitTrainData, splitTestData = train_test_split(compiledData, test_size=0.2, shuffle=False)
+    headers = compiledData.columns.values[2:-1]
+    #Convert the 2D Dataframe into 3D, where it is collected together into its own groups
+    for index, row in compiledData.iterrows():
+        if currChunkAmount == GROUP_SIZE:
+            currChunkAmount = 0
+            currChunkNo += 1
+
+        if currChunkAmount == 0:
+            chunkData[f"Chunk {currChunkNo}"] = []
+            chunkImpact[f"Chunk {currChunkNo}"] = []
+
+        currChunkAmount +=1
+        chunkData[f"Chunk {currChunkNo}"].append(row[headers].to_numpy())
+        chunkImpact[f"Chunk {currChunkNo}"].append(int(row["Most Impactful?"]))
+
+    chunkData = DataFrame.from_dict(chunkData)
+    chunkImpact = DataFrame.from_dict(chunkImpact)
+
+
+    """
+    Make own train_test_split, due to the current one splitting within the groups, rather than by the groups.
+    For curiosities sake, while making adjustments as desired for the real split, I made adjustments so that the current split would work.
+    The result is as follows:
+    1103/1103 [==============================] - 2s 2ms/step - loss: 0.4504 - accuracy: 0.8364 - val_loss: 1.2452 - val_accuracy: 0.3083
+    Epoch 18/20
+    1103/1103 [==============================] - 2s 2ms/step - loss: 0.4642 - accuracy: 0.8285 - val_loss: 1.2321 - val_accuracy: 0.3083
+    Epoch 19/20
+    1103/1103 [==============================] - 2s 2ms/step - loss: 0.4762 - accuracy: 0.8199 - val_loss: 1.3432 - val_accuracy: 0.3083
+    Epoch 20/20
+    1103/1103 [==============================] - 2s 2ms/step - loss: 0.4769 - accuracy: 0.8188 - val_loss: 1.2463 - val_accuracy: 0.3083
+    
+    As can be seen, this is ineffective.
+
+    Anyway, what the custom train_test_split needs to do is:
+        1. Shuffle the grouped data, as in mix the regional groups together, leaving the contents within each group untouched.
+        2. Split the data by group, not by the contents of the groups, and again leaving the contents within the groups untouched.
+        3. Keep the impact data in the same position in relation to their corresponding group, otherwise this whole this is pointless.
+    Therefore, the training and test data should contain a total amount of elements equal to GROUP_SIZE
+    """
+    #Split the grouped data
+    trainingData, testData, trainingImpact, testImpact = train_test_split(chunkData, chunkImpact, test_size=0.2)
+
+    #Convert the 3D data Dataframes back into 2D, so that feature scaling can be performed on it
+    chunkColumnNames = list(trainingData.columns.values)
+    flattenedData = []
+    flattenedImpact =[]
+
+    #Get the number elements within the split data, to facilitate reconstruction later 
+    numberInSplitGroup = trainingData[chunkColumnNames[0]].shape[0]
+
+    for currCol in chunkColumnNames:
+        for currPoint in trainingData[currCol].to_numpy():
+            flattenedData.append(currPoint)
+
+        for currPoint in trainingImpact[currCol].to_numpy():    
+            flattenedImpact.append(currPoint)
+
+    trainingData = deepcopy(flattenedData)
+    trainingImpact = deepcopy(flattenedImpact)
+    
+    flattenedData = []
+    flattenedImpact = []
+    for currCol in chunkColumnNames:
+        for currPoint in testData[currCol].to_numpy():
+            flattenedData.append(currPoint)
+        
+        for currPoint in testImpact[currCol].to_numpy():    
+            flattenedImpact.append(currPoint)
+    
+    testData = deepcopy(flattenedData)
+    testImpact = deepcopy(flattenedImpact)
 
     #Get ready to perform feature scaling
-    scalingColumns = list(splitTrainData.columns.values[2:-1])
-
     scaler = MinMaxScaler()
 
-    scaler.fit_transform(splitTrainData[scalingColumns])
-    scaler.transform(splitTestData[scalingColumns])
+    trainingData = scaler.fit_transform(trainingData)
+    testData = scaler.transform(testData)
 
-    #Split the data
-    trainingData = splitTrainData.drop(["Group No", "Most Impactful?"], axis=1)
-    trainingImpact = splitTrainData["Most Impactful?"]
+    #Convert back into 3D
+    groupedData = []
+    groupedImpact = []
+    currChunkAmount = 0
+    currImpactPoint = 0
+    currGroup = []
+    for point in trainingData:
+        if currChunkAmount == numberInSplitGroup:
+            currChunkAmount = 0
 
-    testData = splitTestData.drop(["Group No", "Most Impactful?",], axis=1)
-    testImpact = splitTestData["Most Impactful?"]
+            groupedData.append(np.array(deepcopy(currGroup)))
 
-    trainingData, trainingImpact = trainingData.to_numpy(), trainingImpact.to_numpy()
-    testData, testImpact = testData.to_numpy(), testImpact.to_numpy()
+            currGroup = []
+            currImpactGroup = []
+            for _ in range(GROUP_SIZE - numberInSplitGroup):
+                currImpactGroup.append(trainingImpact[currImpactPoint])
+                currImpactPoint += 1
 
-    trainingData = np.reshape(trainingData, (trainingData.shape[0], 1, trainingData.shape[1]))
-    testData = np.reshape(testData, (testData.shape[0], 1, testData.shape[1]))
+            groupedImpact.append(np.array(currImpactGroup))         
 
-    #shapedDataNP = TimeseriesGenerator(trainingDataNP, trainingImpactNP, length=GROUP_SIZE, batch_size=1)
+        currChunkAmount += 1
+        currGroup.append(point)
+
+    trainingData = deepcopy(np.array(groupedData))
+    trainingImpact = deepcopy(np.array(groupedImpact))
+    groupedData = []
+    groupedImpact = []
+
+    currChunkAmount = 0
+    currImpactPoint = 0
+    currGroup = []
     
-    print("-----------")    
-    print(trainingData.shape)
-    print(trainingData[0])
-    #print(shapedDataNP[0].shape)
-    #print(shapedDataNP[1])
-    print("-----------")
+    for point in testData:
+        if currChunkAmount == (GROUP_SIZE - numberInSplitGroup):
+            currChunkAmount = 0
+
+            groupedData.append(np.array(deepcopy(currGroup)))
+            currGroup = []
+
+            currImpactGroup = []
+            for _ in range(GROUP_SIZE - numberInSplitGroup):
+                currImpactGroup.append(testImpact[currImpactPoint])
+                currImpactPoint += 1
+                
+            groupedImpact.append(np.array(currImpactGroup))   
+
+        currChunkAmount += 1
+        currGroup.append(point)
+
+    testData = deepcopy(np.array(groupedData))
+    testImpact = deepcopy(np.array(groupedImpact))
+
+    print(trainingImpact.shape)
 
     return trainingData, trainingImpact, testData, testImpact
 
@@ -916,7 +1022,7 @@ def runLSTM(trainingData, trainingImpact, testData, testImpact):
     """
 
     model = Sequential()
-    model.add(LSTM(128, activation="relu", return_sequences=True))
+    model.add(LSTM(128,  activation="relu", return_sequences=True))
     model.add(Dropout(0.2))
 
     model.add(LSTM(128, activation="relu"))
@@ -929,7 +1035,7 @@ def runLSTM(trainingData, trainingImpact, testData, testImpact):
 
     model.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
-    model.fit(trainingData, trainingImpact, epochs=100, validation_data=(testData, testImpact), batch_size=GROUP_SIZE)
+    model.fit(trainingData, trainingImpact, epochs=20, validation_data=(testData, testImpact), batch_size=1)
     
 def main():
     """filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
