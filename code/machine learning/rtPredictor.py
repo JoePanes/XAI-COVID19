@@ -811,7 +811,7 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
     
     return filePath
 
-def prepareData(filePath):
+def prepareData(filePath, regionNo=None):
     """
     Read in a .csv file, then prepare the data for use with Long-Short-Term Memory
 
@@ -823,38 +823,21 @@ def prepareData(filePath):
     """
     compiledData = read_csv(filePath)
 
-    maxGroupNo = findGroupNoCutoff(compiledData)
+    if regionNo == None:
+        maxGroupNo = findGroupNoCutoff(compiledData)
 
-    #Remove Group Nos that don't exist in all regions
-    rowsToDrop = []
-    for index, row in compiledData.iterrows():
-        if int(row["Group No"]) > maxGroupNo:
-            rowsToDrop.append(index)
+        #Remove Group Nos that don't exist in all regions
+        rowsToDrop = []
+        for index, row in compiledData.iterrows():
+            if regionNo == None and int(row["Group No"]) > maxGroupNo:
+                rowsToDrop.append(index)
 
-    compiledData.drop(rowsToDrop, inplace=True)
+    elif regionNo != None and int(regionNo) in REGIONS:
+        currRegion = compiledData["Region No"] == regionNo
+        compiledData = compiledData[currRegion]
+
     #Convert the 2D dataframe into a 3D dataframe
-    currChunkNo = 1
-    currChunkAmount = 0
-    chunkData = {}
-    chunkImpact = {}
-
-    headers = compiledData.columns.values[2:-1]
-    #Convert the 2D Dataframe into 3D, where it is collected together into its own groups
-    for index, row in compiledData.iterrows():
-        if currChunkAmount == GROUP_SIZE:
-            currChunkAmount = 0
-            currChunkNo += 1
-
-        if currChunkAmount == 0:
-            chunkData[f"Chunk {currChunkNo}"] = []
-            chunkImpact[f"Chunk {currChunkNo}"] = []
-
-        currChunkAmount +=1
-        chunkData[f"Chunk {currChunkNo}"].append(row[headers].to_numpy())
-        chunkImpact[f"Chunk {currChunkNo}"].append(int(row["Most Impactful?"]))
-
-    chunkData = DataFrame.from_dict(chunkData)
-    chunkImpact = DataFrame.from_dict(chunkImpact)
+    chunkData, chunkImpact = groupData(compiledData)
 
     #Split the grouped data
     trainingChunks, testChunks = train_test_split(chunkData.columns.values, test_size=0.2)
@@ -873,9 +856,9 @@ def prepareData(filePath):
     testData = scaler.transform(testData)
 
     #Convert back into 3D
-    trainingData, trainingImpact = increaseDataDimensionality(trainingData, trainingImpact)
+    trainingData = np.reshape(trainingData, (trainingData.shape[0], 1, trainingData.shape[1]))
     
-    testData, testImpact = increaseDataDimensionality(testData, testImpact)
+    testData = np.reshape(testData, (testData.shape[0], 1, testData.shape[1]))
 
     return trainingData, trainingImpact, testData, testImpact
 
@@ -917,6 +900,41 @@ def findGroupNoCutoff(dataframe):
     #Find the smallest-largest point, that exists in all regions
     return min(groupLengths)
 
+def groupData(data):
+    """
+    Converts a Dataframe into a 3D Dataframe, based upon the group size.
+
+    INPUT:
+        :param data: Dataframe, containing all of the the data within the dataset
+    
+    OUTPUT:
+        returns two 3D Dataframes, the grouped data, and the goal data.
+    """
+    currChunkNo = 1
+    currChunkAmount = 0
+    chunkData = {}
+    chunkImpact = {}
+
+    headers = data.columns.values[2:-1]
+    #Convert the 2D Dataframe into 3D, where it is collected together into its own groups
+    for index, row in data.iterrows():
+        if currChunkAmount == GROUP_SIZE:
+            currChunkAmount = 0
+            currChunkNo += 1
+
+        if currChunkAmount == 0:
+            chunkData[f"Chunk {currChunkNo}"] = []
+            chunkImpact[f"Chunk {currChunkNo}"] = []
+
+        currChunkAmount +=1
+        chunkData[f"Chunk {currChunkNo}"].append(row[headers].to_numpy())
+        chunkImpact[f"Chunk {currChunkNo}"].append(int(row["Most Impactful?"]))
+
+    chunkData = DataFrame.from_dict(chunkData)
+    chunkImpact = DataFrame.from_dict(chunkImpact)
+
+    return chunkData, chunkImpact
+
 def reduceDataDimensionality(X, y):
     """
     Take in 3D (grouped) data and reduce the dimension back to being 2D
@@ -936,50 +954,10 @@ def reduceDataDimensionality(X, y):
         for currPoint in X[currCol].to_numpy():
             flattenedData.append(currPoint)
         
-        for currPoint in y[currCol].to_numpy():    
-            flattenedImpact.append(currPoint)
+        for currPoint in y[currCol].to_numpy():
+            flattenedImpact.append(np.array(currPoint))
     
     return np.array(flattenedData), np.array(flattenedImpact)
-
-def increaseDataDimensionality(X, y):
-    """
-    Take in 2D data, and regroup the data into 3D Numpy Arrays
-
-    INPUT:
-        :param X: 2D numpy arrays, containing the core data of each row within the dataset
-        :param y: 2D numpy arrays, containing the features being used as the goal of each row within the dataset
-
-    OUTPUT:
-        return a 3D numpy arrays, where the data is sorted into their groups. 
-    """
-    groupedX = []
-    groupedY = []
-    currGroupNo = 0
-    currYIndex = 0
-    currXGroup = []
-
-    for point in X:
-        if currGroupNo == GROUP_SIZE:
-            currGroupNo = 0
-
-            groupedX.append(np.array(currXGroup))
-
-            currXGroup = []
-            currYGroup = []
-            
-            for _ in range(GROUP_SIZE):
-                currYGroup.append(np.array(y[currYIndex]))
-                currYIndex += 1
-
-            currYGroup = np.array(currYGroup)
-
-            currYGroup = np.reshape(currYGroup, (currYGroup.shape[0], y[currYIndex].size))
-            groupedY.append(currYGroup)         
-
-        currGroupNo += 1
-        currXGroup.append(point)
-
-    return np.array(groupedX), np.array(groupedY)
 
 def runLSTM(trainingData, trainingImpact, testData, testImpact):
     """
@@ -991,22 +969,21 @@ def runLSTM(trainingData, trainingImpact, testData, testImpact):
         :param testData: 3D Numpy Array, contains the feature scaled data
         :param testImpact: 3D Numpy Array, contains the binary columns for Most Impactful Points?
     """
-
     model = Sequential()
-    model.add(LSTM(128, input_shape=(trainingData.shape[1:]),  activation="relu", return_sequences=True))
+    model.add(LSTM(32,  activation="relu", return_sequences=True))
     model.add(Dropout(0.2))
 
-    model.add(LSTM(128, activation="relu"))
+    model.add(LSTM(16, activation="relu"))
     model.add(Dropout(0.2))
 
-    model.add(Dense(32, activation="relu"))
+    model.add(Dense(8, activation="relu"))
     model.add(Dropout(0.2))
 
     model.add(Dense(2, activation="softmax"))
 
-    model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
+    model.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
-    model.fit(trainingData, trainingImpact, epochs=20, validation_data=(testData, testImpact), batch_size=1)
+    model.fit(trainingData, trainingImpact, epochs=20, validation_data=(testData, testImpact), batch_size=GROUP_SIZE)
     
 def main():
     """filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
@@ -1033,7 +1010,7 @@ def main():
     filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree")
     filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy")"""
     
-    trainingData, trainingImpact, testData, testImpact = prepareData("../../data/core/" + "uk/predictor/tree.csv")
+    trainingData, trainingImpact, testData, testImpact = prepareData("../../data/core/" + "uk/predictor/tree.csv", 1)
 
     runLSTM(trainingData, trainingImpact, testData, testImpact)
 
