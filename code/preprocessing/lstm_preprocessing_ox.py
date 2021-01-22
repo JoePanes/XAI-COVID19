@@ -4,9 +4,10 @@ Similar use as lstm_preprocessing, but for the Oxford Dataset.
 
 import csv
 
+import pandas as pd
+
 from copy import deepcopy
 
-from shared.sharedFunctions import readFile
 from shared.sharedVariables import FILE_PATH_CORE
 
 CONTROL_MEASURES = {
@@ -23,8 +24,9 @@ CONTROL_MEASURES = {
     'H1_Public information campaigns' : ("Trinary", [0, 1, 2]),
     'H2_Testing policy' : ("Quadruple", [0, 1, 2, 3]), 
     'H3_Contact tracing' : ("Trinary", [0, 1, 2]), 
-    'H6_Facial Covering_National' : ("Quintuple", [0, 1, 2, 3, 4]),
-    'H6_Facial Covering_Regional' : ("Quintuple", [0, 1, 2, 3, 4]), 
+    #'H6_Facial Covering_National' : ("Quintuple", [0, 1, 2, 3, 4]),
+    'H6_Facial Coverings' : ("Quintuple", [0, 1, 2, 3, 4]),
+    #'H6_Facial Covering_Regional' : ("Quintuple", [0, 1, 2, 3, 4]), 
     'H7_Vaccination policy' : ("Sextuple", [0, 1, 2, 3, 4, 5]),
 }
 
@@ -63,8 +65,7 @@ def processControlMeasures(processedData):
                     try:
                         currLevel = int(processedData[currRowIndex][currControlMeasure])
                     except:
-                        print(currRowIndex, " | ", currControlMeasure)
-                        exit()
+                        currLevel = int(processedData[currRowIndex-1][currControlMeasure])
                         
                     noZeros = 0
 
@@ -110,7 +111,7 @@ def processControlMeasures(processedData):
 
     return newData
 
-def writeFile(dataset, fileName, containRt = False):
+def writeFile(dataset, fileName):
     """
     Writes the current state of the dataset to a .csv file, (along with reorder the dataset
     inorder to match the desired format).
@@ -118,15 +119,14 @@ def writeFile(dataset, fileName, containRt = False):
     INPUTS:
         :param dataset: List of dictionaries, where each entry in the list is a row from the dataset
         :param fileName: String, what the name of the outputted file will be
-        :param containRt: Boolean, OPTIONAL, whether the current state of the dataset contains an Rt row
 
     OUTPUT:
         returns nothing, but creates/overwrites a .csv file of the given filename
     """
     with open(FILE_PATH_CORE + "/ox/lstm/" + fileName + ".csv", "w") as optFile:
         
-        labels = {}
-        for currFieldName in dataset[0].keys():
+        labels = {" " : " "}
+        for currFieldName in list(dataset[0].keys()):
             labels[currFieldName] = currFieldName
         
         #reorderedLabels = self.orderFields(labels, containRt)
@@ -137,18 +137,66 @@ def writeFile(dataset, fileName, containRt = False):
         for row in dataset:
             myWriter.writerow(row)
 
+def readFile(dataset, endDate, countryTags, wantedColumns):
+    """
+    From a Dataframe, extract the desired countries and columns and then present them in a usable format for later processing
 
-region = "sz"
-filepath = FILE_PATH_CORE + f"ox/raw/{region}.csv"
+    INPUT:
+        :param dataset: Dataframe, the dataset from which the desired data need to be extracted
+        :param endDate: 
+    """
+    endDate = endDate
 
-oxDataset =  readFile("eu", filepath)
+    dateRange = dataset["Date"] <= endDate
+    dataset = dataset[dateRange]
+    countryList = []
+    
+    #Ignore regional entries
+    nonRegionalEntries = dataset["RegionName"].isna()
+    dataset = dataset[nonRegionalEntries]
+    for currTag in countryTags:
+        currentCountry = dataset["CountryCode"] == currTag
+        currCountryDataframe = dataset[currentCountry]
 
-keys = oxDataset[0].values()
+        currCountryDataframe = currCountryDataframe[wantedColumns]
+        
+        currCountryList = []
+        currRowIndex = 0
+        for _, row in currCountryDataframe.iterrows():
+            currRowDict = row.to_dict()
 
-for currKey in keys:
-    print(currKey)
+            #Alter date format from year|month|day to day|month|year
+            currDate = str(int(currRowDict["Date"]))
+            currRowDict["Date"] = f"{currDate[-2:]}/{currDate[-4:-2]}/{currDate[:4]}"
 
+            currRowDict[" "] = currRowIndex
+            currRowIndex += 1
 
-controlUkOk = processControlMeasures(oxDataset)
+            if str(currRowDict["ConfirmedCases"]) =="nan":
+                currRowDict["ConfirmedCases"] = 0
+            
+            if str(currRowDict["ConfirmedDeaths"]) =="nan":
+                currRowDict["ConfirmedDeaths"] = 0
 
-writeFile(controlUkOk,f"processed_{region}")
+            currCountryList.append(currRowDict)
+        countryList.append(currCountryList)
+    return countryList
+        
+endDate = 20210114
+countryTags = ["AUS", "GBR", "JPN", "CAN", "FRA", "DEU", "NZL", "NOR", "SWE", "CHE"]
+wantedColumns = ["Date"] + list(CONTROL_MEASURES.keys())
+wantedColumns.extend(["ConfirmedCases", "ConfirmedDeaths", "StringencyIndex", "StringencyIndexForDisplay", 
+                     "GovernmentResponseIndexForDisplay", "ContainmentHealthIndexForDisplay", "EconomicSupportIndexForDisplay"])
+filepath = FILE_PATH_CORE + f"ox/raw/OxCGRT_latest.csv"
+
+oxDataset =  pd.read_csv(filepath)
+
+countryList = readFile(oxDataset, endDate, countryTags, wantedColumns)
+
+processedCountries = []
+for currCountry in countryList:
+    processedCountries.append(processControlMeasures(currCountry))
+
+for currIndex in range(len(processedCountries)):
+    currCountryTag = countryTags[currIndex]
+    writeFile(processedCountries[currIndex], f"processed_{currCountryTag.lower()}")
