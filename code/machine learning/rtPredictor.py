@@ -968,23 +968,135 @@ def runLSTM(trainingData, trainingImpact, testData, testImpact):
         :param trainingImpact: 3D Numpy Array, contains the binary columns for Most Impactful Points?
         :param testData: 3D Numpy Array, contains the feature scaled data
         :param testImpact: 3D Numpy Array, contains the binary columns for Most Impactful Points?
+
+    OUTPUT:
+        returns a trained Sequential model, that includes LSTM layers
     """
     model = Sequential()
-    model.add(LSTM(32,  activation="relu", return_sequences=True))
+    model.add(LSTM(256,  activation="relu", return_sequences=True))
     model.add(Dropout(0.2))
 
-    model.add(LSTM(16, activation="relu"))
+    model.add(LSTM(128, activation="relu"))
     model.add(Dropout(0.2))
 
-    model.add(Dense(8, activation="relu"))
+    model.add(Dense(64, activation="relu"))
+    model.add(Dropout(0.2))
+
+    model.add(Dense(32, activation="relu"))
     model.add(Dropout(0.2))
 
     model.add(Dense(2, activation="softmax"))
 
     model.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
-    model.fit(trainingData, trainingImpact, epochs=20, validation_data=(testData, testImpact), batch_size=GROUP_SIZE)
+    model.fit(trainingData, trainingImpact, epochs=50, validation_data=(testData, testImpact), batch_size=GROUP_SIZE)
+
+           
     
+    return model
+
+def determineAccuracy(model, testData, testImpact):
+    """
+    Using a trained LSTM model, determine its accuracy in predicting the goal data, 
+    but also get the accuracy for each group of the "Impactful Point?" field
+
+    INPUTS:
+        :param model: Sequential trained model, with LSTM layers
+        :param testData: Numpy Array, the test data to be used to evalute the model
+        :param testImpact: Numpy Array, the corresponding impactful point values for the test data
+
+    OUTPUT:
+        returns nothing, prints the results of running this function to the command line
+    """
+    results = {
+         #Correct  #Total
+        0 : [0,      0],
+        1 : [0,      0],
+    }
+    for currIndex in range(len(testData)):
+        currentTestData = testData[currIndex]
+        currentTestData = np.reshape(currentTestData, (1, currentTestData.shape[0], currentTestData.shape[1]))
+        
+        prediction = model.predict(currentTestData)[0]
+
+        if prediction[0] > prediction[1]:
+            prediction = 0
+        else:
+            prediction = 1
+        actualValue = testImpact[currIndex]
+
+        if actualValue == prediction:
+            results[prediction][0] += 1
+            results[prediction][1] += 1
+        else:
+            results[actualValue][1] += 1
+
+    zeroResults = results[0]
+    zeroAccuracyPercentage = str(zeroResults[0] / zeroResults[1] * 100)
+
+    oneResults = results[1]
+    oneAccuracyPercentage = str(round(oneResults[0] / oneResults[1] * 100, 5))
+    
+    overallCorrect = zeroResults[0] + oneResults[0]
+    overallTotal = zeroResults[1] + oneResults[1]
+
+    overrallPercentage = str(round(overallCorrect / overallTotal * 100, 5))
+
+    zeroAccuracyPercentage = prepareForPrint(zeroAccuracyPercentage, 8)
+    oneAccuracyPercentage = prepareForPrint(oneAccuracyPercentage, 8)
+    overrallPercentage = prepareForPrint(overrallPercentage, 8)
+
+    print()
+    title = "-----------------Result------------------"
+    headers = "|Impactful?|  "
+
+    #Adjust padding dependending upon size of data
+    if zeroResults[0] > 99 or oneResults[0] > 99 or overallCorrect > 99:
+        headers += " "
+        title += "-"
+    headers += "Results  "
+    
+    if zeroResults[1] > 99 or oneResults[1] > 99 or overallTotal > 99:
+        headers += " "
+        title += "-"
+    headers += "|   Percentage   |"
+    print(title)
+    print(headers)
+    print(f"|    No    |  {results[0]} |   {zeroAccuracyPercentage}     |")
+    print(f"|    Yes   |  {results[1]} |   {oneAccuracyPercentage}     |")
+    print(f"|  Overall |  [{overallCorrect}, {overallTotal}] |   {overrallPercentage}     |")
+
+def prepareForPrint(value, desiredLength):
+    """
+    Check and adjust the length of a String in preparation for printing
+
+    INPUTS:
+        :param value: String, the value to be printed
+        :param desiredLength: Integer, the amount of space needing to be occupied by the value
+
+    OUTPUT:
+        returns the adjusted String, ready to be printed.
+    """
+
+    if len(value) < desiredLength:
+        for _ in range(desiredLength - len(value)):
+            value += " "
+    elif len(value) > desiredLength:
+        try:
+            value = float(value)
+
+            if value < 10:
+                value = round(value, desiredLength - 2)
+            else:
+                value = round(value, desiredLength - 3)
+        except:
+            #In this case, the value is not a number, therefore don't alter it
+            print("---------------------------ATTENTION-------------------------------")
+            print("Can't be shrunk due to String not being a number, therefore, don't")
+            print("know how to proceed without causing potential unwanted data loss.")
+            print("---------------------------ATTENTION-------------------------------")
+    return value
+
 def main():
     """filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
 
@@ -1012,7 +1124,9 @@ def main():
     
     trainingData, trainingImpact, testData, testImpact = prepareData("../../data/core/" + "uk/predictor/tree.csv", 1)
 
-    runLSTM(trainingData, trainingImpact, testData, testImpact)
+    model = runLSTM(trainingData, trainingImpact, testData, testImpact)
+
+    determineAccuracy(model, testData, testImpact)
 
 if __name__ == "__main__":
     sys.exit(main())
