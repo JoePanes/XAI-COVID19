@@ -5,11 +5,16 @@ import os
 
 import numpy as np
 
+#Surpress Tensorflow info
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM
 from tensorflow.keras.layers import Dropout
 from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
+from tensorflow.keras.optimizers import Adam
 
 from pandas import qcut
 from pandas import DataFrame
@@ -24,6 +29,8 @@ from random import shuffle
 from statistics import mean
 from matplotlib import pyplot as plt
 from copy import deepcopy
+from datetime import datetime
+
 QUANTILE_NO = 8
 GROUP_SIZE = 3
 MAX_DEPTH = GROUP_SIZE
@@ -840,27 +847,34 @@ def prepareData(filePath, regionNo=None):
     chunkData, chunkImpact = groupData(compiledData)
 
     #Split the grouped data
-    trainingChunks, testChunks = train_test_split(chunkData.columns.values, test_size=0.2)
+    trainingChunks, testChunks = train_test_split(chunkData.columns.values, test_size=0.2, random_state=randint(1, os.getpid()))
+
+    testChunks, validationChunks = train_test_split(testChunks, test_size=0.5, random_state=randint(1, os.getpid()))
 
     trainingData, trainingImpact = chunkData[trainingChunks], chunkImpact[trainingChunks]
     testData, testImpact = chunkData[testChunks], chunkImpact[testChunks]
+    validData, validImpact = chunkData[validationChunks], chunkImpact[validationChunks]
 
     #Convert the 3D data Dataframes back into 2D, so that feature scaling can be performed on it
     trainingData, trainingImpact = reduceDataDimensionality(trainingData, trainingImpact)
     testData, testImpact = reduceDataDimensionality(testData, testImpact)
+    validData, validImpact = reduceDataDimensionality(validData, validImpact)
 
     #Get ready to perform feature scaling
     scaler = MinMaxScaler()
 
     trainingData = scaler.fit_transform(trainingData)
     testData = scaler.transform(testData)
+    validData = scaler.transform(validData)
 
     #Convert back into 3D
     trainingData = np.reshape(trainingData, (trainingData.shape[0], 1, trainingData.shape[1]))
     
     testData = np.reshape(testData, (testData.shape[0], 1, testData.shape[1]))
 
-    return trainingData, trainingImpact, testData, testImpact
+    validData = np.reshape(validData, (validData.shape[0], 1, validData.shape[1]))
+
+    return trainingData, trainingImpact, testData, testImpact, validData, validImpact
 
 def findGroupNoCutoff(dataframe):
     """
@@ -959,39 +973,47 @@ def reduceDataDimensionality(X, y):
     
     return np.array(flattenedData), np.array(flattenedImpact)
 
-def runLSTM(trainingData, trainingImpact, testData, testImpact):
+def runLSTM(trainingData, trainingImpact, validData, validImpact):
     """
     Runs the LSTM Recurrent Neural Network on the split dataset
 
     INPUTS:
         :param trainingData: 3D Numpy Array, contains the feature scaled data
         :param trainingImpact: 3D Numpy Array, contains the binary columns for Most Impactful Points?
-        :param testData: 3D Numpy Array, contains the feature scaled data
-        :param testImpact: 3D Numpy Array, contains the binary columns for Most Impactful Points?
+        :param validData: 3D Numpy Array, contains the feature scaled data
+        :param validImpact: 3D Numpy Array, contains the binary columns for Most Impactful Points?
 
     OUTPUT:
         returns a trained Sequential model, that includes LSTM layers
     """
     model = Sequential()
-    model.add(LSTM(256,  activation="relu", return_sequences=True))
+    model.add(LSTM(32, return_sequences=True))
     model.add(Dropout(0.2))
+    model.add(BatchNormalization())
 
-    model.add(LSTM(128, activation="relu"))
+    model.add(LSTM(16, activation="swish"))
     model.add(Dropout(0.2))
+    model.add(BatchNormalization())
 
-    model.add(Dense(64, activation="relu"))
-    model.add(Dropout(0.2))
-
-    model.add(Dense(32, activation="relu"))
+    model.add(Dense(8, activation="swish"))
     model.add(Dropout(0.2))
 
     model.add(Dense(2, activation="softmax"))
 
-    model.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+    opt = Adam(lr=0.001, decay=1e-6)
 
-    model.fit(trainingData, trainingImpact, epochs=50, validation_data=(testData, testImpact), batch_size=GROUP_SIZE)
+    model.compile(loss="sparse_categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
-           
+    history = model.fit(trainingData, trainingImpact, epochs=50, validation_data=(validData, validImpact), batch_size=12)
+
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model train vs validation loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper right')
+    plt.savefig(f"../../images/Rt/machine learning/rt/{datetime.now().strftime('%d_%m_%Y_%H_%M_%S')}.png")
+    plt.close()
     
     return model
 
@@ -1006,7 +1028,7 @@ def determineAccuracy(model, testData, testImpact):
         :param testImpact: Numpy Array, the corresponding impactful point values for the test data
 
     OUTPUT:
-        returns nothing, prints the results of running this function to the command line
+        returns the percentage for each category and prints the results of running this function to the command line
     """
     results = {
          #Correct  #Total
@@ -1066,6 +1088,8 @@ def determineAccuracy(model, testData, testImpact):
     print(f"|    Yes   |  {results[1]} |   {oneAccuracyPercentage}     |")
     print(f"|  Overall |  [{overallCorrect}, {overallTotal}] |   {overrallPercentage}     |")
 
+    return zeroAccuracyPercentage, oneAccuracyPercentage, overrallPercentage
+
 def prepareForPrint(value, desiredLength):
     """
     Check and adjust the length of a String in preparation for printing
@@ -1121,12 +1145,31 @@ def main():
 
     filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree")
     filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy")"""
+    noIterations = 3
     
-    trainingData, trainingImpact, testData, testImpact = prepareData("../../data/core/" + "uk/predictor/tree.csv", 1)
+    regionStartNo = 1
+    regionEndNo = 2
 
-    model = runLSTM(trainingData, trainingImpact, testData, testImpact)
+    overallTest = []
+    for currRegion in range(regionStartNo, regionEndNo):
+        groupZeroAcc, groupOneAcc, groupOverallAcc = 0, 0, 0
+        for _ in range(noIterations):
+            trainingData, trainingImpact, testData, testImpact, validData, validImpact = prepareData("../../data/core/" + "uk/predictor/tree.csv")
 
-    determineAccuracy(model, testData, testImpact)
-
+            model = runLSTM(trainingData, trainingImpact, validData, validImpact)
+            print("Test Data")
+            currZeroAcc, currOneAcc, currOverallAcc = determineAccuracy(model, testData, testImpact)
+            
+            groupZeroAcc += float(currZeroAcc)
+            groupOneAcc += float(currOneAcc)
+            groupOverallAcc += float(currOverallAcc)
+        overallTest.append((currRegion, groupZeroAcc / noIterations, groupOneAcc / noIterations, groupOverallAcc / noIterations))
+        
+    overallSumTest = 0
+    for curr in overallTest:
+        overallSumTest += curr[3]
+        print(curr)
+    print(overallSumTest / (regionEndNo - regionStartNo))
+        
 if __name__ == "__main__":
     sys.exit(main())
