@@ -847,9 +847,9 @@ def prepareData(filePath, regionNo=None):
     chunkData, chunkImpact = groupData(compiledData)
 
     #Split the grouped data
-    trainingChunks, testChunks = train_test_split(chunkData.columns.values, test_size=0.2, random_state=randint(1, os.getpid()))
+    trainingChunks, testChunks = train_test_split(chunkData.columns.values, test_size=0.3, random_state=randint(1, os.getpid()))
 
-    testChunks, validationChunks = train_test_split(testChunks, test_size=0.5, random_state=randint(1, os.getpid()))
+    testChunks, validationChunks = train_test_split(testChunks, test_size=0.3, random_state=randint(1, os.getpid()))
 
     trainingData, trainingImpact = chunkData[trainingChunks], chunkImpact[trainingChunks]
     testData, testImpact = chunkData[testChunks], chunkImpact[testChunks]
@@ -987,16 +987,16 @@ def runLSTM(trainingData, trainingImpact, validData, validImpact):
         returns a trained Sequential model, that includes LSTM layers
     """
     model = Sequential()
-    model.add(LSTM(32, return_sequences=True))
+    model.add(LSTM(64, return_sequences=True))
+    model.add(Dropout(0.1))
+    model.add(BatchNormalization())
+
+    model.add(LSTM(64, activation="swish"))
     model.add(Dropout(0.2))
     model.add(BatchNormalization())
 
-    model.add(LSTM(16, activation="swish"))
-    model.add(Dropout(0.2))
-    model.add(BatchNormalization())
-
-    model.add(Dense(8, activation="swish"))
-    model.add(Dropout(0.2))
+    model.add(Dense(16, activation="swish"))
+    model.add(Dropout(0.1))
 
     model.add(Dense(2, activation="softmax"))
 
@@ -1145,18 +1145,19 @@ def main():
 
     filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree")
     filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy")"""
-    noIterations = 3
+    noIterations = 10
     
     regionStartNo = 1
-    regionEndNo = 2
+    regionEndNo = 13
 
     overallTest = []
     for currRegion in range(regionStartNo, regionEndNo):
         groupZeroAcc, groupOneAcc, groupOverallAcc = 0, 0, 0
         for _ in range(noIterations):
-            trainingData, trainingImpact, testData, testImpact, validData, validImpact = prepareData("../../data/core/" + "uk/predictor/tree.csv")
+            trainingData, trainingImpact, testData, testImpact, validData, validImpact = prepareData("../../data/core/" + "uk/predictor/tree.csv", currRegion)
 
             model = runLSTM(trainingData, trainingImpact, validData, validImpact)
+            
             print("Test Data")
             currZeroAcc, currOneAcc, currOverallAcc = determineAccuracy(model, testData, testImpact)
             
