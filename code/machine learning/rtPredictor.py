@@ -397,7 +397,7 @@ def createGraph(origRt, agentRt, regionNo, agentType):
     ax1.set_title(f"{REGIONS[regionNo+1]} - Comparison of Rt vs Agent Rt")
 
     plt.tight_layout()
-    plt.savefig(f"../../images/Rt/machine learning/rt/{regionNo+1} - {agentType}.png")
+    plt.savefig(f"../../images/Rt/machine learning/rt/{regionNo+1} - {agentType}.png", dpi =600)
     plt.close()
 
 def getCumulativeDifference(element):
@@ -929,33 +929,42 @@ def runLSTM(trainingData, trainingAction, validData, validAction):
     model.add(Dropout(0.2))
     model.add(BatchNormalization())
 
-    model.add(LSTM(256, activation="swish", return_sequences=True))
-    model.add(Dropout(0.2))
-    model.add(BatchNormalization())
-    """
-    model.add(LSTM(128, return_sequences=True))
-    model.add(Dropout(0.2))
-    model.add(BatchNormalization())
-
     model.add(LSTM(128, activation="swish", return_sequences=True))
     model.add(Dropout(0.2))
-    model.add(BatchNormalization())"""
+    model.add(BatchNormalization())
 
     model.add(LSTM(64, activation="swish"))
     model.add(Dropout(0.2))
     model.add(BatchNormalization())
 
-
-    model.add(Dense(64, activation="swish"))
+    model.add(Dense(64, activation="sigmoid"))
     model.add(Dropout(0.2))
 
     model.add(Dense((QUANTILE_NO*2)+1, activation="softmax"))
 
-    opt = Adam(lr=0.001, decay=1e-6)
+    opt = Adam(lr=0.0005, decay=0.0001)
 
     model.compile(loss="sparse_categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
-    history = model.fit(trainingData, trainingAction, validation_data=(validData, validAction), epochs=100, batch_size=12)
+    history = model.fit(trainingData, trainingAction, validation_data=(validData, validAction), epochs=450, batch_size=80)
+
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model train vs validation loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper right')
+    plt.savefig(f"../../images/Rt/machine learning/rt/{datetime.now().strftime('%d_%m_%Y_%H_%M_%S_%f')}.png")
+    plt.close()
+
+    plt.plot(history.history['accuracy'])
+    plt.plot(history.history['accuracy'])
+    plt.title('model train vs validation accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper left')
+    plt.savefig(f"../../images/Rt/machine learning/rt/{datetime.now().strftime('%d_%m_%Y_%H_%M_%S_%f')}.png")
+    plt.close()
 
     return model
 
@@ -999,9 +1008,11 @@ def determineAccuracy(model, testData, testImpact):
 
     for current in range(len(resultsPercentage)):
         currentResults = results[current] 
-
-        percentage = prepareForPrint(str(currentResults[0] / currentResults[1] * 100), 8)
-
+        try:
+            percentage = prepareForPrint(str(currentResults[0] / currentResults[1] * 100), 8)
+        except:
+            #In the event that the current action doesn't exist within the test set, then return 0 
+            percentage = 100.0
         resultsPercentage[current] = percentage
         
         overallCorrect += currentResults[0]
@@ -1083,7 +1094,7 @@ def main():
     filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree")
     filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy")"""
 
-    noIterations = 1
+    noIterations = 10
     
     regionStartNo = 1
     regionEndNo = 2
@@ -1097,9 +1108,6 @@ def main():
             trainingData, trainingAction, testData, testAction, validData, validAction = prepareData("../../data/core/" + "uk/predictor/tree.csv")
 
             model = runLSTM(trainingData, trainingAction, validData, validAction)
-
-            print("Training Data")
-            determineAccuracy(model, trainingData, trainingAction)
             
             print("Test Data")
             resultsAccuracy, overallAccuracy = determineAccuracy(model, testData, testAction)
