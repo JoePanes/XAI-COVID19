@@ -31,7 +31,7 @@ from matplotlib import pyplot as plt
 from copy import deepcopy
 from datetime import datetime
 
-QUANTILE_NO = 8
+QUANTILE_NO = 5
 GROUP_SIZE = 3
 MAX_DEPTH = GROUP_SIZE
 NUM_PROCESSES = 10
@@ -748,60 +748,65 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
         returns the filepath for the newly created .csv containing the formatted data
     """
     filePath = "../../data/core/" + "uk/predictor/" + agentType + ".csv"
-    labels = ["Region No", "Group No", "Current Point (Orig) Rt", "Current Point (Agent) Rt", "Current Point (Orig vs Agent) Rt Difference", 
-              "Agent Action to Next Point (Index)", "Agent Action to Next Point (Value)",  "Goal Point (Orig) Rt", 
-              "Goal Point (Agent) Rt", "Goal Point (Eval) Rt", "Goal Point (Orig vs Agent) Rt Difference", "Goal Point (Orig vs Eval) Rt Difference",
-              "Goal Point (Agent vs Eval) Rt Difference", "Point Impact", "Point Impact Percentage", "Most Impactful?",]
+    labels = ["Region No", "Group No"]
+    """
+    What will be needed for the new data set up:
 
+    Region No | Group No | Point 1 Rt Agent | Diff | Point 1 Action to Next | ... | Goal Point Rt Orig | Goal Point Rt Agent Goal Point Diff | Next Point Rt Orig | Next Point Rt Agent | Agent Action to Next Point |
+
+    Where the idea is that the data needs to offer as much information about the actions taken  
+    """
     outputList = []
+
+    for currPoint in range(GROUP_SIZE):
+        labels.append(f"Point {currPoint +1} Orig Rt")
+        labels.append(f"Point {currPoint +1} Agent Difference")
+        labels.append(f"Point {currPoint +1} Action to Next Point")
+
+    
+
+    labels += ["Goal Point Orig Rt", "Goal Point Agent Difference", "Next Point Rt Orig", "Next Point Agent Difference", "Agent Action to Next Point"]
 
     for currRegionIndex in range(len(regionalGroupResults)):
         for currGroupIndex in range(len(regionalGroupResults[currRegionIndex])):
+            currRow = {}
+            currRow["Region No"] = currRegionIndex + 1
+            currRow["Group No"] = currGroupIndex + 1
+
+            goalIndex = 0
             for currIndex in range(GROUP_SIZE):
-                currRow = {}
 
-                currRow["Region No"] = currRegionIndex + 1
-                currRow["Group No"] = currGroupIndex+ 1
-                
-                group = regionalGroupResults[currRegionIndex][currGroupIndex]
-                for currImpactPointIndex in range(len(group)):
-                    if currIndex in group[currImpactPointIndex][1]:
-                        if currImpactPointIndex == 0:
-                            currRow["Most Impactful?"] = 1
-                        else:
-                            currRow["Most Impactful?"] = 0
-
-                        currRow[f"Point Impact"] = group[currImpactPointIndex][0]
-                        currRow[f"Point Impact Percentage"] = group[currImpactPointIndex][2]
-                        break                
-
-                indexs, group = regionalEvaluationResults[currRegionIndex][currGroupIndex]
+                indexs, _ = regionalEvaluationResults[currRegionIndex][currGroupIndex]
                 startIndex, goalIndex = indexs
 
                 #Calculate the difference in Rt value for the original data, and the agent
                 pointOrig = regionRt[currRegionIndex][startIndex + currIndex]
-                goalOrig = regionRt[currRegionIndex][goalIndex]
+                
 
                 agentRt, action = regionalAgentResults[currRegionIndex][startIndex + currIndex]
                 
-                currRow["Current Point (Orig) Rt"] = pointOrig
-                currRow["Current Point (Agent) Rt"] = agentRt
-                currRow["Current Point (Orig vs Agent) Rt Difference"] = pointOrig - agentRt
+                currRow[f"Point {currIndex +1} Orig Rt"] = pointOrig
+                currRow[f"Point {currIndex +1} Agent Difference"] = pointOrig - agentRt
                 
-                currRow["Agent Action to Next Point (Index)"] = action
-                currRow["Agent Action to Next Point (Value)"] = regionalActionLists[currRegionIndex][action]
+                currRow[f"Point {currIndex +1} Action to Next Point"] = action
+            
+            goalOrig = regionRt[currRegionIndex][goalIndex]
+            goalAgentRt, action = regionalAgentResults[currRegionIndex][goalIndex]
+            
+            currRow["Goal Point Orig Rt"] = goalOrig
+            currRow["Goal Point Agent Difference"] = goalOrig - goalAgentRt
+            try:
+                nextPoint = regionRt[currRegionIndex][goalIndex+1]
+            except:
+                #For groups at the end of the regional data, simply ignore them
+                #Since for the desired purpose that are not needed
+                continue
+            currRow["Next Point Rt Orig"] = nextPoint
+            currRow["Next Point Agent Difference"] = goalAgentRt + regionalActionLists[currRegionIndex][action]
+            currRow["Agent Action to Next Point"] = action
 
-                currGroupGoal = group[currIndex]
-                goalAgentRt = regionalAgentResults[currRegionIndex][goalIndex][0]
-                
-                currRow["Goal Point (Orig) Rt"] = goalOrig
-                currRow["Goal Point (Agent) Rt"] = goalAgentRt
-                currRow["Goal Point (Eval) Rt"] = goalOrig + currGroupGoal[1]
-
-                currRow["Goal Point (Orig vs Agent) Rt Difference"] = goalOrig - goalAgentRt
-                currRow["Goal Point (Orig vs Eval) Rt Difference"] = currGroupGoal[1]
-                currRow["Goal Point (Agent vs Eval) Rt Difference"] = goalAgentRt - (goalOrig + currGroupGoal[1])
-                outputList.append(currRow)
+            #print(list(currRow.keys()))
+            outputList.append(currRow)
 
     with open(filePath, "w") as optFile:
             
@@ -841,40 +846,32 @@ def prepareData(filePath, regionNo=None):
 
     elif regionNo != None and int(regionNo) in REGIONS:
         currRegion = compiledData["Region No"] == regionNo
+
         compiledData = compiledData[currRegion]
-
-    #Convert the 2D dataframe into a 3D dataframe
-    chunkData, chunkImpact = groupData(compiledData)
-
+    
+    coreData = compiledData.drop("Agent Action to Next Point", axis=1)
+    goalData = compiledData["Agent Action to Next Point"]
     #Split the grouped data
-    trainingChunks, testChunks = train_test_split(chunkData.columns.values, test_size=0.3, random_state=randint(1, os.getpid()))
+    trainingCore, testCore, trainingGoal, testGoal = train_test_split(coreData, goalData, test_size=0.3, random_state=randint(1, os.getpid()))
 
-    testChunks, validationChunks = train_test_split(testChunks, test_size=0.3, random_state=randint(1, os.getpid()))
+    testCore, validCore, testGoal, validGoal = train_test_split(testCore, testGoal, test_size=0.4, random_state=randint(1, os.getpid()))
 
-    trainingData, trainingImpact = chunkData[trainingChunks], chunkImpact[trainingChunks]
-    testData, testImpact = chunkData[testChunks], chunkImpact[testChunks]
-    validData, validImpact = chunkData[validationChunks], chunkImpact[validationChunks]
-
-    #Convert the 3D data Dataframes back into 2D, so that feature scaling can be performed on it
-    trainingData, trainingImpact = reduceDataDimensionality(trainingData, trainingImpact)
-    testData, testImpact = reduceDataDimensionality(testData, testImpact)
-    validData, validImpact = reduceDataDimensionality(validData, validImpact)
 
     #Get ready to perform feature scaling
     scaler = MinMaxScaler()
 
-    trainingData = scaler.fit_transform(trainingData)
-    testData = scaler.transform(testData)
-    validData = scaler.transform(validData)
+    trainingCore = scaler.fit_transform(trainingCore)
+    testCore = scaler.transform(testCore)
+    validCore = scaler.transform(validCore)
 
     #Convert back into 3D
-    trainingData = np.reshape(trainingData, (trainingData.shape[0], 1, trainingData.shape[1]))
+    trainingCore = np.reshape(trainingCore, (trainingCore.shape[0], 1, trainingCore.shape[1]))
     
-    testData = np.reshape(testData, (testData.shape[0], 1, testData.shape[1]))
+    testCore = np.reshape(testCore, (testCore.shape[0], 1, testCore.shape[1]))
 
-    validData = np.reshape(validData, (validData.shape[0], 1, validData.shape[1]))
+    validCore = np.reshape(validCore, (validCore.shape[0], 1, validCore.shape[1]))
 
-    return trainingData, trainingImpact, testData, testImpact, validData, validImpact
+    return trainingCore, trainingGoal.to_numpy(), testCore, testGoal.to_numpy(), validCore, validGoal
 
 def findGroupNoCutoff(dataframe):
     """
@@ -914,107 +911,52 @@ def findGroupNoCutoff(dataframe):
     #Find the smallest-largest point, that exists in all regions
     return min(groupLengths)
 
-def groupData(data):
-    """
-    Converts a Dataframe into a 3D Dataframe, based upon the group size.
-
-    INPUT:
-        :param data: Dataframe, containing all of the the data within the dataset
-    
-    OUTPUT:
-        returns two 3D Dataframes, the grouped data, and the goal data.
-    """
-    currChunkNo = 1
-    currChunkAmount = 0
-    chunkData = {}
-    chunkImpact = {}
-
-    headers = data.columns.values[2:-1]
-    #Convert the 2D Dataframe into 3D, where it is collected together into its own groups
-    for index, row in data.iterrows():
-        if currChunkAmount == GROUP_SIZE:
-            currChunkAmount = 0
-            currChunkNo += 1
-
-        if currChunkAmount == 0:
-            chunkData[f"Chunk {currChunkNo}"] = []
-            chunkImpact[f"Chunk {currChunkNo}"] = []
-
-        currChunkAmount +=1
-        chunkData[f"Chunk {currChunkNo}"].append(row[headers].to_numpy())
-        chunkImpact[f"Chunk {currChunkNo}"].append(int(row["Most Impactful?"]))
-
-    chunkData = DataFrame.from_dict(chunkData)
-    chunkImpact = DataFrame.from_dict(chunkImpact)
-
-    return chunkData, chunkImpact
-
-def reduceDataDimensionality(X, y):
-    """
-    Take in 3D (grouped) data and reduce the dimension back to being 2D
-
-    INPUT:
-        :param X: 3D Pandas Dataframe, the core of the data
-        :param y: 3D Pandas Dataframe, the feature(s) being used as the goal
-
-    OUTPUT:
-        returns two 2D numpy arrays containing numpy arrays (the rows of the dataset)
-    """
-    flattenedData = []
-    flattenedImpact = []
-    chunkColumnNames = list(X.columns.values)
-
-    for currCol in chunkColumnNames:
-        for currPoint in X[currCol].to_numpy():
-            flattenedData.append(currPoint)
-        
-        for currPoint in y[currCol].to_numpy():
-            flattenedImpact.append(np.array(currPoint))
-    
-    return np.array(flattenedData), np.array(flattenedImpact)
-
-def runLSTM(trainingData, trainingImpact, validData, validImpact):
+def runLSTM(trainingData, trainingAction, validData, validAction):
     """
     Runs the LSTM Recurrent Neural Network on the split dataset
 
     INPUTS:
         :param trainingData: 3D Numpy Array, contains the feature scaled data
-        :param trainingImpact: 3D Numpy Array, contains the binary columns for Most Impactful Points?
+        :param trainingAction: 3D Numpy Array, contains the corresponding actions taken for the training data
         :param validData: 3D Numpy Array, contains the feature scaled data
-        :param validImpact: 3D Numpy Array, contains the binary columns for Most Impactful Points?
+        :param validAction: 3D Numpy Array, contains the corresponding actions taken for the training data
 
     OUTPUT:
         returns a trained Sequential model, that includes LSTM layers
     """
     model = Sequential()
-    model.add(LSTM(64, return_sequences=True))
-    model.add(Dropout(0.1))
+    model.add(LSTM(256, return_sequences=True))
+    model.add(Dropout(0.2))
     model.add(BatchNormalization())
+
+    model.add(LSTM(256, activation="swish", return_sequences=True))
+    model.add(Dropout(0.2))
+    model.add(BatchNormalization())
+    """
+    model.add(LSTM(128, return_sequences=True))
+    model.add(Dropout(0.2))
+    model.add(BatchNormalization())
+
+    model.add(LSTM(128, activation="swish", return_sequences=True))
+    model.add(Dropout(0.2))
+    model.add(BatchNormalization())"""
 
     model.add(LSTM(64, activation="swish"))
     model.add(Dropout(0.2))
     model.add(BatchNormalization())
 
-    model.add(Dense(16, activation="swish"))
-    model.add(Dropout(0.1))
 
-    model.add(Dense(2, activation="softmax"))
+    model.add(Dense(64, activation="swish"))
+    model.add(Dropout(0.2))
+
+    model.add(Dense((QUANTILE_NO*2)+1, activation="softmax"))
 
     opt = Adam(lr=0.001, decay=1e-6)
 
     model.compile(loss="sparse_categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
-    history = model.fit(trainingData, trainingImpact, epochs=50, validation_data=(validData, validImpact), batch_size=12)
+    history = model.fit(trainingData, trainingAction, validation_data=(validData, validAction), epochs=100, batch_size=12)
 
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title('model train vs validation loss')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'validation'], loc='upper right')
-    plt.savefig(f"../../images/Rt/machine learning/rt/{datetime.now().strftime('%d_%m_%Y_%H_%M_%S')}.png")
-    plt.close()
-    
     return model
 
 def determineAccuracy(model, testData, testImpact):
@@ -1030,21 +972,19 @@ def determineAccuracy(model, testData, testImpact):
     OUTPUT:
         returns the percentage for each category and prints the results of running this function to the command line
     """
-    results = {
-         #Correct  #Total
-        0 : [0,      0],
-        1 : [0,      0],
-    }
+    #Prepare method of gathering results
+    results = {}
+    for currResult in range(QUANTILE_NO * 2 + 1):
+                             #Correct  #Total
+        results[currResult] = [0,       0]
+        
     for currIndex in range(len(testData)):
         currentTestData = testData[currIndex]
         currentTestData = np.reshape(currentTestData, (1, currentTestData.shape[0], currentTestData.shape[1]))
         
         prediction = model.predict(currentTestData)[0]
-
-        if prediction[0] > prediction[1]:
-            prediction = 0
-        else:
-            prediction = 1
+        
+        prediction = np.argmax(prediction)
         actualValue = testImpact[currIndex]
 
         if actualValue == prediction:
@@ -1052,43 +992,40 @@ def determineAccuracy(model, testData, testImpact):
             results[prediction][1] += 1
         else:
             results[actualValue][1] += 1
-
-    zeroResults = results[0]
-    zeroAccuracyPercentage = str(zeroResults[0] / zeroResults[1] * 100)
-
-    oneResults = results[1]
-    oneAccuracyPercentage = str(round(oneResults[0] / oneResults[1] * 100, 5))
     
-    overallCorrect = zeroResults[0] + oneResults[0]
-    overallTotal = zeroResults[1] + oneResults[1]
+    resultsPercentage = [[] for _ in range(QUANTILE_NO*2+1)]
+    overallCorrect = 0
+    overallTotal = 0
 
-    overrallPercentage = str(round(overallCorrect / overallTotal * 100, 5))
+    for current in range(len(resultsPercentage)):
+        currentResults = results[current] 
 
-    zeroAccuracyPercentage = prepareForPrint(zeroAccuracyPercentage, 8)
-    oneAccuracyPercentage = prepareForPrint(oneAccuracyPercentage, 8)
-    overrallPercentage = prepareForPrint(overrallPercentage, 8)
+        percentage = prepareForPrint(str(currentResults[0] / currentResults[1] * 100), 8)
+
+        resultsPercentage[current] = percentage
+        
+        overallCorrect += currentResults[0]
+        overallTotal += currentResults[1]
+
+    overrallPercentage = prepareForPrint(str(round(overallCorrect / overallTotal * 100, 5)), 8)
 
     print()
     title = "-----------------Result------------------"
-    headers = "|Impactful?|  "
+    headers = "|Action Index|  "
 
     #Adjust padding dependending upon size of data
-    if zeroResults[0] > 99 or oneResults[0] > 99 or overallCorrect > 99:
-        headers += " "
-        title += "-"
+
     headers += "Results  "
     
-    if zeroResults[1] > 99 or oneResults[1] > 99 or overallTotal > 99:
-        headers += " "
-        title += "-"
     headers += "|   Percentage   |"
     print(title)
     print(headers)
-    print(f"|    No    |  {results[0]} |   {zeroAccuracyPercentage}     |")
-    print(f"|    Yes   |  {results[1]} |   {oneAccuracyPercentage}     |")
+    for current in range(len(resultsPercentage)):
+        print(f"| {current}        |  {results[current]} |   {resultsPercentage[current]}     |")
+
     print(f"|  Overall |  [{overallCorrect}, {overallTotal}] |   {overrallPercentage}     |")
 
-    return zeroAccuracyPercentage, oneAccuracyPercentage, overrallPercentage
+    return resultsPercentage, overrallPercentage
 
 def prepareForPrint(value, desiredLength):
     """
@@ -1145,32 +1082,46 @@ def main():
 
     filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree")
     filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy")"""
-    noIterations = 10
+
+    noIterations = 1
     
     regionStartNo = 1
-    regionEndNo = 13
+    regionEndNo = 2
 
-    overallTest = []
+    currRegionResultsOverall = []
     for currRegion in range(regionStartNo, regionEndNo):
-        groupZeroAcc, groupOneAcc, groupOverallAcc = 0, 0, 0
-        for _ in range(noIterations):
-            trainingData, trainingImpact, testData, testImpact, validData, validImpact = prepareData("../../data/core/" + "uk/predictor/tree.csv", currRegion)
+        groupResultsAccuracy = [0 for _ in range(QUANTILE_NO*2+1)]
+        groupOverallAccuracy = 0
 
-            model = runLSTM(trainingData, trainingImpact, validData, validImpact)
+        for _ in range(noIterations):
+            trainingData, trainingAction, testData, testAction, validData, validAction = prepareData("../../data/core/" + "uk/predictor/tree.csv")
+
+            model = runLSTM(trainingData, trainingAction, validData, validAction)
+
+            print("Training Data")
+            determineAccuracy(model, trainingData, trainingAction)
             
             print("Test Data")
-            currZeroAcc, currOneAcc, currOverallAcc = determineAccuracy(model, testData, testImpact)
-            
-            groupZeroAcc += float(currZeroAcc)
-            groupOneAcc += float(currOneAcc)
-            groupOverallAcc += float(currOverallAcc)
-        overallTest.append((currRegion, groupZeroAcc / noIterations, groupOneAcc / noIterations, groupOverallAcc / noIterations))
+            resultsAccuracy, overallAccuracy = determineAccuracy(model, testData, testAction)
+
+
+            groupOverallAccuracy += float(overallAccuracy)
+
+            for currIndex in range(len(resultsAccuracy)):
+                groupResultsAccuracy[currIndex] += float(resultsAccuracy[currIndex])
+
+        currRegionResultsOverall.append([currRegion]) 
+        
+        for currIndex in range(len(groupResultsAccuracy)):
+            currRegionResultsOverall[currRegion-1].append(round(groupResultsAccuracy[currIndex] / noIterations, 2))
+        
+        currRegionResultsOverall[currRegion-1].append(round(groupOverallAccuracy / noIterations, 2))
         
     overallSumTest = 0
-    for curr in overallTest:
-        overallSumTest += curr[3]
+    for curr in currRegionResultsOverall:
+        overallSumTest += curr[-1]
         print(curr)
     print(overallSumTest / (regionEndNo - regionStartNo))
-        
+
 if __name__ == "__main__":
     sys.exit(main())
