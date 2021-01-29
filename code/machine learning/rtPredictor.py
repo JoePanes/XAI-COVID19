@@ -19,6 +19,7 @@ from tensorflow.keras.optimizers import Adam
 from pandas import qcut
 from pandas import DataFrame
 from pandas import read_csv
+from pandas import concat
 
 from sklearn.model_selection import train_test_split 
 from sklearn.preprocessing import MinMaxScaler
@@ -783,7 +784,7 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
                 _, action = regionalAgentResults[currRegionIndex][currIndex+1]
                 currRow[f"Point {currPointNo} Action to Next Point"] = action
                 currPointNo+= 1
-                
+
             goalOrig = regionRt[currRegionIndex][goalIndex]
             goalAgentRt, _ = regionalAgentResults[currRegionIndex][goalIndex]
             
@@ -847,13 +848,34 @@ def prepareData(filePath, regionNo=None):
     
     compiledData = compiledData.drop("Group No", axis=1)
 
-    currRowList = []
+    regionalRowList = []
     rowsToAdd = []
-    """for index, row in compiledData.iterrow():
 
-    """
+    #Gather all rows in preparation for creating new groups
+    for index, row in compiledData.iterrows():
+        if row["Region No"] == regionNo and len(regionalRowList) == regionNo:
+            regionalRowList[regionNo-1].append(row.to_dict())
+        else:
+            regionalRowList.append([row.to_dict()])
+            regionNo = int(row["Region No"])
+
+    for currRegion in regionalRowList:
+        for currGroupIndex in range(len(currRegion)):
+            endPoint = False
+            for currGroup in range(2, GROUP_SIZE+1):
+                pointsToGather = [list(range(currGroup, GROUP_SIZE+1)), list(range(1, currGroup))]
+                
+                if GROUP_SIZE - currGroup == 1:
+                    endPoint = True
+                try:
+                    newRow = createNewGroupRow(currRegion[currGroupIndex], currRegion[currGroupIndex+1], pointsToGather, endPoint)
+                except:
+                    #If currRegion[currGroupIndex+1] is out of bounds, then the newRow is invalid, so can be skipped without
+                    #need of further intervention
+                    continue
+                rowsToAdd.append(newRow)
     
-
+    compiledData= concat([compiledData, DataFrame(rowsToAdd)])
 
     coreData = compiledData.drop(["Agent Action to Next Point", "Region No"], axis=1)
     goalData = compiledData["Agent Action to Next Point"]
@@ -917,6 +939,56 @@ def findGroupNoCutoff(dataframe):
     #Find the smallest-largest point, that exists in all regions
     return min(groupLengths)
 
+def createNewGroupRow(currGroup, nextGroup, pointsToGather, endPoint):
+    """
+    Using the points present within two groups, create a third new group using the points specified
+    by pointsToGather and work out what else needs to be taken through endPoint.
+
+    INPUTS:
+        :param currGroup: Dictionary, containing a row of the dataset
+        :param nextGroup: Dictionary, containing the next row of the dataset
+        :param pointsToGather: 2D list of integers, containing what points need to be taken from either dictionary
+        :param endPoint: Boolean, whether it is the last point within the group that is being taken from currGroup
+
+    OUTPUT:
+        returns a Dictionary, containing a mixture of contents from currGroup and nextGroup
+    """
+    newRow = {}
+    newRow["Region No"] = currGroup["Region No"]
+    currPoint = 1
+    #Sort out the Group Points
+    for currPointIndex in range(len(pointsToGather[0])):
+        currGroupPoint = pointsToGather[0][currPointIndex]
+        newRow[f"Point {currPoint + currPointIndex} Orig Rt"] = currGroup[f"Point {currGroupPoint} Orig Rt"]
+        newRow[f"Point {currPoint + currPointIndex} Agent Difference"] = currGroup[f"Point {currGroupPoint} Agent Difference"]
+        newRow[f"Point {currPoint + currPointIndex} Action to Next Point"] = currGroup[f"Point {currGroupPoint} Action to Next Point"]
+    
+    currPoint += len(pointsToGather[0])
+
+    for currPointIndex in range(len(pointsToGather[1])):
+        currGroupPoint = pointsToGather[1][currPointIndex]
+        newRow[f"Point {currPoint + currPointIndex} Orig Rt"] = nextGroup[f"Point {currGroupPoint} Orig Rt"]
+        newRow[f"Point {currPoint + currPointIndex} Agent Difference"] = nextGroup[f"Point {currGroupPoint} Agent Difference"]
+        newRow[f"Point {currPoint + currPointIndex} Action to Next Point"] = nextGroup[f"Point {currGroupPoint} Action to Next Point"]
+    
+    #Sort out the Goal Point and Next Point
+    goalPoint = pointsToGather[1][currPointIndex]+1
+
+    newRow[f"Goal Point Orig Rt"] = nextGroup[f"Point {goalPoint} Orig Rt"]
+    newRow[f"Goal Point Agent Difference"] = nextGroup[f"Point {goalPoint} Agent Difference"]
+
+    if endPoint:
+        newRow[f"Next Point Rt Orig"] = nextGroup["Goal Point Orig Rt"]
+        newRow[f"Next Point Agent Difference"] = nextGroup["Goal Point Agent Difference"]
+        newRow[f"Agent Action to Next Point"] = nextGroup[f"Point {goalPoint} Action to Next Point"]
+    else:
+        goalPoint += 1
+        newRow[f"Next Point Rt Orig"] = nextGroup[f"Point {goalPoint} Orig Rt"]
+        newRow[f"Next Point Agent Difference"] = nextGroup[f"Point {goalPoint} Agent Difference"]
+        newRow[f"Agent Action to Next Point"] = nextGroup[f"Point {goalPoint} Action to Next Point"]
+
+    return newRow
+
 def runLSTM(trainingData, trainingAction, validData, validAction):
     """
     Runs the LSTM Recurrent Neural Network on the split dataset
@@ -952,7 +1024,7 @@ def runLSTM(trainingData, trainingAction, validData, validAction):
 
     model.compile(loss="sparse_categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
-    history = model.fit(trainingData, trainingAction, validation_data=(validData, validAction), epochs=450, batch_size=80)
+    history = model.fit(trainingData, trainingAction, validation_data=(validData, validAction), epochs=500, batch_size=80)
 
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
@@ -1076,7 +1148,7 @@ def prepareForPrint(value, desiredLength):
     return value
 
 def main():
-    filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
+    """filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
 
     regionRt = readFile("uk", filePath)
 
@@ -1098,7 +1170,7 @@ def main():
     regionalGroupResultsTree = evalutateAgentPerformance(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree)
 
     filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree")
-    filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy")
+    filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy")"""
 
     noIterations = 10
     
