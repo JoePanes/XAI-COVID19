@@ -749,21 +749,14 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
     """
     filePath = "../../data/core/" + "uk/predictor/" + agentType + ".csv"
     labels = ["Region No", "Group No"]
-    """
-    What will be needed for the new data set up:
 
-    Region No | Group No | Point 1 Rt Agent | Diff | Point 1 Action to Next | ... | Goal Point Rt Orig | Goal Point Rt Agent Goal Point Diff | Next Point Rt Orig | Next Point Rt Agent | Agent Action to Next Point |
-
-    Where the idea is that the data needs to offer as much information about the actions taken  
-    """
     outputList = []
 
-    for currPoint in range(GROUP_SIZE):
-        labels.append(f"Point {currPoint +1} Orig Rt")
-        labels.append(f"Point {currPoint +1} Agent Difference")
-        labels.append(f"Point {currPoint +1} Action to Next Point")
+    for currPoint in range(1, GROUP_SIZE+1):
+        labels.append(f"Point {currPoint} Orig Rt")
+        labels.append(f"Point {currPoint} Agent Difference")
+        labels.append(f"Point {currPoint} Action to Next Point")
 
-    
 
     labels += ["Goal Point Orig Rt", "Goal Point Agent Difference", "Next Point Rt Orig", "Next Point Agent Difference", "Agent Action to Next Point"]
 
@@ -774,35 +767,38 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
             currRow["Group No"] = currGroupIndex + 1
 
             goalIndex = 0
-            for currIndex in range(GROUP_SIZE):
-
-                indexs, _ = regionalEvaluationResults[currRegionIndex][currGroupIndex]
-                startIndex, goalIndex = indexs
+            indexs, _ = regionalEvaluationResults[currRegionIndex][currGroupIndex]
+            startIndex, goalIndex = indexs
+            currPointNo = 1
+            for currIndex in range(startIndex, goalIndex):
 
                 #Calculate the difference in Rt value for the original data, and the agent
-                pointOrig = regionRt[currRegionIndex][startIndex + currIndex]
+                pointOrig = regionRt[currRegionIndex][currIndex]
                 
+                currRow[f"Point {currPointNo} Orig Rt"] = pointOrig
 
-                agentRt, action = regionalAgentResults[currRegionIndex][startIndex + currIndex]
+                agentRt, _ = regionalAgentResults[currRegionIndex][currIndex]
+                currRow[f"Point {currPointNo} Agent Difference"] = agentRt - pointOrig
+
+                _, action = regionalAgentResults[currRegionIndex][currIndex+1]
+                currRow[f"Point {currPointNo} Action to Next Point"] = action
+                currPointNo+= 1
                 
-                currRow[f"Point {currIndex +1} Orig Rt"] = pointOrig
-                currRow[f"Point {currIndex +1} Agent Difference"] = pointOrig - agentRt
-                
-                currRow[f"Point {currIndex +1} Action to Next Point"] = action
-            
             goalOrig = regionRt[currRegionIndex][goalIndex]
-            goalAgentRt, action = regionalAgentResults[currRegionIndex][goalIndex]
+            goalAgentRt, _ = regionalAgentResults[currRegionIndex][goalIndex]
             
             currRow["Goal Point Orig Rt"] = goalOrig
-            currRow["Goal Point Agent Difference"] = goalOrig - goalAgentRt
+            currRow["Goal Point Agent Difference"] = goalAgentRt - goalOrig
+
             try:
                 nextPoint = regionRt[currRegionIndex][goalIndex+1]
+                nextPointAgent, action = regionalAgentResults[currRegionIndex][goalIndex+1]
             except:
                 #For groups at the end of the regional data, simply ignore them
                 #Since for the desired purpose that are not needed
                 continue
             currRow["Next Point Rt Orig"] = nextPoint
-            currRow["Next Point Agent Difference"] = goalAgentRt + regionalActionLists[currRegionIndex][action]
+            currRow["Next Point Agent Difference"] = nextPointAgent - nextPoint
             currRow["Agent Action to Next Point"] = action
 
             #print(list(currRow.keys()))
@@ -849,7 +845,17 @@ def prepareData(filePath, regionNo=None):
 
         compiledData = compiledData[currRegion]
     
-    coreData = compiledData.drop("Agent Action to Next Point", axis=1)
+    compiledData = compiledData.drop("Group No", axis=1)
+
+    currRowList = []
+    rowsToAdd = []
+    """for index, row in compiledData.iterrow():
+
+    """
+    
+
+
+    coreData = compiledData.drop(["Agent Action to Next Point", "Region No"], axis=1)
     goalData = compiledData["Agent Action to Next Point"]
     #Split the grouped data
     trainingCore, testCore, trainingGoal, testGoal = train_test_split(coreData, goalData, test_size=0.3, random_state=randint(1, os.getpid()))
@@ -1070,7 +1076,7 @@ def prepareForPrint(value, desiredLength):
     return value
 
 def main():
-    """filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
+    filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
 
     regionRt = readFile("uk", filePath)
 
@@ -1092,7 +1098,7 @@ def main():
     regionalGroupResultsTree = evalutateAgentPerformance(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree)
 
     filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree")
-    filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy")"""
+    filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy")
 
     noIterations = 10
     
