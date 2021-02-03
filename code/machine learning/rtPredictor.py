@@ -840,19 +840,21 @@ def prepareData(filePath, regionNo=None):
 
     INPUT:
         :param filePath: String, the location of the .csv file to be used 
-    
+        :param regionNo: Integer, the specific regional data to be used
+
     OUTPUT:
         returns four separate numpy arrays, these are the training set, test set, and their corresponding most impactful.
     """
     compiledData = read_csv(filePath)
 
     if regionNo == None:
+
         maxGroupNo = findGroupNoCutoff(compiledData)
 
         #Remove Group Nos that don't exist in all regions
         rowsToDrop = []
         for index, row in compiledData.iterrows():
-            if regionNo == None and int(row["Group No"]) > maxGroupNo:
+            if int(row["Group No"]) > maxGroupNo:
                 rowsToDrop.append(index)
 
     elif regionNo != None and int(regionNo) in REGIONS:
@@ -893,17 +895,20 @@ def prepareData(filePath, regionNo=None):
     labels = list(rowsToAdd[0].keys())
     labels.pop(-1)
     labels.insert(1, "Group No")
-    print(filePath)
+
     newFilePath = filePath[:-4] + "_expanded.csv"
-    print(newFilePath)
     
     compiledData= concat([compiledData, DataFrame(rowsToAdd)])
     compiledData.sort_values(["Region No", "Group No"], ascending=[True, True], inplace=True)
 
     rowsToAdd = []
+    regionalActionsAmount = [0 for _ in range(QUANTILE_NO*2+1)]
     for index, row in compiledData.iterrows():
         rowsToAdd.append(row.to_dict())
 
+        regionalActionsAmount[int(row["Agent Action to Next Point"])] += 1
+
+    print(regionalActionsAmount)
     writeFile(newFilePath, labels, rowsToAdd)
     coreData = compiledData.drop(["Agent Action to Next Point", "Region No", "Group No"], axis=1)
     goalData = compiledData["Agent Action to Next Point"]
@@ -914,7 +919,7 @@ def prepareData(filePath, regionNo=None):
 
 
     #Get ready to perform feature scaling
-    scaler = MinMaxScaler()
+    scaler = MinMaxScaler(feature_range=(-1, 1))
 
     trainingCore = scaler.fit_transform(trainingCore)
     testCore = scaler.transform(testCore)
@@ -1019,7 +1024,7 @@ def createNewGroupRow(currGroup, nextGroup, pointsToGather, endPoint):
 
 def runLSTM(trainingData, trainingAction):
     """
-    Runs the LSTM Recurrent Neural Network on the split dataset
+    Runs the LSTM Recurrent Neural Network on the dataset
 
     INPUTS:
         :param trainingData: 3D Numpy Array, contains the feature scaled data
@@ -1060,7 +1065,7 @@ def runLSTM(trainingData, trainingAction):
 
     model.compile(loss="sparse_categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
-    history = model.fit(trainingData, trainingAction, validation_data=(validData, validAction), epochs=500, batch_size=80)
+    history = model.fit(trainingData, trainingAction, epochs=500, batch_size=160)
 
     """plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
@@ -1070,15 +1075,7 @@ def runLSTM(trainingData, trainingAction):
     plt.legend(['train', 'validation'], loc='upper right')
     plt.savefig(f"../../images/Rt/machine learning/rt/{datetime.now().strftime('%d_%m_%Y_%H_%M_%S_%f')}.png")
     plt.close()
-
-    plt.plot(history.history['accuracy'])
-    plt.plot(history.history['accuracy'])
-    plt.title('model train vs validation accuracy')
-    plt.ylabel('accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'validation'], loc='upper left')
-    plt.savefig(f"../../images/Rt/machine learning/rt/{datetime.now().strftime('%d_%m_%Y_%H_%M_%S_%f')}.png")
-    plt.close()"""
+    """
 
     return model
 
@@ -1149,8 +1146,7 @@ def determineAccuracy(model, testData, testImpact):
     print(headers)
 
     for current in range(len(resultsPercentage)):
-        missRate = round(results[current][3] / (results[current][3] + results[current][0]) *100, 2)
-        print(f"| {current}        |  {results[current][0:2]} |   {resultsPercentage[current]}     | {results[current][2]}| {results[current][3]} | {missRate}")
+        print(f"| {current}        |  {results[current][0:2]} |   {resultsPercentage[current]}     | {results[current][2]}| {results[current][3]}")
 
     print(f"|  Overall |  [{overallCorrect}, {overallTotal}] |   {overrallPercentage}     |")
 
@@ -1188,7 +1184,7 @@ def prepareForPrint(value, desiredLength):
     return value
 
 def main():
-    """filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
+    filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
 
     regionRt = readFile("uk", filePath)
 
@@ -1201,6 +1197,21 @@ def main():
     regionalAgentResultsTree = runAgent(regionalPotentialActionLists, regionRt, "tree")
     regionalAgentResultsGreed = runAgent(regionalPotentialActionLists, regionRt)
 
+    agentCumulativeDifferenceTree = 0
+    agentCumulativeDifferenceGreedy = 0
+
+    for currRegionIndex in range(len(regionRt)):
+        for currPoint in range(len(regionRt[currRegionIndex])):
+            origRt = regionRt[currRegionIndex][currPoint]
+            agentRtTree, _ = regionalAgentResultsTree[currRegionIndex][currPoint]
+            agentRtGreedy, _ = regionalAgentResultsGreed[currRegionIndex][currPoint]
+
+            agentCumulativeDifferenceTree += abs(origRt - agentRtTree)
+            agentCumulativeDifferenceGreedy += abs(origRt - agentRtGreedy)
+
+    print("Tree: ", agentCumulativeDifferenceTree / 12)
+    print("Greedy: ", agentCumulativeDifferenceGreedy / 12) 
+
     print("----") 
 
     regionalEvaluationGroupsGreed = runEvaluationAgent(regionalPotentialActionLists, regionRt, regionalAgentResultsGreed)
@@ -1210,10 +1221,10 @@ def main():
     regionalGroupResultsTree = evalutateAgentPerformance(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree)
 
     filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree")
-    filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy")"""
+    filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy")
 
-    noIterations = 3
-    
+    noIterations = 1
+    useRegionNo = False
     regionStartNo = 1
     regionEndNo = 2
 
@@ -1221,10 +1232,14 @@ def main():
     for currRegion in range(regionStartNo, regionEndNo):
         groupResultsAccuracy = [0 for _ in range(QUANTILE_NO*2+1)]
         groupOverallAccuracy = 0
-
+        
+        regionNo = None
+        if useRegionNo:
+            regionNo = currRegion
         for _ in range(noIterations):
-            trainingData, trainingAction, testData, testAction = prepareData("../../data/core/" + "uk/predictor/tree.csv")
-
+            
+            trainingData, trainingAction, testData, testAction = prepareData("../../data/core/" + "uk/predictor/tree.csv", regionNo)
+            
             model = runLSTM(trainingData, trainingAction)
             
             print("Test Data")
