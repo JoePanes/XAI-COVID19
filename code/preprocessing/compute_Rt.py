@@ -191,7 +191,7 @@ class computeRt():
             if lineRegion != currRegion:
                 currRegion = lineRegion
                 continue
-            
+
             #Look at previous dates increasingly further back
             for currDateReduction in self.PAST_DATE_LIST:
                 previousDateIndex = currRowIndex - currDateReduction
@@ -204,8 +204,12 @@ class computeRt():
                         val = int(processedData[previousDateIndex].get(currControlMeasure))
                         typeOfControlMeasure = self.CONTROL_MEASURES.get(currControlMeasure)
                         
-                        if typeOfControlMeasure[0] is "Binary" and val >= 1:
-                            processedData[currRowIndex][currControlMeasure] = str(self.PAST_DATE_LIST.index(currDateReduction) + val)
+                        if typeOfControlMeasure[0] is "Binary":
+                            if int(processedData[currRowIndex][currControlMeasure]) == 0:
+                                continue
+                            elif val >= 1:
+                                processedData[currRowIndex][currControlMeasure] = str(self.PAST_DATE_LIST.index(currDateReduction) + val)
+                            
                         
                         elif typeOfControlMeasure[0] is "Trinary":
                             trinaryValues = typeOfControlMeasure[1]
@@ -220,20 +224,23 @@ class computeRt():
                             for currIndex in range(len(currDateControlLevel)):
 
                                 currField = f"{currControlMeasure} ({trinaryValues[currIndex]})"
-
+                                
                                 if currDateControlLevel[currIndex] == 1 and currDateControlLevel[currIndex] == prevDateControlLevel[currIndex]:    
                                     try:
                                         #Due to the breaking up of fields, the val used in binary is not usable for the same purpose here,
                                         #since we are not overwriting the same field
+                                        
                                         prevDateTrinaryVal = int(processedData[previousDateIndex].get(currField))
                                     except:
                                         #If this is the case, then it is early on in the converting of this region
                                         prevDateTrinaryVal = 1
-
+ 
                                     processedData[currRowIndex].update({currField : str(self.PAST_DATE_LIST.index(currDateReduction) + prevDateTrinaryVal)})
                                 else:
+                                    processedData[currRowIndex].update({currField : 0})
 
-                                    processedData[currRowIndex].update({currField : 0})                            
+                        else:
+                            processedData[currRowIndex][currControlMeasure] = str(0)                            
 
             nextRegion = self.getRegion(processedData[currRowIndex + 1])
 
