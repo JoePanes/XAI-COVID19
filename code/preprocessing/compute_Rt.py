@@ -170,31 +170,34 @@ class computeRt():
             returnVal = gamma.cdf(s+0.5, a, 0, scale) - gamma.cdf(s-0.5, a, 0, scale)
             return returnVal
 
-    def processControlMeasures(self, processedData):
+    def processControlMeasures(self, processedData, windowSize):
         """
         Look at the Control measures used, and evalutate the length that have been implemented for, 
         and provide a value.
 
         INPUT:
-            :param processedData: List of dictionaries, where each entry is a row from the datasetc
+            :param processedData: List of dictionaries, where each entry is a row from the dataset
+            :param windowSize: Integer, the number of elements to consider when normalising the case numbers
 
         OUTPUT:
             returns the new altered version of the dataset
         """
         newData = []
         currRegion = self.getRegion(processedData[0])
+        halfOfWindowRoundedDown = int((windowSize - 1) / 2)
+        currRowIndex = halfOfWindowRoundedDown
         
-        for currRowIndex in range(1, len(processedData)-1):
+        while currRowIndex < (len(processedData) - halfOfWindowRoundedDown):
             lineRegion = self.getRegion(processedData[currRowIndex])
 
             #When a new regions occurs, replace and skip over the first instance
             if lineRegion != currRegion:
                 currRegion = lineRegion
+                currRowIndex += halfOfWindowRoundedDown
                 continue
             
             #Look at previous dates increasingly further back
-            for currControlMeasure in self.CONTROL_MEASURES:
-                
+            for currControlMeasure in self.CONTROL_MEASURES:  
                 typeOfControlMeasure = self.CONTROL_MEASURES.get(currControlMeasure)
     
                 dateReductionChecks = [True, True, True]
@@ -205,7 +208,6 @@ class computeRt():
                     
                     if previousDateIndex > 0 and pastDateRegion == currRegion:
                         val = int(processedData[previousDateIndex].get(currControlMeasure))
-                        
                         
                         if typeOfControlMeasure[0] is "Binary":
                             if int(processedData[currRowIndex][currControlMeasure]) == 0:
@@ -251,25 +253,28 @@ class computeRt():
                         else:
                             processedData[currRowIndex][currControlMeasure] = str(0)                            
 
-            nextRegion = self.getRegion(processedData[currRowIndex + 1])
+            nextRegion = self.getRegion(processedData[currRowIndex + halfOfWindowRoundedDown])
 
             if currRegion != nextRegion:
+                currRowIndex += halfOfWindowRoundedDown
                 continue
-            
 
             newRow = deepcopy(processedData[currRowIndex])
 
             for currControlMeasure in self.CONTROL_MEASURES:
                 if self.CONTROL_MEASURES.get(currControlMeasure)[0] is "Trinary":
                     newRow.pop(currControlMeasure)
+            meanList = [int(processedData[currRowIndex].get("Cumulative Cases"))]
 
-            prevCaseCount = int(processedData[currRowIndex - 1].get("Cumulative Cases"))
-            currCaseCount = int(processedData[currRowIndex].get("Cumulative Cases"))
-            nextCaseCount = int(processedData[currRowIndex + 1].get("Cumulative Cases"))
+            for currIndex in range(1, (halfOfWindowRoundedDown +1)):
+                meanList.append(int(processedData[currRowIndex-currIndex].get("Cumulative Cases")))
+                meanList.append(int(processedData[currRowIndex+currIndex].get("Cumulative Cases")))
 
-            newRow["Cumulative Cases"] = int((prevCaseCount + currCaseCount + nextCaseCount) / 3)
+            newRow["Cumulative Cases"] = int(statistics.mean(meanList))
 
             newData.append(newRow)
+
+            currRowIndex += 1
         
         return newData
 
@@ -448,10 +453,12 @@ class computeRt():
             dataset
         """
         optDataList = []
+        
+        windowSize = 3
 
         processedData = readFile(self.DATASET, f"{FILE_PATH_CORE}{self.DATASET}{self.INPUT_FILE}")
 
-        newData = self.processControlMeasures(processedData)
+        newData = self.processControlMeasures(processedData, windowSize)
 
         #Log the current dataset before further processing
         self.writeFile(newData, "/2. Rt/after_control_measures.csv")
