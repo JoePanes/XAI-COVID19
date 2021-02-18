@@ -191,22 +191,25 @@ class computeRt():
             if lineRegion != currRegion:
                 currRegion = lineRegion
                 continue
-
+            
             #Look at previous dates increasingly further back
-            for currDateReduction in self.PAST_DATE_LIST:
-                previousDateIndex = currRowIndex - currDateReduction
-
-                pastDateRegion = self.getRegion(processedData[previousDateIndex])
+            for currControlMeasure in self.CONTROL_MEASURES:
                 
-                if previousDateIndex > 0 and pastDateRegion == currRegion:
+                typeOfControlMeasure = self.CONTROL_MEASURES.get(currControlMeasure)
+    
+                dateReductionChecks = [True, True, True]
 
-                    for currControlMeasure in self.CONTROL_MEASURES:
+                for currDateReduction in self.PAST_DATE_LIST:
+                    previousDateIndex = currRowIndex - currDateReduction
+                    pastDateRegion = self.getRegion(processedData[previousDateIndex])
+                    
+                    if previousDateIndex > 0 and pastDateRegion == currRegion:
                         val = int(processedData[previousDateIndex].get(currControlMeasure))
-                        typeOfControlMeasure = self.CONTROL_MEASURES.get(currControlMeasure)
+                        
                         
                         if typeOfControlMeasure[0] is "Binary":
                             if int(processedData[currRowIndex][currControlMeasure]) == 0:
-                                continue
+                                break
                             elif val >= 1:
                                 processedData[currRowIndex][currControlMeasure] = str(self.PAST_DATE_LIST.index(currDateReduction) + val)
                             
@@ -220,24 +223,30 @@ class computeRt():
                             currDateControlLevel = [1]*currLevel + [0]*(3 - currLevel)
 
                             prevDateControlLevel = [1]*val + [0]*(3 - val)
-
+                            
                             for currIndex in range(len(currDateControlLevel)):
 
+                                if dateReductionChecks[currIndex] == False:
+                                    continue
+
                                 currField = f"{currControlMeasure} ({trinaryValues[currIndex]})"
+                                if currDateControlLevel[currIndex] == 0:
+                                    #If this is the case, then the next currIndex will also be 0
+                                    processedData[currRowIndex].update({currField : str(0)})
+                                    dateReductionChecks[currIndex] = False
                                 
-                                if currDateControlLevel[currIndex] == 1 and currDateControlLevel[currIndex] == prevDateControlLevel[currIndex]:    
+                                elif currDateControlLevel[currIndex] != prevDateControlLevel[currIndex]:
+                                    dateReductionChecks[currIndex] = False
+
+                                elif currDateControlLevel[currIndex] == prevDateControlLevel[currIndex]:    
                                     try:
                                         #Due to the breaking up of fields, the val used in binary is not usable for the same purpose here,
-                                        #since we are not overwriting the same field
-                                        
+                                        #since we are not overwriting the same field   
                                         prevDateTrinaryVal = int(processedData[previousDateIndex].get(currField))
                                     except:
                                         #If this is the case, then it is early on in the converting of this region
                                         prevDateTrinaryVal = 1
- 
                                     processedData[currRowIndex].update({currField : str(self.PAST_DATE_LIST.index(currDateReduction) + prevDateTrinaryVal)})
-                                else:
-                                    processedData[currRowIndex].update({currField : 0})
 
                         else:
                             processedData[currRowIndex][currControlMeasure] = str(0)                            
