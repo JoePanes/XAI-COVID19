@@ -21,7 +21,7 @@ BIN_NO_DEATHS_CU = 5
 BIN_NO_TESTS = 8
 BIN_NO_TESTS_CU = 5
 
-RT_THRESHOLD = [0, 0.5, 1, float("inf")]
+RT_THRESHOLD = [0, 1, float("inf")]
 
 def getInformationAboutDiscretizer(discreteData, originalData):
     """
@@ -156,20 +156,7 @@ if __name__ == "__main__":
             rtData[rowIndex]["Cumulative Tests"] = int(testsCumulativeDiscrete[rowIndex])
 
             disRt =  discretizeVal(rtData[rowIndex]["Rt"], RT_THRESHOLD)
-            rtData[rowIndex]["Rt"] = disRt
-
-            if disRt == 0:
-                rtData[rowIndex]["Rt <= 0.5"] = 0
-                rtData[rowIndex]["Rt <= 1.0"] = 0
-            
-            else:
-                rtData[rowIndex]["Rt <= 0.5"] = 1
-                
-                if disRt == 1:
-                    rtData[rowIndex]["Rt <= 1.0"] = 0
-                else:
-                    rtData[rowIndex]["Rt <= 1.0"] = 1
-            
+            rtData[rowIndex]["Rt"] = disRt            
         
         fieldNames = {}
         for field in list(rtData[0].keys()):
