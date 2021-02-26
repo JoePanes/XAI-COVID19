@@ -15,6 +15,8 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.losses import MeanSquaredLogarithmicError
+from tensorflow.keras import backend
 
 from pandas import qcut
 from pandas import DataFrame
@@ -23,19 +25,30 @@ from pandas import concat
 
 from sklearn.model_selection import train_test_split 
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import mean_squared_error
 
 from random import randint
 from random import shuffle
 
 from statistics import mean
+
 from matplotlib import pyplot as plt
+
 from copy import deepcopy
+from copy import copy
+
 from datetime import datetime
+
+from itertools import product
+
+from math import sqrt
 
 QUANTILE_NO = 4
 GROUP_SIZE = 3
 MAX_DEPTH = GROUP_SIZE
 NUM_PROCESSES = 10
+WINDOW_SIZE = 5
 
 REGIONS = {
     1 : "East Midlands",
@@ -50,6 +63,28 @@ REGIONS = {
     10 : "Northern Ireland",
     11 : "Scotland",
     12 : "Wales",
+    13 : "Blaenau Gwent",
+    14 : "Caerphilly",
+    15 : "Monmouthshire",
+    16 : "Newport",
+    17 : "Torfaen",
+    18 : "Conwy",
+    19 : "Denbighshire",
+    20 : "Flintshire",
+    21 : "Gwynedd",
+    22 : "Isle of Anglesey",
+    23 : "Wrexham",
+    24 : "Cardiff",
+    25 : "Vale of Glamorgan",
+    26 : "Bridgend",
+    27 : "Merthyr Tydfil",
+    28 : "Rhondda Cynon Taf",
+    29 : "Carmarthenshire",
+    30 : "Ceredigion",
+    31 : "Pembrokeshire",
+    32 : "Powys",
+    33 : "Neath Port Talbot",
+    34 : "Swansea",
 }
 
 class Node:
@@ -153,10 +188,9 @@ def getRtValueChange(regionRt):
         
         for currRow in currRegion:
             currRt = float(currRow)
-
             rtValueChange[currIndex].append(float(currRt - prevRt))
 
-            prevRt = currRt
+            prevRt = copy(currRt)
         
         currIndex += 1
     return rtValueChange
@@ -753,70 +787,49 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
 
     outputList = []
 
-    for currPoint in range(1, GROUP_SIZE+1):
-        labels.append(f"Point {currPoint} Orig Rt")
-        labels.append(f"Point {currPoint} Agent Difference")
+    for currPoint in range(1, WINDOW_SIZE+1):
         labels.append(f"Point {currPoint} Action to Next Point")
 
+    labels.append(f"Agent Action to Next Point")
 
-    labels += ["Goal Point Orig Rt", "Goal Point Agent Difference", "Next Point Rt Orig", "Next Point Agent Difference", "Agent Action to Next Point"]
-
-    for currRegionIndex in range(len(regionalGroupResults)):
-        for currGroupIndex in range(len(regionalGroupResults[currRegionIndex])):
+    for currRegionIndex in range(len(regionalAgentResults)):
+        for currPoint in range(len(regionalAgentResults[currRegionIndex])):
             currRow = {}
             currRow["Region No"] = currRegionIndex + 1
-            currRow["Group No"] = currGroupIndex + 1
-
-            goalIndex = 0
-            indexs, _ = regionalEvaluationResults[currRegionIndex][currGroupIndex]
-            startIndex, goalIndex = indexs
-            currPointNo = 1
-            for currIndex in range(startIndex, goalIndex):
-
-                #Calculate the difference in Rt value for the original data, and the agent
-                pointOrig = regionRt[currRegionIndex][currIndex]
-                
-                currRow[f"Point {currPointNo} Orig Rt"] = pointOrig
-
-                agentRt, _ = regionalAgentResults[currRegionIndex][currIndex]
-                currRow[f"Point {currPointNo} Agent Difference"] = agentRt - pointOrig
-
-                _, action = regionalAgentResults[currRegionIndex][currIndex+1]
-                currRow[f"Point {currPointNo} Action to Next Point"] = action
-                currPointNo+= 1
-
-            goalOrig = regionRt[currRegionIndex][goalIndex]
-            goalAgentRt, _ = regionalAgentResults[currRegionIndex][goalIndex]
-            
-            currRow["Goal Point Orig Rt"] = goalOrig
-            currRow["Goal Point Agent Difference"] = goalAgentRt - goalOrig
+            currRow["Group No"] = currPoint +1
 
             try:
-                nextPoint = regionRt[currRegionIndex][goalIndex+1]
-                nextPointAgent, action = regionalAgentResults[currRegionIndex][goalIndex+1]
+                currPointNo = 1
+                for currIndex in range(WINDOW_SIZE):
+                    _, action = regionalAgentResults[currRegionIndex][currPoint + currIndex]
+                    if action > QUANTILE_NO:
+                        action = QUANTILE_NO - action
+                    currRow[f"Point {currPointNo} Action to Next Point"] = action
+                    currPointNo+= 1
+
+                _, action = regionalAgentResults[currRegionIndex][currPoint+currIndex+1]
+
+                currRow[f"Agent Action to Next Point"] = action
             except:
                 #For groups at the end of the regional data, simply ignore them
                 #Since for the desired purpose that are not needed
                 continue
-            currRow["Next Point Rt Orig"] = nextPoint
-            currRow["Next Point Agent Difference"] = nextPointAgent - nextPoint
-            currRow["Agent Action to Next Point"] = action
-
+        
             #print(list(currRow.keys()))
             outputList.append(currRow)
 
-    writeFile(filePath, labels, outputList)
+    writeFile(filePath, outputList, labels)
     
     return filePath
 
-def writeFile(filePath, labels, outputList):
+def writeFile(filePath, outputList, labels=None):
     """
     Write the current Dataset to .csv File
 
     INPUTS:
         :param filePath: String, the directory path to where the new .csv will be saved
-        :param labels: List of Strings, the desired order for the .csv to be saved in
         :param outputList: List of Dictionaries, where each dictionary is a row for the .csv
+        :param labels: List of Strings, the desired order for the .csv to be saved in
 
     OUTPUT:
         returns nothing, but creates a new .csv at the specified location
@@ -824,9 +837,13 @@ def writeFile(filePath, labels, outputList):
     with open(filePath, "w") as optFile:
             
         outputLabels = {}
-        for currFieldName in labels:
-            outputLabels[currFieldName] = currFieldName
-        
+        if labels != None and type(labels[0]) is str:
+            for currFieldName in labels:
+                outputLabels[currFieldName] = currFieldName
+        else:
+            for currFieldName in list(outputList[0].keys()):
+                outputLabels[currFieldName] = currFieldName
+
         myWriter = csv.DictWriter(optFile, outputLabels)
         
         myWriter.writerow(outputLabels)
@@ -862,7 +879,7 @@ def prepareData(filePath, regionNo=None):
 
         compiledData = compiledData[currRegion]
 
-    regionalRowList = []
+    """regionalRowList = []
     rowsToAdd = []
 
     #Gather all rows in preparation for creating new groups
@@ -891,7 +908,7 @@ def prepareData(filePath, regionNo=None):
                     #need of further intervention
                     continue
                 rowsToAdd.append(newRow)
-    
+
     labels = list(rowsToAdd[0].keys())
     labels.pop(-1)
     labels.insert(1, "Group No")
@@ -909,13 +926,16 @@ def prepareData(filePath, regionNo=None):
         regionalActionsAmount[int(row["Agent Action to Next Point"])] += 1
 
     print(regionalActionsAmount)
-    writeFile(newFilePath, labels, rowsToAdd)
-    coreData = compiledData.drop(["Agent Action to Next Point", "Region No", "Group No"], axis=1)
+    writeFile(newFilePath, labels, rowsToAdd)"""
+
+    nextActionLabels = []
+
+    coreData = compiledData.drop(["Region No", "Group No", "Agent Action to Next Point"], axis=1)
     goalData = compiledData["Agent Action to Next Point"]
     #Split the grouped data
-    trainingCore, testCore, trainingGoal, testGoal = train_test_split(coreData, goalData, test_size=0.2, random_state=randint(1, os.getpid()))
+    trainingCore, testCore, trainingGoal, testGoal = train_test_split(coreData, goalData, test_size=0.1, random_state=randint(1, os.getpid()))
 
-    #testCore, validCore, testGoal, validGoal = train_test_split(testCore, testGoal, test_size=0.5, random_state=randint(1, os.getpid()))
+    testCore, validCore, testGoal, validGoal = train_test_split(testCore, testGoal, test_size=0.5, random_state=randint(1, os.getpid()))
 
 
     #Get ready to perform feature scaling
@@ -923,16 +943,16 @@ def prepareData(filePath, regionNo=None):
 
     trainingCore = scaler.fit_transform(trainingCore)
     testCore = scaler.transform(testCore)
-    #validCore = scaler.transform(validCore)
+    validCore = scaler.transform(validCore)
 
     #Convert back into 3D
     trainingCore = np.reshape(trainingCore, (trainingCore.shape[0], 1, trainingCore.shape[1]))
     
     testCore = np.reshape(testCore, (testCore.shape[0], 1, testCore.shape[1]))
 
-    #validCore = np.reshape(validCore, (validCore.shape[0], 1, validCore.shape[1]))
+    validCore = np.reshape(validCore, (validCore.shape[0], 1, validCore.shape[1]))
 
-    return trainingCore, trainingGoal.to_numpy(), testCore, testGoal.to_numpy(), #validCore, validGoal
+    return trainingCore, trainingGoal.to_numpy(), testCore, testGoal.to_numpy(), validCore, validGoal
 
 def findGroupNoCutoff(dataframe):
     """
@@ -1022,7 +1042,7 @@ def createNewGroupRow(currGroup, nextGroup, pointsToGather, endPoint):
 
     return newRow
 
-def runLSTM(trainingData, trainingAction):
+def runLSTM(trainingData, trainingAction, validData, validAction):
     """
     Runs the LSTM Recurrent Neural Network on the dataset
 
@@ -1035,8 +1055,13 @@ def runLSTM(trainingData, trainingAction):
     OUTPUT:
         returns a trained Sequential model, that includes LSTM layers
     """
+
     model = Sequential()
-    model.add(LSTM(512, return_sequences=True))
+    model.add(LSTM(64, activation="sigmoid", return_sequences=True))
+    model.add(Dropout(0.2))
+    model.add(BatchNormalization())
+    
+    model.add(LSTM(128, activation="sigmoid", return_sequences=True))
     model.add(Dropout(0.2))
     model.add(BatchNormalization())
 
@@ -1044,30 +1069,17 @@ def runLSTM(trainingData, trainingAction):
     model.add(Dropout(0.2))
     model.add(BatchNormalization())
 
-    model.add(LSTM(256, activation="swish", return_sequences=True))
-    model.add(Dropout(0.2))
-    model.add(BatchNormalization())
-
-    model.add(LSTM(128, activation="swish", return_sequences=True))
-    model.add(Dropout(0.2))
-    model.add(BatchNormalization())
-
-    model.add(LSTM(64, activation="swish"))
-    model.add(Dropout(0.2))
-    model.add(BatchNormalization())
-
-    model.add(Dense(64, activation="sigmoid"))
-    model.add(Dropout(0.2))
+    model.add(Dense(1024, activation="swish"))
 
     model.add(Dense((QUANTILE_NO*2)+1, activation="softmax"))
-
+     
     opt = Adam(lr=0.0005, decay=0.001)
 
     model.compile(loss="sparse_categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
-    history = model.fit(trainingData, trainingAction, epochs=500, batch_size=160)
+    history = model.fit(trainingData, trainingAction, validation_data=(validData, validAction), epochs=256, batch_size=200)
 
-    """plt.plot(history.history['loss'])
+    plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
     plt.title('model train vs validation loss')
     plt.ylabel('loss')
@@ -1075,11 +1087,54 @@ def runLSTM(trainingData, trainingAction):
     plt.legend(['train', 'validation'], loc='upper right')
     plt.savefig(f"../../images/Rt/machine learning/rt/{datetime.now().strftime('%d_%m_%Y_%H_%M_%S_%f')}.png")
     plt.close()
-    """
 
     return model
 
-def determineAccuracy(model, testData, testImpact):
+def testLSTM(trainingData, trainingAction, validData, validAction, lstmConfiguration):
+    """
+    Runs a LSTM of the specified configuration, to get the results.
+
+    INPUTS:
+        :param trainingData: 3D Numpy Array, contains the feature scaled data
+        :param trainingAction: 3D Numpy Array, contains the corresponding actions taken for the training data
+        :param validData: 3D Numpy Array, contains the feature scaled data
+        :param validAction: 3D Numpy Array, contains the corresponding actions taken for the training data
+        :param lstmConfiguration: Iterable (list or tuple) of numerical values, where each position contains the desired value for a component within the LSTM.
+
+    OUTPUT:
+        returns a trained Sequential model, that includes LSTM layers
+    """
+    learningRate = 0.0001
+    epochs = 100
+    decay = 0.0001
+    model = Sequential()
+
+    model.add(LSTM(256, activation="swish", return_sequences=True))
+    model.add(Dropout(0.2))
+    model.add(BatchNormalization())
+
+    model.add(LSTM(64, activation="swish", return_sequences=True))
+    model.add(Dropout(0.2))
+    model.add(BatchNormalization())
+
+    model.add(LSTM(64, activation="swish", return_sequences=True))
+    model.add(Dropout(0.2))
+    model.add(BatchNormalization())
+
+    model.add(Dense(128, activation="swish"))
+    model.add(Dropout(0.1))
+
+    #output layer
+    model.add(Dense((QUANTILE_NO*2)+1, activation="softmax"))
+
+    opt = Adam(lr=learningRate, decay=decay, beta_1=0.3)
+    model.compile(loss=rmse, optimizer=opt, metrics=["accuracy"])
+
+    history = model.fit(trainingData, trainingAction, validation_data=(validData, validAction), epochs=epochs, batch_size=512)
+
+    return model, history
+
+def determineAccuracy(model, testData, testAction, printTable=False):
     """
     Using a trained LSTM model, determine its accuracy in predicting the goal data, 
     but also get the accuracy for each group of the "Impactful Point?" field
@@ -1087,7 +1142,8 @@ def determineAccuracy(model, testData, testImpact):
     INPUTS:
         :param model: Sequential trained model, with LSTM layers
         :param testData: Numpy Array, the test data to be used to evalute the model
-        :param testImpact: Numpy Array, the corresponding impactful point values for the test data
+        :param testAction: Numpy Array, the resultant action after the previous actions
+        :param printTable: Boolean, whether or not to print the results for the test data
 
     OUTPUT:
         returns the percentage for each category and prints the results of running this function to the command line
@@ -1097,7 +1153,7 @@ def determineAccuracy(model, testData, testImpact):
     for currResult in range(QUANTILE_NO * 2 + 1):
                              #Correct  #Total #FP #FN
         results[currResult] = [0,       0,     0,  0]
-        
+    predictionResults = []
     for currIndex in range(len(testData)):
         currentTestData = testData[currIndex]
         currentTestData = np.reshape(currentTestData, (1, currentTestData.shape[0], currentTestData.shape[1]))
@@ -1105,7 +1161,8 @@ def determineAccuracy(model, testData, testImpact):
         prediction = model.predict(currentTestData)[0]
         
         prediction = np.argmax(prediction)
-        actualValue = testImpact[currIndex]
+        predictionResults.append(prediction)
+        actualValue = testAction[currIndex]
 
         if actualValue == prediction:
             results[prediction][0] += 1
@@ -1132,23 +1189,28 @@ def determineAccuracy(model, testData, testImpact):
         overallTotal += currentResults[1]
 
     overrallPercentage = prepareForPrint(str(round(overallCorrect / overallTotal * 100, 5)), 8)
+    if printTable:
+        print()
+        title = "-----------------Result------------------"
+        headers = "|Action Index|  "
 
-    print()
-    title = "-----------------Result------------------"
-    headers = "|Action Index|  "
+        #Adjust padding dependending upon size of data
 
-    #Adjust padding dependending upon size of data
+        headers += "Results  "
+        
+        headers += "|   Percentage   | FP | FN |"
+        print(title)
+        print(headers)
 
-    headers += "Results  "
-    
-    headers += "|   Percentage   | FP | FN |Miss Rate|"
-    print(title)
-    print(headers)
+        for current in range(len(resultsPercentage)):
+            print(f"| {current}        |  {results[current][0:2]} |   {resultsPercentage[current]}     | {results[current][2]}| {results[current][3]}")
 
-    for current in range(len(resultsPercentage)):
-        print(f"| {current}        |  {results[current][0:2]} |   {resultsPercentage[current]}     | {results[current][2]}| {results[current][3]}")
+        print(f"|  Overall |  [{overallCorrect}, {overallTotal}] |   {overrallPercentage}     |")
 
-    print(f"|  Overall |  [{overallCorrect}, {overallTotal}] |   {overrallPercentage}     |")
+        print("Confusion Matrix")
+        confuse = confusion_matrix(testAction, np.array(predictionResults))
+
+        print(confuse)
 
     return resultsPercentage, overrallPercentage
 
@@ -1183,10 +1245,69 @@ def prepareForPrint(value, desiredLength):
             print("---------------------------ATTENTION-------------------------------")
     return value
 
+def generateSineData(noRegions, length):
+    """
+    Generate data that produces a Sine wave for the sake of testing
+
+    INPUTS:
+        :param noRegions: Integer, used to determine how to split the data into equal portions
+        :param length: Integer, the amount of data to be produced for each region
+
+    OUTPUT:
+        returns a 2D list, containing the split Sine data.
+    """
+
+    totalData = noRegions * length
+
+    #Based upon the example from https://pythontic.com/visualization/charts/sinewave
+
+    time = np.arange(0, totalData, 1)
+
+    amplitude = np.sin(time * np.pi / 10) #this alteration is based upon https://numpy.org/doc/stable/reference/generated/numpy.sin.html
+
+    plt.plot(amplitude)
+    plt.title('Sine Wave')
+    plt.savefig(f"../../images/Rt/machine learning/rt/Sine-{datetime.now().strftime('%d_%m_%Y_%H_%M_%S_%f')}.png")
+    
+    #Break up the Sine data into equal chunks, to mimic the regional nature of the original data
+    currRegionLength = 0
+    regionalData = []
+    currRegionData = []
+    for currIndex in range(len(amplitude)):
+        if currRegionLength == length:
+            currRegionLength = 0
+            regionalData.append(currRegionData)
+            currRegionData = []
+        
+        currRegionData.append(amplitude[currIndex])
+        currRegionLength += 1
+    
+    #Add on the final region
+    regionalData.append(currRegionData)
+
+    return regionalData
+
+def rmse(actual, predicted):
+    """
+    Returns a percentage of how similar the numbers in actual are to those in prediction.
+
+    
+    INPUT:
+        :param actual: List of what is the real values for the data
+        :param predicted: List of what the current model guesses the values are
+
+    OUTPUT:
+        returns a float to give an indication of, on average, how similar the  
+    """
+    msle = MeanSquaredLogarithmicError()
+    return backend.sqrt(msle(actual, predicted)) 
+
 def main():
-    filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
+    """filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
 
     regionRt = readFile("uk", filePath)
+
+    #regionRt = generateSineData(10, 300)
 
     rtValueChange = getRtValueChange(regionRt)
 
@@ -1222,47 +1343,98 @@ def main():
 
     filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree")
     filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy")
+    """
+    learningAndDecay = [(0.001, 0.1), (0.0001, 0.001), (0.0001, 0.0001), (0.0001, 1e-05), (0.0001, 1e-07)]
 
-    noIterations = 1
-    useRegionNo = False
+    potentialLayers = [(32, 32, 64, 128), (32, 32, 128, 32), (32, 32, 256, 64), (32, 64, 32, 32), (32, 128, 128, 32), (32, 256, 64, 32),
+                       (32, 256, 128, 64), (32, 256, 128, 128), (64, 32, 32, 64), (64, 32, 64, 128), (64, 32,64,256), (64, 32, 128, 64),
+                       (64, 32, 256, 32), (64, 32, 256, 128), (64, 128, 32, 128), (64, 128, 32, 256), (64, 128, 64, 128), (64, 128, 128, 32),
+                       (64, 128, 128, 64), (64, 128, 128, 256), (64, 256, 32, 32),(64, 256, 32, 64), (64, 256, 64, 32),(128, 32, 32, 64),
+                       (128, 32, 32, 256), (128, 32, 64, 64), (128, 32, 128, 64), (128, 64, 32, 128), (128, 64, 32, 256), (128, 64, 64, 256),
+                       (128, 64, 256, 32), (128, 128, 32, 256), (128, 128, 64, 64), (128, 128, 128, 32), (256, 32, 32, 64), (256, 32, 32, 128),
+                       (256, 32, 64, 64), (256, 32, 64, 256), (256,32,128,64), (256, 32, 256, 32), (256, 64, 32, 64), (256, 64, 32, 128),
+                       (256, 64, 32, 256), (256, 64, 64, 32), (256, 64, 64, 128), (256, 64, 128, 128), (256, 64, 256, 128), (256, 128, 32, 256),
+                       (256, 128, 64, 32), (256, 128, 64, 64), (256, 128, 128, 128), (128, 128, 256, 256), (256, 128, 256, 32)]
+
+    
+    rate = [0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001]
+    neurons = [32, 64, 128, 256]
+    filePath = "../../data/core/uk/predictor/lr_decay_layers.csv"
+    noIterations = 5
     regionStartNo = 1
     regionEndNo = 2
+    firstRun = True
+    #layers = list(product(neurons, repeat=4))
+    
+    layers = []
+
+    for currLr in learningAndDecay:
+        for currLay in potentialLayers:
+            layers.append(tuple(list(currLr[::]) + list(currLay[::])))
+
 
     currRegionResultsOverall = []
-    for currRegion in range(regionStartNo, regionEndNo):
-        groupResultsAccuracy = [0 for _ in range(QUANTILE_NO*2+1)]
-        groupOverallAccuracy = 0
+    alreadyRun = {}
+    if firstRun != True:
+        with open(filePath, "r") as dataFile:
+            myReader = csv.DictReader(dataFile)
+
+            for row in myReader:
+                alreadyRun[str(row["LSTM Layers"])] = "yep"
+    
+    print(len(layers))
+    #for curr in layers:
+    history = []
+    
+    """if str(curr) in alreadyRun:
+        continue """
+
+    #print(curr)
+    groupOverallAccuracy = 0
+    for _ in range(noIterations):
         
-        regionNo = None
-        if useRegionNo:
-            regionNo = currRegion
-        for _ in range(noIterations):
-            
-            trainingData, trainingAction, testData, testAction = prepareData("../../data/core/" + "uk/predictor/tree.csv", regionNo)
-            
-            model = runLSTM(trainingData, trainingAction)
-            
-            print("Test Data")
-            resultsAccuracy, overallAccuracy = determineAccuracy(model, testData, testAction)
+        trainingData, trainingAction, testData, testAction, validData, validAction = prepareData("../../data/core/" + "uk/predictor/tree.csv")
 
-
-            groupOverallAccuracy += float(overallAccuracy)
-
-            for currIndex in range(len(resultsAccuracy)):
-                groupResultsAccuracy[currIndex] += float(resultsAccuracy[currIndex])
-
-        currRegionResultsOverall.append([currRegion]) 
         
-        for currIndex in range(len(groupResultsAccuracy)):
-            currRegionResultsOverall[currRegion-1].append(round(groupResultsAccuracy[currIndex] / noIterations, 2))
+        model, currHistory = testLSTM(trainingData, trainingAction, validData, validAction, "boop")
         
-        currRegionResultsOverall[currRegion-1].append(round(groupOverallAccuracy / noIterations, 2))
-        
-    overallSumTest = 0
-    for curr in currRegionResultsOverall:
-        overallSumTest += curr[-1]
-        print(curr)
-    print(overallSumTest / (regionEndNo - regionStartNo))
+        history.append(currHistory)
+        resultsAccuracy, overallAccuracy = determineAccuracy(model, testData, testAction, True)
 
+        groupOverallAccuracy += round(float(overallAccuracy), 2)
+
+    print(resultsAccuracy, " | ", groupOverallAccuracy/noIterations)
+    
+    for currHistory in history:
+        plt.plot(currHistory.history['loss'])
+    plt.title('Model Training')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    #plt.legend(['validation'], loc='upper right')
+    plt.savefig(f"../../images/Rt/machine learning/rt/boop-Training-{datetime.now().strftime('%d_%m_%Y_%H_%M_%S')}.png")
+    plt.close()
+
+    for currHistory in history:
+        plt.plot(currHistory.history['val_loss'])
+    plt.title('Model Validation')
+    plt.ylabel('val_loss')
+    plt.xlabel('epoch')
+    #plt.legend(['validation'], loc='upper right')
+    plt.savefig(f"../../images/Rt/machine learning/rt/boop-Validation-{datetime.now().strftime('%d_%m_%Y_%H_%M_%S')}.png")
+    plt.close()
+    existingResults = []
+
+    """if firstRun != True:
+        with open(filePath, "r") as dataFile:
+            myReader = csv.DictReader(dataFile)
+
+            for row in myReader:
+                existingResults.append(row)
+
+    firstRun = False
+    existingResults.append({"LSTM Layers":curr, "Accuracy":groupOverallAccuracy/noIterations})
+    print(existingResults)
+    writeFile(filePath, existingResults)
+        """
 if __name__ == "__main__":
     sys.exit(main())
