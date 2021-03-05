@@ -1,0 +1,24 @@
+Total errors 22
+
+18/01/2021 | Temperature                              | Wales
+18/01/2021 | Humidity                                 | Wales
+19/01/2021 | Temperature                              | Wales
+19/01/2021 | Humidity                                 | Wales
+20/01/2021 | Temperature                              | Wales
+20/01/2021 | Humidity                                 | Wales
+21/01/2021 | Temperature                              | Wales
+21/01/2021 | Humidity                                 | Wales
+22/01/2021 | Temperature                              | Wales
+22/01/2021 | Humidity                                 | Wales
+23/01/2021 | Temperature                              | Wales
+23/01/2021 | Humidity                                 | Wales
+24/01/2021 | Temperature                              | Wales
+24/01/2021 | Humidity                                 | Wales
+25/01/2021 | Temperature                              | Wales
+25/01/2021 | Humidity                                 | Wales
+26/01/2021 | Temperature                              | Wales
+26/01/2021 | Humidity                                 | Wales
+27/01/2021 | Temperature                              | Wales
+27/01/2021 | Humidity                                 | Wales
+28/01/2021 | Temperature                              | Wales
+28/01/2021 | Humidity                                 | Wales
