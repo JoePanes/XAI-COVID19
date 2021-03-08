@@ -379,7 +379,7 @@ Day,Date,Regions,Cases,Cumulative Cases,Deaths,Cumulative Deaths,Tests,Cumulativ
 322,12/01/2021,East of England,5226,284764,185,8324,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,4.65,87.42,0.121817,52.205338
 321,11/01/2021,East of England,6140,279538,161,8139,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,5.71,87.02,0.121817,52.205338
 320,10/01/2021,East of England,3738,273398,185,7978,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,1.46,94.77,0.121817,52.205338
-319,9/1/2021,East of England,4066,269660,172,7793,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,-0.04,94.85,0.121817,52.205338
+319,09/01/2021,East of England,4066,269660,172,7793,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,-0.04,94.85,0.121817,52.205338
 318,08/01/2021,East of England,5228,265594,135,7621,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,0.31,97.08,0.121817,52.205338
 317,07/01/2021,East of England,5803,260366,152,7486,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,1.35,90.81,0.121817,52.205338
 316,06/01/2021,East of England,6256,254563,117,7334,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,3.33,87.4,0.121817,52.205338
@@ -440,7 +440,7 @@ Day,Date,Regions,Cases,Cumulative Cases,Deaths,Cumulative Deaths,Tests,Cumulativ
 261,12/11/2020,East of England,1373,68618,19,4618,n/a,n/a,High,High,High,Moderate,High,High,High,Moderate,Closed,Opened,10.06,83.7,0.121817,52.205338
 260,11/11/2020,East of England,1608,67245,23,4599,n/a,n/a,High,High,High,Moderate,High,High,High,Moderate,Closed,Opened,11.04,92.62,0.121817,52.205338
 259,10/11/2020,East of England,1457,65637,23,4576,n/a,n/a,High,High,High,Moderate,High,High,High,Moderate,Closed,Closed,11.57,94.52,0.121817,52.205338
-258,9/11/2020,East of England,1796,64180,26,4553,n/a,n/a,High,High,High,Moderate,High,High,High,Moderate,Closed,Closed,13.58,94.52,0.121817,52.205338
+258,09/11/2020,East of England,1796,64180,26,4553,n/a,n/a,High,High,High,Moderate,High,High,High,Moderate,Closed,Closed,13.58,94.52,0.121817,52.205338
 257,08/11/2020,East of England,1077,62384,20,4527,n/a,n/a,High,High,High,Moderate,High,High,High,Moderate,Closed,Closed,10.9,93.85,0.121817,52.205338
 256,07/11/2020,East of England,1008,61307,15,4507,n/a,n/a,High,High,High,Moderate,High,High,High,Moderate,Closed,Closed,7.62,93.53,0.121817,52.205338
 255,06/11/2020,East of England,1107,60284,22,4492,n/a,n/a,High,High,High,Moderate,High,High,High,Moderate,Closed,Closed,6.73,88.52,0.121817,52.205338
@@ -1036,7 +1036,7 @@ Day,Date,Regions,Cases,Cumulative Cases,Deaths,Cumulative Deaths,Tests,Cumulativ
 27,08/03/2020,London,22,128,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,10.43,73.94,-0.127758,51.507351
 26,07/03/2020,London,14,106,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,8.75,76.85,-0.127758,51.507351
 25,06/03/2020,London,23,92,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,6.67,67.69,-0.127758,51.507351
-24,5/3/2020,London,14,69,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,6.35,88.25,-0.127758,51.507351
+24,05/03/2020,London,14,69,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,6.35,88.25,-0.127758,51.507351
 23,04/03/2020,London,18,55,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,6.1,81.62,-0.127758,51.507351
 22,03/03/2020,London,6,37,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,6.56,71.65,-0.127758,51.507351
 21,02/03/2020,London,12,31,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,6.57,73.83,-0.127758,51.507351
@@ -1058,7 +1058,7 @@ Day,Date,Regions,Cases,Cumulative Cases,Deaths,Cumulative Deaths,Tests,Cumulativ
 5,15/02/2020,London,0,3,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,12.52,84.65,-0.127758,51.507351
 4,14/02/2020,London,0,3,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,9.19,76.33,-0.127758,51.507351
 3,13/02/2020,London,0,3,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,8.26,78.32,-0.127758,51.507351
-2,12/2/2020,London,2,3,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,6.25,68.67,-0.127758,51.507351
+2,12/02/2020,London,2,3,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,6.25,68.67,-0.127758,51.507351
 1,11/02/2020,London,1,1,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,6.08,59.04,-0.127758,51.507351
 342,06/02/2021,North East,563,171070,26,5440,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,3.33,94.08,-1.61778,54.978252
 341,05/02/2021,North East,679,170507,28,5414,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,4.65,95.19,-1.61778,54.978252
@@ -1086,9 +1086,9 @@ Day,Date,Regions,Cases,Cumulative Cases,Deaths,Cumulative Deaths,Tests,Cumulativ
 319,14/01/2021,North East,1228,148977,40,4616,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,0.59,95.74,-1.61778,54.978252
 318,13/01/2021,North East,1396,147749,25,4576,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,0.13,88.02,-1.61778,54.978252
 317,12/01/2021,North East,1432,146353,34,4551,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,0.38,86.16,-1.61778,54.978252
-316,11/1/2021,North East,1688,144921,48,4517,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,6.73,85.06,-1.61778,54.978252
-315,10/1/2021,North East,1059,143233,36,4469,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,5.06,89.88,-1.61778,54.978252
-314,9/1/2021,North East,1002,142174,30,4433,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,-1.2,86.13,-1.61778,54.978252
+316,11/01/2021,North East,1688,144921,48,4517,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,6.73,85.06,-1.61778,54.978252
+315,10/01/2021,North East,1059,143233,36,4469,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,5.06,89.88,-1.61778,54.978252
+314,09/01/2021,North East,1002,142174,30,4433,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,-1.2,86.13,-1.61778,54.978252
 313,08/01/2021,North East,1149,141172,30,4403,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,-0.21,93.77,-1.61778,54.978252
 312,07/01/2021,North East,1480,140023,30,4373,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,0.12,95.77,-1.61778,54.978252
 311,06/01/2021,North East,1504,138543,25,4343,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,0.22,93.72,-1.61778,54.978252
@@ -1119,7 +1119,7 @@ Day,Date,Regions,Cases,Cumulative Cases,Deaths,Cumulative Deaths,Tests,Cumulativ
 286,12/12/2020,North East,508,108353,20,3726,n/a,n/a,High,Moderate,Moderate,Moderate,High,High,High,Moderate,Opened,Opened,6.41,96.04,-1.61778,54.978252
 285,11/12/2020,North East,651,107845,21,3706,n/a,n/a,High,Moderate,Moderate,Moderate,High,High,High,Moderate,Opened,Opened,5.83,93.92,-1.61778,54.978252
 284,10/12/2020,North East,647,107194,26,3685,n/a,n/a,High,Moderate,Moderate,Moderate,High,High,High,Moderate,Opened,Opened,4.24,90.65,-1.61778,54.978252
-283,9/12/2020,North East,644,106547,16,3659,n/a,n/a,High,Moderate,Moderate,Moderate,High,High,High,Moderate,Opened,Opened,4.95,92.3,-1.61778,54.978252
+283,09/12/2020,North East,644,106547,16,3659,n/a,n/a,High,Moderate,Moderate,Moderate,High,High,High,Moderate,Opened,Opened,4.95,92.3,-1.61778,54.978252
 282,08/12/2020,North East,725,105903,19,3643,n/a,n/a,High,Moderate,Moderate,Moderate,High,High,High,Moderate,Opened,Opened,4.69,88.6,-1.61778,54.978252
 281,07/12/2020,North East,758,105178,27,3624,n/a,n/a,High,Moderate,Moderate,Moderate,High,High,High,Moderate,Opened,Opened,2.52,93.46,-1.61778,54.978252
 280,06/12/2020,North East,511,104420,21,3597,n/a,n/a,High,Moderate,Moderate,Moderate,High,High,High,Moderate,Opened,Opened,4.43,93.6,-1.61778,54.978252
@@ -1743,7 +1743,7 @@ Day,Date,Regions,Cases,Cumulative Cases,Deaths,Cumulative Deaths,Tests,Cumulativ
 7,05/03/2020,North West,10,33,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,4.67,82.19,-2.244644,53.483959
 6,04/03/2020,North West,2,23,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,5.02,85.6,-2.244644,53.483959
 5,03/03/2020,North West,7,21,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,5.58,85.08,-2.244644,53.483959
-4,2/3/2020,North West,6,14,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,4.7,79.81,-2.244644,53.483959
+4,02/03/2020,North West,6,14,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,4.7,79.81,-2.244644,53.483959
 3,01/03/2020,North West,7,8,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,6.31,71.04,-2.244644,53.483959
 2,29/02/2020,North West,0,1,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,7.23,79.94,-2.244644,53.483959
 1,28/02/2020,North West,1,1,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,6.42,91.21,-2.244644,53.483959
@@ -1989,9 +1989,9 @@ Day,Date,Regions,Cases,Cumulative Cases,Deaths,Cumulative Deaths,Tests,Cumulativ
 129,12/06/2020,South East,89,32443,8,4668,n/a,n/a,Moderate,Moderate,Moderate,Moderate,High,High,High,High,Closed,Opened,15.41,86.5,-0.5732063,51.2356068
 128,11/06/2020,South East,94,32354,9,4660,n/a,n/a,Moderate,Moderate,Moderate,Moderate,High,High,High,High,Closed,Opened,15.06,78.46,-0.5732063,51.2356068
 127,10/06/2020,South East,124,32260,14,4651,n/a,n/a,Moderate,Moderate,Moderate,Moderate,High,High,High,High,Closed,Opened,13.03,85.67,-0.5732063,51.2356068
-126,9/6/2020,South East,112,32136,17,4637,n/a,n/a,Moderate,Moderate,Moderate,Moderate,High,High,High,High,Closed,Opened,13.47,72.58,-0.5732063,51.2356068
-125,8/6/2020,South East,124,32033,12,4620,n/a,n/a,Moderate,Moderate,Moderate,Moderate,High,High,High,High,Closed,Opened,13.06,72.83,-0.5732063,51.2356068
-124,7/6/2020,South East,61,31909,15,4608,n/a,n/a,Moderate,Moderate,Moderate,Moderate,High,High,High,High,Closed,Opened,12.74,83.04,-0.5732063,51.2356068
+126,09/06/2020,South East,112,32136,17,4637,n/a,n/a,Moderate,Moderate,Moderate,Moderate,High,High,High,High,Closed,Opened,13.47,72.58,-0.5732063,51.2356068
+125,08/06/2020,South East,124,32033,12,4620,n/a,n/a,Moderate,Moderate,Moderate,Moderate,High,High,High,High,Closed,Opened,13.06,72.83,-0.5732063,51.2356068
+124,07/06/2020,South East,61,31909,15,4608,n/a,n/a,Moderate,Moderate,Moderate,Moderate,High,High,High,High,Closed,Opened,12.74,83.04,-0.5732063,51.2356068
 123,06/06/2020,South East,85,31848,11,4593,n/a,n/a,Moderate,Moderate,Moderate,Moderate,High,High,High,High,Closed,Opened,11.22,71.25,-0.5732063,51.2356068
 122,05/06/2020,South East,141,31763,15,4582,n/a,n/a,Moderate,Moderate,Moderate,Moderate,High,High,High,High,Closed,Opened,13.99,59.04,-0.5732063,51.2356068
 121,04/06/2020,South East,158,31622,18,4567,n/a,n/a,Moderate,Moderate,Moderate,Moderate,High,High,High,High,Closed,Opened,12.83,73.88,-0.5732063,51.2356068
@@ -2415,7 +2415,7 @@ Day,Date,Regions,Cases,Cumulative Cases,Deaths,Cumulative Deaths,Tests,Cumulativ
 65,15/04/2020,South West,211,4320,41,776,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,9.33,61.69,-2.5972985,51.4538022
 64,14/04/2020,South West,185,4109,35,735,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,6.15,64.35,-2.5972985,51.4538022
 63,13/04/2020,South West,194,3924,45,700,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,7.67,64.46,-2.5972985,51.4538022
-62,12/4/2020,South West,179,3730,37,655,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,14.81,67.35,-2.5972985,51.4538022
+62,12/04/2020,South West,179,3730,37,655,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,14.81,67.35,-2.5972985,51.4538022
 61,11/04/2020,South West,173,3551,42,618,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,16.48,55.35,-2.5972985,51.4538022
 60,10/04/2020,South West,234,3378,62,576,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,15.85,59.52,-2.5972985,51.4538022
 59,09/04/2020,South West,246,3144,31,514,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,15.79,61.23,-2.5972985,51.4538022
@@ -2476,7 +2476,7 @@ Day,Date,Regions,Cases,Cumulative Cases,Deaths,Cumulative Deaths,Tests,Cumulativ
 4,14/02/2020,South West,0,0,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,opened,Opened,7.38,92.06,-2.5972985,51.4538022
 3,13/02/2020,South West,0,0,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,opened,Opened,6.15,87.38,-2.5972985,51.4538022
 2,12/02/2020,South West,0,0,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,opened,Opened,4.69,81.19,-2.5972985,51.4538022
-1,11/2/2020,South West,0,0,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,opened,Opened,4,72.04,-2.5972985,51.4538022
+1,11/02/2020,South West,0,0,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,opened,Opened,4,72.04,-2.5972985,51.4538022
 343,06/02/2021,West Midlands,1480,380253,64,11891,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,2.33,96.31,-1.9026911,52.4796992
 342,05/02/2021,West Midlands,1910,378773,65,11827,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,6.25,94.12,-1.9026911,52.4796992
 341,04/02/2021,West Midlands,2195,376863,83,11762,n/a,n/a,High,High,High,Moderate,High,High,High,High,Closed,Closed,4.81,97.17,-1.9026911,52.4796992
@@ -2696,8 +2696,8 @@ Day,Date,Regions,Cases,Cumulative Cases,Deaths,Cumulative Deaths,Tests,Cumulativ
 127,05/07/2020,West Midlands,36,25476,2,4512,n/a,n/a,Moderate,Moderate,Low,Moderate,Moderate,Moderate,Moderate,Moderate,Opened,opened,16.22,60.35,-1.9026911,52.4796992
 126,04/07/2020,West Midlands,23,25440,4,4510,n/a,n/a,Moderate,Moderate,Low,Moderate,Moderate,Moderate,Moderate,Moderate,Opened,opened,17.4,81.04,-1.9026911,52.4796992
 125,03/07/2020,West Midlands,40,25417,4,4506,n/a,n/a,Moderate,Moderate,Low,Moderate,Moderate,Moderate,Moderate,Moderate,Opened,opened,14.31,81.94,-1.9026911,52.4796992
-124,2/7/2020,West Midlands,54,25377,5,4502,n/a,n/a,Moderate,Moderate,Low,Moderate,Moderate,Moderate,Moderate,Moderate,Opened,opened,15.27,77.54,-1.9026911,52.4796992
-123,1/7/2020,West Midlands,50,25323,1,4497,n/a,n/a,Moderate,Moderate,Low,Moderate,Moderate,Moderate,Moderate,Moderate,Opened,opened,15.96,79.1,-1.9026911,52.4796992
+124,02/07/2020,West Midlands,54,25377,5,4502,n/a,n/a,Moderate,Moderate,Low,Moderate,Moderate,Moderate,Moderate,Moderate,Opened,opened,15.27,77.54,-1.9026911,52.4796992
+123,01/07/2020,West Midlands,50,25323,1,4497,n/a,n/a,Moderate,Moderate,Low,Moderate,Moderate,Moderate,Moderate,Moderate,Opened,opened,15.96,79.1,-1.9026911,52.4796992
 122,30/06/2020,West Midlands,51,25273,6,4496,n/a,n/a,Moderate,Moderate,Moderate,Moderate,High,High,High,Moderate,Opened,Opened,15.56,72.75,-1.9026911,52.4796992
 121,29/06/2020,West Midlands,56,25222,3,4490,n/a,n/a,Moderate,Moderate,Moderate,Moderate,High,High,High,Moderate,Opened,Opened,13.54,70.54,-1.9026911,52.4796992
 120,28/06/2020,West Midlands,26,25166,4,4487,n/a,n/a,Moderate,Moderate,Moderate,Moderate,High,High,High,Moderate,Opened,Opened,14.52,66.79,-1.9026911,52.4796992
@@ -3100,8 +3100,8 @@ Day,Date,Regions,Cases,Cumulative Cases,Deaths,Cumulative Deaths,Tests,Cumulativ
 97,05/05/2020,Yorkshire and The Humber,440,15962,51,2362,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,7.31,72.04,-1.5437941,53.7974185
 96,04/05/2020,Yorkshire and The Humber,350,15522,54,2311,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,8.41,86.75,-1.5437941,53.7974185
 95,03/05/2020,Yorkshire and The Humber,384,15172,46,2257,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,9.19,76.62,-1.5437941,53.7974185
-94,2/5/2020,Yorkshire and The Humber,385,14788,56,2211,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,8.48,77.88,-1.5437941,53.7974185
-93,1/5/2020,Yorkshire and The Humber,621,14403,54,2155,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,7.03,86.04,-1.5437941,53.7974185
+94,02/05/2020,Yorkshire and The Humber,385,14788,56,2211,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,8.48,77.88,-1.5437941,53.7974185
+93,01/05/2020,Yorkshire and The Humber,621,14403,54,2155,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,7.03,86.04,-1.5437941,53.7974185
 92,30/04/2020,Yorkshire and The Humber,578,13782,58,2101,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,7.35,79.96,-1.5437941,53.7974185
 91,29/04/2020,Yorkshire and The Humber,713,13204,73,2043,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,5.94,95.29,-1.5437941,53.7974185
 90,28/04/2020,Yorkshire and The Humber,486,12491,58,1970,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,6.02,85.17,-1.5437941,53.7974185
@@ -3130,8 +3130,8 @@ Day,Date,Regions,Cases,Cumulative Cases,Deaths,Cumulative Deaths,Tests,Cumulativ
 67,05/04/2020,Yorkshire and The Humber,217,3576,52,451,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,12.22,53.83,-1.5437941,53.7974185
 66,04/04/2020,Yorkshire and The Humber,202,3359,69,399,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,7.9,75.79,-1.5437941,53.7974185
 65,03/04/2020,Yorkshire and The Humber,293,3157,53,330,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,5.55,78.38,-1.5437941,53.7974185
-64,2/4/2020,Yorkshire and The Humber,243,2864,43,277,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,6.3,82.21,-1.5437941,53.7974185
-63,1/4/2020,Yorkshire and The Humber,297,2621,42,234,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,5.32,81.83,-1.5437941,53.7974185
+64,02/04/2020,Yorkshire and The Humber,243,2864,43,277,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,6.3,82.21,-1.5437941,53.7974185
+63,01/04/2020,Yorkshire and The Humber,297,2621,42,234,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,5.32,81.83,-1.5437941,53.7974185
 62,31/03/2020,Yorkshire and The Humber,319,2324,37,192,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,4.93,84.75,-1.5437941,53.7974185
 61,30/03/2020,Yorkshire and The Humber,285,2005,30,155,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,4.68,73.42,-1.5437941,53.7974185
 60,29/03/2020,Yorkshire and The Humber,228,1720,29,125,n/a,n/a,High,High,High,High,High,High,High,High,Closed,Closed,2.12,71.12,-1.5437941,53.7974185
@@ -3161,8 +3161,8 @@ Day,Date,Regions,Cases,Cumulative Cases,Deaths,Cumulative Deaths,Tests,Cumulativ
 36,05/03/2020,Yorkshire and The Humber,2,17,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,1.31,88.33,-1.5437941,53.7974185
 35,04/03/2020,Yorkshire and The Humber,2,15,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,3.46,83.83,-1.5437941,53.7974185
 34,03/03/2020,Yorkshire and The Humber,4,13,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,2.5,92.83,-1.5437941,53.7974185
-33,2/3/2020,Yorkshire and The Humber,3,9,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,1.93,87.46,-1.5437941,53.7974185
-32,1/3/2020,Yorkshire and The Humber,2,6,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,3.32,76.04,-1.5437941,53.7974185
+33,02/03/2020,Yorkshire and The Humber,3,9,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,1.93,87.46,-1.5437941,53.7974185
+32,01/03/2020,Yorkshire and The Humber,2,6,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,3.32,76.04,-1.5437941,53.7974185
 31,29/02/2020,Yorkshire and The Humber,0,4,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,4.65,86.17,-1.5437941,53.7974185
 30,28/02/2020,Yorkshire and The Humber,2,4,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,3.57,93.12,-1.5437941,53.7974185
 29,27/02/2020,Yorkshire and The Humber,1,2,0,0,n/a,n/a,Low,Low,Low,Low,Low,Low,Low,Low,Opened,Opened,1.75,88.08,-1.5437941,53.7974185
@@ -3918,17 +3918,17 @@ Day,Date,Regions,Cases,Cumulative Cases,Deaths,Cumulative Deaths,Tests,Cumulativ
 340,31/01/2021,Wales,460,193788,21,4875,12269,2436643,High,High,High,Moderate,High,High,High,High,Closed,Closed,1.45,89.38,-3.17909,51.481583
 339,30/01/2021,Wales,486,193328,22,4854,11232,2424374,High,High,High,Moderate,High,High,High,High,Closed,Closed,4.65,96.66,-3.17909,51.481583
 338,29/01/2021,Wales,597,192842,42,4832,15565,2413146,High,High,High,Moderate,High,High,High,High,Closed,Closed,8.38,98.58,-3.17909,51.481583
-337,28/01/2021,Wales,564,192245,29,4790,13228,2397597,High,High,High,Moderate,High,High,High,High,Closed,Closed,,,-3.17909,51.481583
-336,27/01/2021,Wales,700,191681,21,4761,12007,2384370,High,High,High,Moderate,High,High,High,High,Closed,Closed,,,-3.17909,51.481583
-335,26/01/2021,Wales,729,190981,37,4740,6451,2372365,High,High,High,Moderate,High,High,High,High,Closed,Closed,,,-3.17909,51.481583
-334,25/01/2021,Wales,843,190252,27,4703,7201,2365915,High,High,High,Moderate,High,High,High,High,Closed,Closed,,,-3.17909,51.481583
-333,24/01/2021,Wales,376,189409,34,4676,12919,2358714,High,High,High,Moderate,High,High,High,High,Closed,Closed,,,-3.17909,51.481583
-332,23/01/2021,Wales,530,189033,31,4642,13224,2345795,High,High,High,Moderate,High,High,High,High,Closed,Closed,,,-3.17909,51.481583
-331,22/01/2021,Wales,769,188503,39,4611,15780,2332572,High,High,High,Moderate,High,High,High,High,Closed,Closed,,,-3.17909,51.481583
-330,21/01/2021,Wales,909,187734,34,4572,14968,2316792,High,High,High,Moderate,High,High,High,High,Closed,Closed,,,-3.17909,51.481583
-329,20/01/2021,Wales,971,186825,38,4538,13057,2301867,High,High,High,Moderate,High,High,High,High,Closed,Closed,,,-3.17909,51.481583
-328,19/01/2021,Wales,1081,185854,25,4500,10259,2288810,High,High,High,Moderate,High,High,High,High,Closed,Closed,,,-3.17909,51.481583
-327,18/01/2021,Wales,1397,184773,43,4475,10531,2278551,High,High,High,Moderate,High,High,High,High,Closed,Closed,,,-3.17909,51.481583
+337,28/01/2021,Wales,564,192245,29,4790,13228,2397597,High,High,High,Moderate,High,High,High,High,Closed,Closed,9.85,98.75,-3.17909,51.481583
+336,27/01/2021,Wales,700,191681,21,4761,12007,2384370,High,High,High,Moderate,High,High,High,High,Closed,Closed,8.8,100,-3.17909,51.481583
+335,26/01/2021,Wales,729,190981,37,4740,6451,2372365,High,High,High,Moderate,High,High,High,High,Closed,Closed,6.07,89.21,-3.17909,51.481583
+334,25/01/2021,Wales,843,190252,27,4703,7201,2365915,High,High,High,Moderate,High,High,High,High,Closed,Closed,1.82,79.62,-3.17909,51.481583
+333,24/01/2021,Wales,376,189409,34,4676,12919,2358714,High,High,High,Moderate,High,High,High,High,Closed,Closed,1.7,90.33,-3.17909,51.481583
+332,23/01/2021,Wales,530,189033,31,4642,13224,2345795,High,High,High,Moderate,High,High,High,High,Closed,Closed,1.38,84.67,-3.17909,51.481583
+331,22/01/2021,Wales,769,188503,39,4611,15780,2332572,High,High,High,Moderate,High,High,High,High,Closed,Closed,3.15,92.17,-3.17909,51.481583
+330,21/01/2021,Wales,909,187734,34,4572,14968,2316792,High,High,High,Moderate,High,High,High,High,Closed,Closed,5.73,81.08,-3.17909,51.481583
+329,20/01/2021,Wales,971,186825,38,4538,13057,2301867,High,High,High,Moderate,High,High,High,High,Closed,Closed,9.63,91.71,-3.17909,51.481583
+328,19/01/2021,Wales,1081,185854,25,4500,10259,2288810,High,High,High,Moderate,High,High,High,High,Closed,Closed,9.88,93.92,-3.17909,51.481583
+327,18/01/2021,Wales,1397,184773,43,4475,10531,2278551,High,High,High,Moderate,High,High,High,High,Closed,Closed,7.15,91.54,-3.17909,51.481583
 326,17/01/2021,Wales,826,183376,26,4432,13652,2268020,High,High,High,Moderate,High,High,High,High,Closed,Closed,5.71,88.12,-3.17909,51.481583
 325,16/01/2021,Wales,1005,182550,40,4406,15126,2254371,High,High,High,Moderate,High,High,High,High,Closed,Closed,7.35,89.92,-3.17909,51.481583
 324,15/01/2021,Wales,1212,181545,41,4366,15396,2239245,High,High,High,Moderate,High,High,High,High,Closed,Closed,2.6,92.08,-3.17909,51.481583
