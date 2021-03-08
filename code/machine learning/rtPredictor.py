@@ -767,7 +767,7 @@ def evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluation
     
     return regionalGroupResults
 
-def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regionalGroupResults, regionalActionLists, agentType, useDifferentWindowSize=False):
+def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regionalGroupResults, regionalActionLists, agentType, useDifferentWindowSize=None):
     """
     Take in all of the results from the two runs of the Agent and write the desired parts to a 
     .csv file for further use elsewhere.
@@ -779,6 +779,7 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
         :param regionalGroupResults: List of tuples, the result of further comparison of the previous variables in order to determine the most impactful points
         :param regionalActionLists: List of lists, the potential actions that could be taken by the agent for each of the regions
         :param agentType: String, the name of the agent currently being used
+        :param useDifferentWindowSize: Integer, if given to the function, it will use that value over the value of WINDOW_SIZE
 
     OUTPUT:
         returns the filepath for the newly created .csv containing the formatted data
@@ -793,14 +794,11 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
     labels = ["Region No", "Group No"]
 
     outputList = []
-    
-
-        
 
     for currPoint in range(1, windowSize+1):
-        labels.append(f"Point {currPoint} Action to Next Point")
+        labels.append(f"Action {currPoint}")
 
-    labels.append(f"Agent Action to Next Point")
+    labels.append(f"Action to Next Point")
 
     for currRegionIndex in range(len(regionalAgentResults)):
         for currPoint in range(len(regionalAgentResults[currRegionIndex])):
@@ -814,7 +812,7 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
                     _, action = regionalAgentResults[currRegionIndex][currPoint + currIndex]
                     if action > QUANTILE_NO:
                         action = QUANTILE_NO - action
-                    currRow[f"Point {currPointNo} Action to Next Point"] = action
+                    currRow[f"Action {currPointNo}"] = action
                     currPointNo+= 1
 
                 _, action = regionalAgentResults[currRegionIndex][currPoint+currIndex+1]
@@ -822,7 +820,7 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
                 if action > QUANTILE_NO:
                     action = QUANTILE_NO - action
 
-                currRow[f"Agent Action to Next Point"] = action
+                currRow[f"Action to Next Point"] = action
             except:
                 #For groups at the end of the regional data, simply ignore them
                 #Since for the desired purpose that are not needed
@@ -894,8 +892,8 @@ def prepareData(filePath, regionNo=None):
 
     nextActionLabels = []
 
-    coreData = compiledData.drop(["Region No", "Group No", "Agent Action to Next Point"], axis=1)
-    goalData = compiledData["Agent Action to Next Point"]
+    coreData = compiledData.drop(["Region No", "Group No", "Action to Next Point"], axis=1)
+    goalData = compiledData["Action to Next Point"]
     #Split the grouped data
     trainingCore, testCore, trainingGoal, testGoal = train_test_split(coreData, goalData, test_size=0.2, random_state=10)
 
@@ -903,7 +901,7 @@ def prepareData(filePath, regionNo=None):
 
 
     #Get ready to perform feature scaling
-    scaler = MinMaxScaler(feature_range=(0, ((QUANTILE_NO*2)+1)))
+    scaler = MinMaxScaler(feature_range=(-QUANTILE_NO, QUANTILE_NO))
 
     trainingCore = scaler.fit_transform(trainingCore)
     testCore = scaler.transform(testCore)
@@ -1310,31 +1308,30 @@ def normaliseRt(regionalRt, amount):
 
 def prepareDataRandomForest(filepath):
     """
-    Tweaks the results of the original prepareData function to be usable for the RandomForest
+    Prepare data for use with Random Forest models
 
     INPUTS:
         :param filepath: String, the location of the actions .csv
     
     OUTPUTS:
-        returns four 2D lists, two each for the training and test set containing data (series of actions) and the label that needs to be predicted (next action)
+        returns four 2D Dataframes, two each for the training and test set containing data (series of actions) and the label that needs to be predicted (next action)
     """
-    trainingData, trainingAction, testData, testAction, validData, validAction = prepareData(filepath)
+    compiledData = read_csv(filepath)
 
-    regressorTrainingData = trainingData
-    regressorTrainingActions = trainingAction
+    maxGroupNo = findGroupNoCutoff(compiledData)
 
-    regressorTestData = testData.reshape(testData.shape[0], testData.shape[2])
+    #Remove Group Nos that don't exist in all regions
+    rowsToDrop = []
+    for index, row in compiledData.iterrows():
+        if int(row["Group No"]) > maxGroupNo:
+            rowsToDrop.append(index)
 
-    #Merge Validation and Training dataset to utilise RandomForest's bootstrapping
-    for row in validData:
-        np.append(regressorTrainingData, row)
+    coreData = compiledData.drop(["Region No", "Group No", "Action to Next Point"], axis=1)
+    goalData = compiledData["Action to Next Point"]
 
-    for row in validAction:
-        np.append(regressorTrainingActions, row)
+    trainingCore, testCore, trainingGoal, testGoal = train_test_split(coreData, goalData, test_size=0.2, random_state=10)
 
-    regressorTrainingData = np.reshape(regressorTrainingData,(regressorTrainingData.shape[0], regressorTrainingData.shape[2]))
-
-    return regressorTrainingData, regressorTrainingActions, regressorTestData, testAction 
+    return trainingCore, trainingGoal, testCore, testGoal
 
 def runRandomForest(trainingData, trainingActions, testData, testActions):
     """
@@ -1361,9 +1358,9 @@ def runRandomForest(trainingData, trainingActions, testData, testActions):
 
 
 def main():
-    windowSizes = [4, 5, 6, 7, 8, 9, 10, 12, 14, 15, 17, 20, 22, 25, 27, 30, 32, 35, 37, 40]
+    windowSizes = [4, 5, 6, 7, 8, 9, 10, 12, 14, 15, 17, 18, 19, 20, 22, 25, 27, 30, 32, 35, 37, 40]
     
-    """
+    
     filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
 
     regionRt = readFile("uk", filePath)
@@ -1405,10 +1402,10 @@ def main():
     regionalGroupResultsTree = evalutateAgentPerformance(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree)
 
     
-    for curr in windowSizes[:11]:
+    for curr in windowSizes:
         filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree", curr)
         filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy", curr)
-    """
+    
     
     learningAndDecay = [(0.001, 0.1), (0.0001, 0.001), (0.0001, 0.0001), (0.0001, 1e-05), (0.0001, 1e-07)]
 
@@ -1458,7 +1455,7 @@ def main():
 
     #print(curr)
     groupOverallAccuracy = 0
-    for curr in windowSizes[9:15]:
+    for curr in windowSizes:
         print(curr)
         regressorTrainingData, regressorTrainingActions, regressorTestData, regressorTestActions = prepareDataRandomForest(f"../../data/core/uk/predictor/tree_{curr}.csv")
         
