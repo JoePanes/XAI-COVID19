@@ -1,0 +1,26 @@
+Total errors 24
+
+24.11.2020 12:00 | east_midlands
+24.11.2020 11:00 | east_midlands
+24.11.2020 10:00 | east_midlands
+10.06.2020 15:00 | east_midlands
+10.06.2020 14:00 | east_midlands
+10.06.2020 13:00 | east_midlands
+19.11.2020 15:00 | northern_ireland
+19.11.2020 14:00 | northern_ireland
+19.11.2020 13:00 | northern_ireland
+19.11.2020 12:00 | northern_ireland
+03.06.2020 11:00 | northern_ireland
+03.06.2020 10:00 | northern_ireland
+18.11.2020 13:20 | north_west
+31.07.2020 16:20 | north_west
+19.11.2020 15:00 | scotland
+19.11.2020 14:00 | scotland
+19.11.2020 13:00 | scotland
+19.11.2020 12:00 | scotland
+03.06.2020 11:00 | scotland
+03.06.2020 10:00 | scotland
+29.11.2020 16:50 | south_west
+29.11.2020 04:20 | south_west
+02.06.2020 14:00 | yorkshire_and_the_humber
+02.06.2020 13:00 | yorkshire_and_the_humber

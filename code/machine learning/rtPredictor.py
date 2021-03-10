@@ -23,11 +23,14 @@ from pandas import DataFrame
 from pandas import read_csv
 from pandas import concat
 
-from sklearn.model_selection import train_test_split 
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, BaggingRegressor, GradientBoostingRegressor
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
+from sklearn.utils import resample
 
 from random import randint
 from random import shuffle
@@ -44,6 +47,8 @@ from datetime import datetime
 from itertools import product
 
 from math import sqrt
+
+from xgboost import XGBRFRegressor
 
 QUANTILE_NO = 3
 GROUP_SIZE = 3
@@ -1124,11 +1129,11 @@ def determineAccuracy(model, testData, testAction, printTable=False):
     predictionResults = []
     for currIndex in range(len(testData)):
         currentTestData = testData[currIndex]
-        currentTestData = np.reshape(currentTestData, (1, currentTestData.shape[0], currentTestData.shape[1]))
+        #currentTestData = np.reshape(currentTestData, (1, currentTestData.shape[0], currentTestData.shape[1]))
         
-        prediction = model.predict(currentTestData)[0]
+        prediction = model.predict(currentTestData)
         
-        prediction = np.argmax(prediction)
+        prediction = int(np.argmax(prediction))
         predictionResults.append(prediction)
         actualValue = testAction[currIndex]
 
@@ -1318,24 +1323,35 @@ def prepareDataRandomForest(filepath):
     """
     compiledData = read_csv(filepath)
 
-    maxGroupNo = findGroupNoCutoff(compiledData)
-
-    #Remove Group Nos that don't exist in all regions
-    rowsToDrop = []
-    for index, row in compiledData.iterrows():
-        if int(row["Group No"]) > maxGroupNo:
-            rowsToDrop.append(index)
+    #compiledData = compiledData.sample(frac=0.4)
 
     coreData = compiledData.drop(["Region No", "Group No", "Action to Next Point"], axis=1)
     goalData = compiledData["Action to Next Point"]
 
-    trainingCore, testCore, trainingGoal, testGoal = train_test_split(coreData, goalData, test_size=0.2, random_state=10)
+    #trainingCore, testCore, trainingGoal, testGoal = train_test_split(coreData, goalData, test_size=0.1, random_state=10, stratify=goalData)
+    kFold = StratifiedKFold(n_splits=10, shuffle=True, random_state=10)
+
+    coreData = coreData.to_numpy()
+    goalData = goalData.to_numpy()
+
+
+    coreData, goalData = resample(coreData, goalData)
+    split = kFold.split(coreData, goalData)
+    trainingCore, trainingGoal = [], []
+    testCore, testGoal = [], []
+
+
+    for currTraining, currTest in split:
+        trainingCore.append(coreData[currTraining])
+        trainingGoal.append(goalData[currTraining])
+        testCore.append(coreData[currTest])
+        testGoal.append(goalData[currTest])
 
     return trainingCore, trainingGoal, testCore, testGoal
 
-def runRandomForest(trainingData, trainingActions, testData, testActions):
+def runRegressors(trainingData, trainingActions, testData, testActions):
     """
-    Run RandomForestRegressor on the training data, then determine its accuracy with test set.
+    Run various Regressors on the training data, then determine its accuracy with test set.
 
     INPUTS:
         :param trainingData: 2D list of Integers, containing the sequence of actions that was taken by the agent
@@ -1344,23 +1360,61 @@ def runRandomForest(trainingData, trainingActions, testData, testActions):
         :param testActions: 1D list of Integers, containing the action that occurs after the sequence to be predicted
 
     OUTPUT:
-        returns a RandomForestRegressor that has been trained on the training data.
+        returns a list of the models that has been trained on the training data, score and accuracy for each model.
     """
 
-    regressor = RandomForestRegressor(bootstrap=True, verbose=0)
-        
-    regressor.fit(trainingData, trainingActions)
+    regressorRF = RandomForestRegressor(bootstrap=True, verbose=0, criterion="mse", max_features="auto", oob_score=True, max_samples=0.1)
+    regressorBR = BaggingRegressor(bootstrap=True, n_estimators=10)
+    regressorGB = GradientBoostingRegressor(max_depth=4, loss="lad", learning_rate=0.1)
+    regressorGB2 = GradientBoostingRegressor(max_depth=5, loss="quantile", learning_rate=0.1, alpha=0.6)
+    regressorXG = XGBRFRegressor()        
 
-    print("\nTest Data Accuracy:")
-    print(round(regressor.score(testData, testActions), 2))
+    regressorRF.fit(trainingData, trainingActions)
+    regressorBR.fit(trainingData, trainingActions)
+    regressorGB.fit(trainingData, trainingActions)
+    regressorGB2.fit(trainingData, trainingActions)
+    regressorXG.fit(trainingData, trainingActions)
+
+    score = []
+    score.append(round(regressorRF.score(testData, testActions), 2))
+    score.append(round(regressorBR.score(testData, testActions), 2))
+    score.append(round(regressorGB.score(testData, testActions), 2))
+    score.append(round(regressorGB2.score(testData, testActions), 2))
+    score.append(round(regressorXG.score(testData, testActions), 2))
+
+    predictionsRF = regressorRF.predict(testData)
+    predictionsBR = regressorBR.predict(testData)
+    predictionsGB = regressorGB.predict(testData)
+    predictionsGB2 = regressorGB2.predict(testData)
+    predicitionsXG = regressorXG.predict(testData)
+
+    print("-")
+
+    predictionsRF = np.rint(predictionsRF)
+    predictionsBR = np.rint(predictionsBR)
+    predictionsGB = np.rint(predictionsGB)
+    predictionsGB2 = np.rint(predictionsGB2)
+    predicitionsXG = np.rint(predicitionsXG)
+
+    accuracy = []
+    accuracy.append(round(accuracy_score(testActions, predictionsRF), 2))
+    accuracy.append(round(accuracy_score(testActions, predictionsBR), 2))
+    accuracy.append(round(accuracy_score(testActions, predictionsGB), 2))
+    accuracy.append(round(accuracy_score(testActions, predictionsGB2), 2))
+    accuracy.append(round(accuracy_score(testActions, predicitionsXG), 2))
+
+    confuse = confusion_matrix(testActions, np.array(predictionsBR).astype(int))
+
+    print(confuse)
+    models = [regressorRF, regressorBR, regressorGB, regressorGB2, ]
     print("")
-    return regressor
+    return models, score, accuracy
 
 
 def main():
-    windowSizes = [4, 5, 6, 7, 8, 9, 10, 12, 14, 15, 17, 18, 19, 20, 22, 25, 27, 30, 32, 35, 37, 40]
+    windowSizes = [4, 7, 15, 17, 20, 22, 25]
     
-    
+    """
     filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
 
     regionRt = readFile("uk", filePath)
@@ -1405,8 +1459,7 @@ def main():
     for curr in windowSizes:
         filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree", curr)
         filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy", curr)
-    
-    
+    """
     learningAndDecay = [(0.001, 0.1), (0.0001, 0.001), (0.0001, 0.0001), (0.0001, 1e-05), (0.0001, 1e-07)]
 
     potentialLayers = [(32, 32, 64, 128), (32, 32, 128, 32), (32, 32, 256, 64), (32, 64, 32, 32), (32, 128, 128, 32), (32, 256, 64, 32),
@@ -1456,12 +1509,22 @@ def main():
     #print(curr)
     groupOverallAccuracy = 0
     for curr in windowSizes:
-        print(curr)
+        print(f"-----{curr}-----")
+        totalScore = [[],[], [], [], []]
+        totalAccuracy = [[], [], [], [], []]
+        
         regressorTrainingData, regressorTrainingActions, regressorTestData, regressorTestActions = prepareDataRandomForest(f"../../data/core/uk/predictor/tree_{curr}.csv")
         
-        runRandomForest(regressorTrainingData, regressorTrainingActions, regressorTestData, regressorTestActions)
+        for curr in range(len(regressorTrainingData)):
+            _, score, accuracy = runRegressors(regressorTrainingData[curr], regressorTrainingActions[curr], regressorTestData[curr], regressorTestActions[curr])
+            for currIndex in range(len(accuracy)):
+                totalScore[currIndex].append(score[currIndex])
+                totalAccuracy[currIndex].append(accuracy[currIndex])
 
-        
+        print("===========")
+        for currIndex in range(len(totalAccuracy)):
+            print(round(mean(totalScore[currIndex]), 2), " | ", round(mean(totalAccuracy[currIndex]), 2))
+        print("===========")
         """model, currHistory = testLSTM(trainingData, trainingAction, validData, validAction, curr)
         
         history.append(currHistory)
