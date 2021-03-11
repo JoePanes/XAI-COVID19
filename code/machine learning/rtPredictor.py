@@ -39,6 +39,14 @@ from statistics import mean
 
 from matplotlib import pyplot as plt
 
+from imblearn.over_sampling import RandomOverSampler
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.under_sampling import TomekLinks
+from imblearn.under_sampling import EditedNearestNeighbours
+from imblearn.under_sampling import OneSidedSelection
+from imblearn.under_sampling import NeighbourhoodCleaningRule
+from imblearn.under_sampling import NearMiss
+
 from copy import deepcopy
 from copy import copy
 
@@ -1328,14 +1336,31 @@ def prepareDataRandomForest(filepath):
     coreData = compiledData.drop(["Region No", "Group No", "Action to Next Point"], axis=1)
     goalData = compiledData["Action to Next Point"]
 
+    print(len(coreData.index))
     #trainingCore, testCore, trainingGoal, testGoal = train_test_split(coreData, goalData, test_size=0.1, random_state=10, stratify=goalData)
     kFold = StratifiedKFold(n_splits=10, shuffle=True, random_state=10)
+    
+    #ros = RandomOverSampler()
 
+    #rus = RandomUnderSampler()
+    #tl = TomekLinks(sampling_strategy="majority")
+    #ed = EditedNearestNeighbours()
+    #oss = OneSidedSelection(n_neighbors=4, n_seeds_S=300)
+
+    #ncc = NeighbourhoodCleaningRule(n_neighbors=QUANTILE_NO*2+1, kind_sel="all", threshold_cleaning=0.8)
+
+    nm = NearMiss(version=3, n_neighbors=QUANTILE_NO*2+1, n_neighbors_ver3=QUANTILE_NO*2+1)
+
+    origCore = deepcopy(coreData)
+    origGoal = deepcopy(goalData)
+    coreData, goalData = nm.fit_resample(coreData, goalData)
+
+    print(len(coreData.index))
     coreData = coreData.to_numpy()
     goalData = goalData.to_numpy()
 
 
-    coreData, goalData = resample(coreData, goalData)
+    #coreData, goalData = resample(coreData, goalData)
     split = kFold.split(coreData, goalData)
     trainingCore, trainingGoal = [], []
     testCore, testGoal = [], []
@@ -1347,7 +1372,7 @@ def prepareDataRandomForest(filepath):
         testCore.append(coreData[currTest])
         testGoal.append(goalData[currTest])
 
-    return trainingCore, trainingGoal, testCore, testGoal
+    return trainingCore, trainingGoal, testCore, testGoal, origCore, origGoal
 
 def runRegressors(trainingData, trainingActions, testData, testActions):
     """
@@ -1364,7 +1389,7 @@ def runRegressors(trainingData, trainingActions, testData, testActions):
     """
 
     regressorRF = RandomForestRegressor(bootstrap=True, verbose=0, criterion="mse", max_features="auto", oob_score=True, max_samples=0.1)
-    regressorBR = BaggingRegressor(bootstrap=True, n_estimators=10)
+    regressorBR = BaggingRegressor(bootstrap=True, n_estimators=15)
     regressorGB = GradientBoostingRegressor(max_depth=4, loss="lad", learning_rate=0.1)
     regressorGB2 = GradientBoostingRegressor(max_depth=5, loss="quantile", learning_rate=0.1, alpha=0.6)
     regressorXG = XGBRFRegressor()        
@@ -1513,14 +1538,32 @@ def main():
         totalScore = [[],[], [], [], []]
         totalAccuracy = [[], [], [], [], []]
         
-        regressorTrainingData, regressorTrainingActions, regressorTestData, regressorTestActions = prepareDataRandomForest(f"../../data/core/uk/predictor/tree_{curr}.csv")
-        
+        regressorTrainingData, regressorTrainingActions, regressorTestData, regressorTestActions, origCore, origGoal = prepareDataRandomForest(f"../../data/core/uk/predictor/tree_{curr}.csv")
+        accuracy = []
+        currBest = 0
+        bestConfuse = []
         for curr in range(len(regressorTrainingData)):
-            _, score, accuracy = runRegressors(regressorTrainingData[curr], regressorTrainingActions[curr], regressorTestData[curr], regressorTestActions[curr])
+            model, score, accuracy = runRegressors(regressorTrainingData[curr], regressorTrainingActions[curr], regressorTestData[curr], regressorTestActions[curr])
             for currIndex in range(len(accuracy)):
                 totalScore[currIndex].append(score[currIndex])
                 totalAccuracy[currIndex].append(accuracy[currIndex])
+            
+            currModel = model[1]
 
+            predictions = currModel.predict(origCore.to_numpy())
+            predictions = np.rint(predictions)
+
+            
+            currAccuracy = round(accuracy_score(origGoal, predictions), 2)
+            accuracy.append(currAccuracy)
+            confuse = confusion_matrix(origGoal, np.array(predictions).astype(int))
+            
+            if currAccuracy > currBest:
+                bestConfuse = confuse
+            
+        print("Entire Dataset accuracy:")
+        print(round(mean(accuracy), 2))
+        print(bestConfuse)
         print("===========")
         for currIndex in range(len(totalAccuracy)):
             print(round(mean(totalScore[currIndex]), 2), " | ", round(mean(totalAccuracy[currIndex]), 2))
