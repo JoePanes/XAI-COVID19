@@ -40,6 +40,12 @@ from statistics import mean
 from matplotlib import pyplot as plt
 
 from imblearn.over_sampling import RandomOverSampler
+from imblearn.over_sampling import BorderlineSMOTE
+from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import SMOTEN
+from imblearn.over_sampling import KMeansSMOTE
+from imblearn.over_sampling import SVMSMOTE
+
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.under_sampling import TomekLinks
 from imblearn.under_sampling import EditedNearestNeighbours
@@ -1319,9 +1325,9 @@ def normaliseRt(regionalRt, amount):
 
     return normalisedRt
 
-def prepareDataRandomForest(filepath):
+def prepareDataRegressor(filepath):
     """
-    Prepare data for use with Random Forest models
+    Prepare data for use with Regressor Models
 
     INPUTS:
         :param filepath: String, the location of the actions .csv
@@ -1336,35 +1342,42 @@ def prepareDataRandomForest(filepath):
     coreData = compiledData.drop(["Region No", "Group No", "Action to Next Point"], axis=1)
     goalData = compiledData["Action to Next Point"]
 
-    print(len(coreData.index))
-    #trainingCore, testCore, trainingGoal, testGoal = train_test_split(coreData, goalData, test_size=0.1, random_state=10, stratify=goalData)
     kFold = StratifiedKFold(n_splits=10, shuffle=True, random_state=10)
     
-    #ros = RandomOverSampler()
+    origCore = deepcopy(coreData)
+    origGoal = deepcopy(goalData)
 
+    coreData, testCore, goalData, testGoal = train_test_split(origCore, origGoal, test_size=0.2, random_state=10, stratify=origGoal)
+    
+    ros = RandomOverSampler()
     #rus = RandomUnderSampler()
+    #kms = KMeansSMOTE(k_neighbors=7)
+    #svm = SVMSMOTE()
     #tl = TomekLinks(sampling_strategy="majority")
     #ed = EditedNearestNeighbours()
     #oss = OneSidedSelection(n_neighbors=4, n_seeds_S=300)
+    #ncr = NeighbourhoodCleaningRule(n_neighbors=7, kind_sel="mode", threshold_cleaning=0.5)
+    #nm = NearMiss(version=3, n_neighbors=7, n_neighbors_ver3=7)
+    #smote = SMOTE(k_neighbors=7)
 
-    #ncc = NeighbourhoodCleaningRule(n_neighbors=QUANTILE_NO*2+1, kind_sel="all", threshold_cleaning=0.8)
+    coreData, goalData = ros.fit_resample(coreData, goalData)
+    #coreData, goalData = ncr.fit_resample(coreData, goalData)
 
-    nm = NearMiss(version=3, n_neighbors=QUANTILE_NO*2+1, n_neighbors_ver3=QUANTILE_NO*2+1)
+    combined = deepcopy(coreData)
+    combined["Action to Next Point"] = goalData
+    combined.to_csv(f"../../data/core/uk/predictor/tree_balanced.csv")
+    
+    testCore["Action to Next Point"] = testGoal
+    testCore.to_csv(f"../../data/core/uk/predictor/tree_test_orig.csv")
 
-    origCore = deepcopy(coreData)
-    origGoal = deepcopy(goalData)
-    coreData, goalData = nm.fit_resample(coreData, goalData)
-
-    print(len(coreData.index))
     coreData = coreData.to_numpy()
     goalData = goalData.to_numpy()
 
-
-    #coreData, goalData = resample(coreData, goalData)
+    #coreData, goalData = resample(coreData, goalData, stratify=goalData, )
+    
     split = kFold.split(coreData, goalData)
     trainingCore, trainingGoal = [], []
     testCore, testGoal = [], []
-
 
     for currTraining, currTest in split:
         trainingCore.append(coreData[currTraining])
@@ -1379,17 +1392,17 @@ def runRegressors(trainingData, trainingActions, testData, testActions):
     Run various Regressors on the training data, then determine its accuracy with test set.
 
     INPUTS:
-        :param trainingData: 2D list of Integers, containing the sequence of actions that was taken by the agent
-        :param trainingActions: 1D list of Integers, containing the action that occurs after the sequence to be predicted
-        :param testData: 2D list of Integers, containing the sequence of actions that was taken by the agent
-        :param testActions: 1D list of Integers, containing the action that occurs after the sequence to be predicted
+        :param trainingData: 2D Numpy of Integers, containing the sequence of actions that was taken by the agent
+        :param trainingActions: 1D Numpy of Integers, containing the action that occurs after the sequence to be predicted
+        :param testData: 2D Numpy of Integers, containing the sequence of actions that was taken by the agent
+        :param testActions: 1D Numpy of Integers, containing the action that occurs after the sequence to be predicted
 
     OUTPUT:
         returns a list of the models that has been trained on the training data, score and accuracy for each model.
     """
 
     regressorRF = RandomForestRegressor(bootstrap=True, verbose=0, criterion="mse", max_features="auto", oob_score=True, max_samples=0.1)
-    regressorBR = BaggingRegressor(bootstrap=True, n_estimators=15)
+    regressorBR = BaggingRegressor(bootstrap=True, n_estimators=20)
     regressorGB = GradientBoostingRegressor(max_depth=4, loss="lad", learning_rate=0.1)
     regressorGB2 = GradientBoostingRegressor(max_depth=5, loss="quantile", learning_rate=0.1, alpha=0.6)
     regressorXG = XGBRFRegressor()        
@@ -1431,13 +1444,40 @@ def runRegressors(trainingData, trainingActions, testData, testActions):
     confuse = confusion_matrix(testActions, np.array(predictionsBR).astype(int))
 
     print(confuse)
-    models = [regressorRF, regressorBR, regressorGB, regressorGB2, ]
+    models = [regressorRF, regressorBR, regressorGB, regressorGB2, regressorXG]
     print("")
     return models, score, accuracy
 
+def runBaggingRegressor(trainingData, trainingActions, testData, testActions):
+    """
+    Train a Bagging Regressor, then evaluate using the Test data.
+
+    INPUTS:
+        :param trainingData: 2D Numpy of Integers, containing the sequence of actions that was taken by the agent
+        :param trainingActions: 1D Numpy of Integers, containing the action that occurs after the sequence to be predicted
+        :param testData: 2D Numpy of Integers, containing the sequence of actions that was taken by the agent
+        :param testActions: 1D Numpy of Integers, containing the action that occurs after the sequence to be predicted
+
+    OUTPUT:
+        returns the trained model, the score for the model's predictions, the accuracy of the model's predictions and the confusion matrix
+    """
+    regressorBR = BaggingRegressor(bootstrap=True, n_estimators=15)
+
+    regressorBR.fit(trainingData, trainingActions)
+    score = round(regressorBR.score(testData, testActions), 2)
+
+    predictionsBR = regressorBR.predict(testData)
+
+    predictionsBR = np.rint(predictionsBR)
+
+    accuracy = round(accuracy_score(testActions, predictionsBR), 2)
+
+    confuse = confusion_matrix(testActions, np.array(predictionsBR).astype(int))
+
+    return regressorBR, score, accuracy, confuse 
 
 def main():
-    windowSizes = [4, 7, 15, 17, 20, 22, 25]
+    windowSizes = [20, 22, 25]
     
     """
     filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
@@ -1537,33 +1577,34 @@ def main():
         print(f"-----{curr}-----")
         totalScore = [[],[], [], [], []]
         totalAccuracy = [[], [], [], [], []]
-        
-        regressorTrainingData, regressorTrainingActions, regressorTestData, regressorTestActions, origCore, origGoal = prepareDataRandomForest(f"../../data/core/uk/predictor/tree_{curr}.csv")
-        accuracy = []
-        currBest = 0
-        bestConfuse = []
+        totalAccuracyOrig = [[], [], [], [], []] 
+
+        regressorTrainingData, regressorTrainingActions, regressorTestData, regressorTestActions, origCore, origGoal = prepareDataRegressor(f"../../data/core/uk/predictor/tree_{curr}.csv")
+                
         for curr in range(len(regressorTrainingData)):
+            
             model, score, accuracy = runRegressors(regressorTrainingData[curr], regressorTrainingActions[curr], regressorTestData[curr], regressorTestActions[curr])
+            
             for currIndex in range(len(accuracy)):
                 totalScore[currIndex].append(score[currIndex])
                 totalAccuracy[currIndex].append(accuracy[currIndex])
-            
-            currModel = model[1]
 
-            predictions = currModel.predict(origCore.to_numpy())
-            predictions = np.rint(predictions)
+            for curr in range(len(model)):
+                currModel = model[curr]
 
-            
-            currAccuracy = round(accuracy_score(origGoal, predictions), 2)
-            accuracy.append(currAccuracy)
-            confuse = confusion_matrix(origGoal, np.array(predictions).astype(int))
-            
-            if currAccuracy > currBest:
-                bestConfuse = confuse
+                predictions = currModel.predict(origCore.to_numpy())
+                predictions = np.rint(predictions)
+
+                currAccuracy = round(accuracy_score(origGoal, predictions), 2)
+                print("Current Orig Data Accuracy: ", currAccuracy)
+                totalAccuracyOrig[curr].append(currAccuracy)
+                #confuse = confusion_matrix(origGoal, np.array(predictions).astype(int))
+                
             
         print("Entire Dataset accuracy:")
-        print(round(mean(accuracy), 2))
-        print(bestConfuse)
+        for curr in totalAccuracyOrig:
+            print(round(mean(curr), 2))
+
         print("===========")
         for currIndex in range(len(totalAccuracy)):
             print(round(mean(totalScore[currIndex]), 2), " | ", round(mean(totalAccuracy[currIndex]), 2))
