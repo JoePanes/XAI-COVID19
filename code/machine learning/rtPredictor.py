@@ -143,7 +143,7 @@ class Node:
             self.cumulativeDifference = currDifference
 
 
-def readFile(dataset, filePath):
+def readFile(dataset, filePath, startYear=None, endYear=None):
     """
     Takes in the contents of the file, and compiles it into
     a usable format
@@ -151,9 +151,11 @@ def readFile(dataset, filePath):
     INPUT:
         :param dataset: String, the name of the dataset being read (determines the order)
         :param filePath: String, the location of the .csv file to be read from
+        :param startYear: Integer, for the financial data, which year to start the data range from
+        :param endYear: Integer, for the financial data, which year to end the data range at
     
     OUTPUT:
-        returns a list of lists, where each sublist contains the Rt values for each region 
+        returns a list of lists, where each sublist contains the values for each region or year
     """
     compiledData = []
 
@@ -163,6 +165,7 @@ def readFile(dataset, filePath):
         firstIteration = True
         prevRegionNo = None
         dateColName = ""
+        prevYear = None
         
         if dataset == "eu":
             regionalColName = "Country"
@@ -193,10 +196,26 @@ def readFile(dataset, filePath):
                 if firstIteration:
                     dateColName = list(row.keys())[0]
                     firstIteration == False
-
+                
+                currYear = int(row[dateColName][-4:])
+                
                 #Only add dates within the desired years
-                if int(row[dateColName][-4:]) >= 2010 and int(row[dateColName][-4:]) <= 2011:
+                if currYear >= startYear and currYear <= endYear:
+                    if currYear != prevYear:
+                        if type(prevYear) == int:
+                            compiledData.append([])
+                            currInsertionIndex += 1
+                        
+                        prevYear = currYear
+                    
                     compiledData[currInsertionIndex].append(float(row["US $ TO UK £ (WMR) - EXCHANGE RATE"]))
+                
+                elif currYear > endYear:
+                    #Rather pointless to continue looking through the data if it is exceeding
+                    #what is desired
+                    break
+
+
             else:
                 print("The dataset that you are trying to use has not been implemented, or, there is an error in how it has been typed.")
                 print("Please check the code to determine the course of correction to be taken, thank you =)")
@@ -204,69 +223,68 @@ def readFile(dataset, filePath):
 
     return compiledData
 
-def getRtValueChange(regionRt):
+def getValueChange(regionValues):
     """
-    From the dataset, go through each regional sublist and obtain the Rt value change from
+    From the dataset, go through each regional sublist and obtain the value change from
     one day to the next.
 
     INPUT:
-        :param regionRt: List of Lists, containing only the Rt values for each day in each region
+        :param regionValues: List of Lists, containing only the Rt values for each day in each region
     
     OUTPUT:
         returns a new list of lists, in the same structure and lengths as the input, but with the Rt values
                 now being the difference in value between one day to the next.
     """
-    rtValueChange = []
+    valueChange = []
     currIndex = 0
 
     #Get the Rt value changes
-    for currRegion in regionRt:
-        rtValueChange.append([])
-        prevRt = float(0)
+    for currRegion in regionValues:
+        valueChange.append([])
+        prevVal = float(0)
         
-        for currRow in currRegion:
-            currRt = float(currRow)
-            rtValueChange[currIndex].append(float(currRt - prevRt))
+        for currVal in currRegion:
+            valueChange[currIndex].append(float(float(currVal) - prevVal))
 
-            prevRt = copy(currRt)
+            prevVal = float(currVal)
         
         currIndex += 1
-    return rtValueChange
+    return valueChange
 
-def convertRtValues(rtValueChange):
+def convertValues(valueChange):
     """
     Converts all negative values to positive and remove 0 from the dataset.
 
     INPUT:
-        :param rtValueChange: List of lists, the day to day value change of Rt
+        :param valueChange: List of lists, the day to day value change of value
     
     OUTPUT:
-        returns the altered rtValueChange, which may have sublists now shorter.
+        returns the altered valueChange, which may have sublists now shorter.
     """
-    for currRegionIndex in range(len(rtValueChange)):
-        newRegionRtValueChange = []
+    for currRegionIndex in range(len(valueChange)):
+        newRegionValueChange = []
     
-        for currIndex in range(len(rtValueChange[currRegionIndex])):
-            currVal = rtValueChange[currRegionIndex][currIndex]
+        for currIndex in range(len(valueChange[currRegionIndex])):
+            currVal = valueChange[currRegionIndex][currIndex]
             if currVal < 0:
-                newRegionRtValueChange.append(-currVal)
+                newRegionValueChange.append(-currVal)
             elif currVal == 0:
                 continue
             else:
-                newRegionRtValueChange.append(currVal)
+                newRegionValueChange.append(currVal)
 
-        rtValueChange[currRegionIndex] = newRegionRtValueChange
+        valueChange[currRegionIndex] = newRegionValueChange
     
-    return rtValueChange
+    return valueChange
 
 def getPotentialActionLists(rtValueChange):
     """
     For each region, it performs Quantile Bucketing as a method,
-    of splitting a region's Rt values in an equal manner.
+    of splitting a region's values in an equal manner.
     Then, derives the action list using this split data.
 
     INPUT:
-        :param rtValueChange: List of lists, the day to day value change of Rt
+        :param rtValueChange: List of lists, the day to day value change
     
     OUTPUT:
         returns a list of lists, where each sublist contains the potential actions 
@@ -282,10 +300,10 @@ def getPotentialActionLists(rtValueChange):
         #The discretized bucket vals for each record
         quantileBuckets = list(rtValChangeDataFrame["Bucket"])
 
-        #Where the Rt val changes will be sorted based on quantileBuckets
+        #Where the val changes will be sorted based on quantileBuckets
         quantileBucketsValues = [[] for _ in range(QUANTILE_NO)]
         
-        #Sort the Rt values into their corresponding bucket
+        #Sort the values into their corresponding bucket
         for currIndex in range(len(rtValueChange[currRegionIndex])):
             bucketVal = quantileBuckets[currIndex]
             quantileBucketsValues[bucketVal].append(rtValueChange[currRegionIndex][currIndex])
@@ -307,16 +325,16 @@ def getPotentialActionLists(rtValueChange):
 def greedyAgent(currRegion, actionList, firstValue=True, evaluatePoint=False, evaluateAction=None):
     """
     A greedy implementation for the agent to try and mimic as closely the
-    movements of the Rt values.
+    movements of the values.
 
     INPUTS:
-        :param currRegion: List of floats, of the current region's Rt values
+        :param currRegion: List of floats, of the current region's values
         :param actionList: List of floats, the changes in value that the agent will be able to use.
         :param evaluatePoint: Boolean, whether the agent is being used to evaluate the impact of a point
         :param evaluateAction: Integer, the index for the action originally taken that needs to be ignored at the evaluatePoint
 
     OUTPUTS:
-        returns a list of tuples, containing the Rt value and the index for the action that resulted in said Rt value
+        returns a list of tuples, containing the Rt value and the index for the action that resulted in said value
     """
     agentRtValues = []
 
@@ -366,7 +384,7 @@ def mapGreedyAgent(regionalRtAndActionList):
     so that it can be used by the main greedyAgent() function.
 
     INPUT:
-        :param regionalRtAndActionList: Tuple, containing all of the Rt values for the current region, the action list for the current region and
+        :param regionalRtAndActionList: Tuple, containing all of the values for the current region, the action list for the current region and
                                                information for the Greedy Agent function.
 
     OUTPUT:
@@ -394,8 +412,8 @@ def evaluatePotentialActions(prevPoint, currPoint, potentialActionList):
     in achieving the current point's value.
 
     INPUTS:
-        :param prevPoint: Float, the Rt value of the previous point in the data
-        :param currPoint: Float, the Rt value of the current point in the data
+        :param prevPoint: Float, the value of the previous point in the data
+        :param currPoint: Float, the value of the current point in the data
         :param potentialActionList: List of floats, the various alterations that can be done to prevPoint
 
     OUTPUT:
@@ -410,11 +428,11 @@ def evaluatePotentialActions(prevPoint, currPoint, potentialActionList):
 
 def prepareCurrentActionResults(currRegion, currRtIndex, actionList, firstValue=False):
     """
-    From the action list, provide how close to the original Rt value the actions are able
+    From the action list, provide how close to the original value the actions are able
     to achieve.
 
     INPUT:
-        :param currRegion: List of floats, a list of the Rt values from the dataset
+        :param currRegion: List of floats, a list of the values from the dataset
         :param currRtIndex: Integer, where within currRegion the current point is
         :param actionList: List of floats, a list of the possible adjustments that can be made
         :param firstValue: Boolean, whether the current value is the first within the current region
@@ -434,44 +452,58 @@ def prepareCurrentActionResults(currRegion, currRtIndex, actionList, firstValue=
     
     return actionListResults
 
-def createGraph(origRt, agentRt, regionNo, agentType, dataset):
+def createGraph(origVal, agentVal, regionNo, agentType, dataset, startYear=None, currRegionNo=None):
     """
-    Create a line graph that provides a clean comparison between the original Rt,
+    Create a line graph that provides a clean comparison between the original,
     and the one produced from the current agent
 
     Code from Xiyui Fan, adjusted for the dataset and modified further for this application
 
     INPUT:
-        :param origRt: List of floats, the Rt values for the current region from the dataset
-        :param agentRt: List of floats, the Rt values produced by the agent when trying to mimic the Rt values.
+        :param origVal: List of floats, the values for the current region from the dataset
+        :param agentVal: List of floats, the values produced by the agent when trying to mimic the dataset values.
         :param regionNo: Integer, the current regional number within the dataset
         :param agentType: String, the agent used to obtain these results
         :param dataset: String, which dataset is currently being used
+        :param startYear: Integer, for financial dataset, what is the starting year for the range of data
     
     OUTPUT:
         returns nothing, but produces a line graph of the two Rt values plotted together for comparison
     """
     width = .4
-    m1_t = DataFrame({'Rt' : origRt, 'Agent Rt' : agentRt})
-    ax1 = m1_t[['Rt']].plot(figsize=(12,3))
-    ax2 = m1_t['Agent Rt'].plot(secondary_y=False, color='red', label='Agent Rt')
+
+    m1_t = DataFrame({'Original' : origVal, 'Agent' : agentVal})
+    ax1 = m1_t[['Original']].plot(figsize=(12,3))
+    ax2 = m1_t['Agent'].plot(secondary_y=False, color='red', label='Agent Rt')
 
     ax2.legend(loc='upper right')
 
-    plt.xlim([-width, len(m1_t['Agent Rt'])-width])
-
-    xticks = [int(len(origRt)/10)*k for k in range(10)]
+    plt.xlim([-width, len(m1_t['Agent'])-width])
+    xticks = [int(len(origVal)/10)*k for k in range(10)]
 
     ax1.set_xticks(xticks)
     ax1.set_xticklabels([str(x) for x in xticks])
-
     ax1.set_xlabel('Days')
-    ax1.set_ylabel('Rt')
-    
-    ax1.set_title(f"{REGIONS[regionNo+1]} - Comparison of Rt vs Agent Rt")
+
+    if dataset == "uk":
+        ax1.set_ylabel('Rt')
+        ax1.set_title(f"{REGIONS[regionNo + 1]} - Comparison of Original vs Agent Rt")
+    else:
+        ax1.set_ylabel('$ to £ Exchange rate')
+        ax1.set_title(f"{startYear + regionNo} - Comparison of Original vs Agent")
 
     plt.tight_layout()
-    plt.savefig(f"../../images/machine learning/rt/{dataset}/{regionNo+1} - {agentType}.png", dpi =600)
+
+    filename = f"../../images/machine learning/predictor/{dataset}/"
+
+    if dataset == "uk":
+        filename += f"{regionNo + 1}"
+    elif dataset == "fn":
+        filename += f"{startYear + regionNo}"
+    
+    filename +=f"- {agentType}.png"
+
+    plt.savefig(filename, dpi =600)
     plt.close()
 
 def getCumulativeDifference(element):
@@ -487,32 +519,32 @@ def getCumulativeDifference(element):
     """
     return element.cumulativeDifference
 
-def treeSearch(regionRt, potentialActions, isEvaluationAgent=False, originalAction=None, depthReduction=None):
+def treeSearch(regionVal, potentialActions, isEvaluationAgent=False, originalAction=None, depthReduction=None):
     """
     Performs a tree search out the MAX_DEPTH to select the best (according to the heuristic) action to take
 
     INPUTS:
-        :param regionRt: List of floats, the regional data that will be explored by the tree search
-        :param potentialActions: List of floats, containing floats to be used to alter the Rt value of the previous point
+        :param regionVal: List of floats, the regional data that will be explored by the tree search
+        :param potentialActions: List of floats, containing floats to be used to alter the value of the previous point
         :param isEvaluationAgent: Boolean, whether the current use of the function is for evaluating a previous run
         :param originalAction: Integer, the index of the original agent action within the potential action list
         :param depthReduction: Integer, the amount to reduce the depth by in order to stop at the goal index during evaluation
     
     OUTPUT:
-        returns a list of tuples, containing the Rt value and the index for the action that resulted in said Rt value
+        returns a list of tuples, containing the value and the index for the action that resulted in said value
     """
     agentRtValues = []
 
     #Iterate over the current region's data, using the current point as the root for the search
-    for currRootIndex in range(len(regionRt)):
+    for currRootIndex in range(len(regionVal)):
         toBeExploredNodes = []
         childNodes = []
         
         #Set up the inital point that we are finding the action for
         if currRootIndex == 0:
-            root = Node(regionRt[currRootIndex], 0, 0, regionRt[currRootIndex])
+            root = Node(regionVal[currRootIndex], 0, 0, regionVal[currRootIndex])
         else:
-            root = Node(regionRt[currRootIndex], 0, 0, currentNode.currVal)            
+            root = Node(regionVal[currRootIndex], 0, 0, currentNode.currVal)            
 
         root.isExpandedPoint = True
 
@@ -522,7 +554,7 @@ def treeSearch(regionRt, potentialActions, isEvaluationAgent=False, originalActi
                 continue
             action = potentialActions[actionIndex]
 
-            toBeExploredNodes.append(Node(regionRt[currRootIndex], action, actionIndex, root.currVal, root))
+            toBeExploredNodes.append(Node(regionVal[currRootIndex], action, actionIndex, root.currVal, root))
         
         currDepth = 1
         maxDepth = MAX_DEPTH
@@ -530,14 +562,14 @@ def treeSearch(regionRt, potentialActions, isEvaluationAgent=False, originalActi
             maxDepth = MAX_DEPTH - depthReduction
 
         #Explore to max depth or until end of the region
-        while maxDepth > currDepth and currRootIndex + currDepth <= len(regionRt) - 1:
+        while maxDepth > currDepth and currRootIndex + currDepth <= len(regionVal) - 1:
             
             while len(toBeExploredNodes) > 0:
                 currentNode = toBeExploredNodes.pop(0)
                 
                 for actionIndex in range(len(potentialActions)):
                     action = potentialActions[actionIndex]
-                    childNodes.append(Node(regionRt[currRootIndex + currDepth], action, actionIndex, currentNode.currVal, currentNode))
+                    childNodes.append(Node(regionVal[currRootIndex + currDepth], action, actionIndex, currentNode.currVal, currentNode))
             
             #Once all explored, prepare childNodes to be explored
             toBeExploredNodes, childNodes = childNodes, toBeExploredNodes
@@ -564,7 +596,7 @@ def mapTreeSearch(regionalRtAndActionList):
     so that it can be used by the main treeSearch() function.
 
     INPUT:
-        :param regionalRtAndActionList: Tuple, containing all of the Rt values for the current region, the action list for the current region and
+        :param regionalRtAndActionList: Tuple, containing all of the values for the current region, the action list for the current region and
                                                information for the tree function.
 
     OUTPUT:
@@ -587,14 +619,14 @@ def mapTreeSearch(regionalRtAndActionList):
 
         return regionEvaluationResults
     
-def runAgent(potentialActionLists, regionRt, dataset, agentType="greedy"):
+def runAgent(potentialActionLists, regionVal, dataset, agentType="greedy", startYear=None):
     """
     Given the actions lists that the agent can take for each region, have it try to match
     as closely as possible to the actual Rt as it can.
 
     INPUTS:
         :param potentialActionLists: List of lists, containing the potential alterations the agent can make for each region
-        :param regionRt: List of lists, containing the Rt values for each day within each region
+        :param regionVal: List of lists, containing the values for each day within each region
         :param dataset: String, which dataset is currently being used
         :param agentType: String, which type of agent will be use to try and mimic the Rt value
         
@@ -604,9 +636,9 @@ def runAgent(potentialActionLists, regionRt, dataset, agentType="greedy"):
     regionalRtAndActionList = []
     
     #Prepare data for map function
-    for currIndex in range(len(regionRt)):
+    for currIndex in range(len(regionVal)):
         currActionList = potentialActionLists[currIndex]
-        currRegionRt = regionRt[currIndex]
+        currRegionRt = regionVal[currIndex]
         
         agentInfo = [currRegionRt, currActionList]
         #Based upon what Agent is being used, store the relevant information for its use
@@ -631,18 +663,18 @@ def runAgent(potentialActionLists, regionRt, dataset, agentType="greedy"):
 
     for currIndex in range(len(agentResults)):
         agentRt = [currRt for currRt, _ in agentResults[currIndex]]
-        createGraph(regionRt[currIndex], agentRt, currIndex, agentType, dataset)
+        createGraph(regionVal[currIndex], agentRt, currIndex, agentType, dataset, startYear)
     
     return agentResults
 
-def runEvaluationAgent(potentialActionLists, regionRt, regionalAgentResults, agentType="greedy"):
+def runEvaluationAgent(potentialActionLists, regionVal, regionalAgentResults, agentType="greedy"):
     """
     Determine how effective the agent's attempt to mimic the Rt is through re-running the agent, but this time,
     removing the actions that it took from its decision making.
 
     INPUTS:
         :param potentialActionLists: List of lists, containing the potential alterations the agent can make for each region
-        :param regionRt: List of lists, containing the Rt values for each day within each region
+        :param regionVal: List of lists, containing the values for each day within each region
         :param regionalAgentResults: List of lists, containing all information relating to the actions of the original agent (see runAgent())
         :param agentType: String, which type of agent will be use to try and mimic the Rt value
     
@@ -668,7 +700,7 @@ def runEvaluationAgent(potentialActionLists, regionRt, regionalAgentResults, age
             
 
             #Gather the current groups data
-            currRegionSubset = regionRt[currRegionIndex][startIndex:goalIndex + 1]
+            currRegionSubset = regionVal[currRegionIndex][startIndex:goalIndex + 1]
 
             noIterations = range(len(currRegionSubset)-1)
             
@@ -723,7 +755,7 @@ def runEvaluationAgent(potentialActionLists, regionRt, regionalAgentResults, age
 
                 _, goalIndex = regionalIndexes[currRegion][currGroup]
                 
-                distanceFromGoal = regionRt[currRegion][goalIndex] - goalRt
+                distanceFromGoal = regionVal[currRegion][goalIndex] - goalRt
                 agentResults[currRegion][currGroup][currPoint] = (agentResults[currRegion][currGroup][currPoint], distanceFromGoal)
 
             agentResults[currRegion][currGroup] = (regionalIndexes[currRegion][currGroup], agentResults[currRegion][currGroup])
@@ -1149,8 +1181,7 @@ def testLSTM(trainingData, trainingAction, validData, validAction, lstmConfigura
 
 def determineAccuracy(model, testData, testAction, printTable=False):
     """
-    Using a trained LSTM model, determine its accuracy in predicting the goal data, 
-    but also get the accuracy for each group of the "Impactful Point?" field
+    Using a trained LSTM model, derive some statistics on how well it has performed.
 
     INPUTS:
         :param model: Sequential trained model, with LSTM layers
@@ -1319,12 +1350,12 @@ def rmse(actual, predicted):
     msle = MeanSquaredLogarithmicError()
     return backend.sqrt(msle(actual, predicted)) 
 
-def normaliseRt(regionalRt, amount):
+def normalise(regionalVal, amount):
     """
-    Iterate over the regional Rt values and normalise their values to reduce potentially extreme trends
+    Iterate over the regional values and normalise their values to reduce potentially extreme trends
 
     INPUTS:
-        :param regionalRt: 3D list of floats, contains each regions Rt values for each day
+        :param regionalVal: 3D list of floats, contains each regions Rt values for each day
         :param amount: Integer, the number of points to gather when averaging
 
     OUTPUT:
@@ -1333,7 +1364,7 @@ def normaliseRt(regionalRt, amount):
 
     halfOfAmountFloored = int((amount -1) / 2)
     normalisedRt = []
-    for currRegion in regionalRt:
+    for currRegion in regionalVal:
         currRegionNormalisedRt = []
 
         for currIndex in range(halfOfAmountFloored, len(currRegion) - halfOfAmountFloored):
@@ -1506,52 +1537,54 @@ def runBaggingRegressor(trainingData, trainingActions, testData, testActions):
 
 def main():
     windowSizes = [5, 7, 10]
-    dataset = "fn"
+    dataset = "uk"
+    startYear = 2010
+    endYear = 2015
 
-    #filepath = "../../data/core/uk/2. Rt/uk_Rt.csv"
-    filepath = "../../data/core/fn/raw/financial.csv"
-    regionRt = readFile(dataset, filepath)
+    filepath = "../../data/core/uk/2. Rt/uk_Rt.csv"
+    #filepath = "../../data/core/fn/raw/financial.csv"
+    regionValues = readFile(dataset, filepath, startYear, endYear)
 
-    #regionRt = generateSineData(30, 350)
+    #regionValues = generateSineData(30, 350)
 
-    regionRt = normaliseRt(regionRt, 3)
+    regionValues = normalise(regionValues, 3)
 
-    rtValueChange = getRtValueChange(regionRt)
+    valueChange = getValueChange(regionValues)
 
-    rtValueChange = convertRtValues(rtValueChange)
+    valueChange = convertValues(valueChange)
 
-    regionalPotentialActionLists = getPotentialActionLists(rtValueChange)
+    regionalPotentialActionLists = getPotentialActionLists(valueChange)
     
-    regionalAgentResultsTree = runAgent(regionalPotentialActionLists, regionRt, dataset, "tree")
-    regionalAgentResultsGreed = runAgent(regionalPotentialActionLists, regionRt, dataset)
+    regionalAgentResultsTree = runAgent(regionalPotentialActionLists, regionValues, dataset, "tree", startYear)
+    regionalAgentResultsGreed = runAgent(regionalPotentialActionLists, regionValues, dataset, "greedy", startYear)
 
     agentCumulativeDifferenceTree = 0
     agentCumulativeDifferenceGreedy = 0
 
-    for currRegionIndex in range(len(regionRt)):
-        for currPoint in range(len(regionRt[currRegionIndex])):
-            origRt = regionRt[currRegionIndex][currPoint]
-            agentRtTree, _ = regionalAgentResultsTree[currRegionIndex][currPoint]
-            agentRtGreedy, _ = regionalAgentResultsGreed[currRegionIndex][currPoint]
+    for currRegionIndex in range(len(regionValues)):
+        for currPoint in range(len(regionValues[currRegionIndex])):
+            origVal = regionValues[currRegionIndex][currPoint]
+            agentValTree, _ = regionalAgentResultsTree[currRegionIndex][currPoint]
+            agentValGreedy, _ = regionalAgentResultsGreed[currRegionIndex][currPoint]
 
-            agentCumulativeDifferenceTree += abs(origRt - agentRtTree)
-            agentCumulativeDifferenceGreedy += abs(origRt - agentRtGreedy)
+            agentCumulativeDifferenceTree += abs(origVal - agentValTree)
+            agentCumulativeDifferenceGreedy += abs(origVal - agentValGreedy)
 
-    print("Tree: ", agentCumulativeDifferenceTree / 12)
-    print("Greedy: ", agentCumulativeDifferenceGreedy / 12) 
+    print("Tree: ", agentCumulativeDifferenceTree / len(regionValues))
+    print("Greedy: ", agentCumulativeDifferenceGreedy / len(regionValues)) 
 
     print("----") 
 
-    regionalEvaluationGroupsGreed = runEvaluationAgent(regionalPotentialActionLists, regionRt, regionalAgentResultsGreed)
-    regionalGroupResultsGreed = evalutateAgentPerformance(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed)
+    regionalEvaluationGroupsGreed = runEvaluationAgent(regionalPotentialActionLists, regionValues, regionalAgentResultsGreed)
+    regionalGroupResultsGreed = evalutateAgentPerformance(regionValues, regionalAgentResultsGreed, regionalEvaluationGroupsGreed)
     
-    regionalEvaluationGroupsTree = runEvaluationAgent(regionalPotentialActionLists, regionRt, regionalAgentResultsTree, "tree")
-    regionalGroupResultsTree = evalutateAgentPerformance(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree)
+    regionalEvaluationGroupsTree = runEvaluationAgent(regionalPotentialActionLists, regionValues, regionalAgentResultsTree, "tree")
+    regionalGroupResultsTree = evalutateAgentPerformance(regionValues, regionalAgentResultsTree, regionalEvaluationGroupsTree)
 
     
     for curr in windowSizes:
-        filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree", dataset, curr)
-        filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy", dataset, curr)
+        filePathTree = saveResults(regionValues, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree", dataset, curr)
+        filePathGreed = saveResults(regionValues, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy", dataset, curr)
     """learningAndDecay = [(0.001, 0.1), (0.0001, 0.001), (0.0001, 0.0001), (0.0001, 1e-05), (0.0001, 1e-07)]
 
     potentialLayers = [(32, 32, 64, 128), (32, 32, 128, 32), (32, 32, 256, 64), (32, 64, 32, 32), (32, 128, 128, 32), (32, 256, 64, 32),
