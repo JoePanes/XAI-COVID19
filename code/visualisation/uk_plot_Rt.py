@@ -6,44 +6,44 @@ import csv
 from matplotlib import pyplot as plt
 import pandas as pd
 
-filePath = "../../data/core/uk/Rt/uk_Rt.csv"
+filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
 
 outputFilePath = "../../images/Rt/uk"
 
 REGIONS = {
-    1 : "East Midlands",
-    2 : "East of England",
-    3 : "London",
-    4 : "North East",
-    5 : "North West",
-    6 : "South East",
-    7 : "South West",
-    8 : "West Midlands",
-    9 : "Yorkshire and the Humber",
-    10 : "Northern Ireland",
-    11 : "Scotland",
-    12 : "Blaenau gwent",
-    13 : "Caerphilly",
-    14 : "Monmouthshire",
-    15 : "Newport",
-    16 : "Torfaen",
-    17 : "Conwy",
-    18 : "Denbighshire",
-    19 : "Flintshire",
-    20 : "Gwynedd",
-    21 : "Isle of Anglesey",
-    22 : "Wrexham",
-    23 : "Cardiff",
-    24 : "Vale of Glamorgan",
-    25 : "Bridgend",
-    26 : "Merthyr Tydfil",
-    27 :"Rhondda Cynon Taf",
-    28 : "Carmarthenshire",
-    29 :"Ceredigion",
-    30 : "Pembrokeshire",
-    31 : "Powys",
-    32 : "Neath Port Talbot",
-    33 : "Swansea",
+    0 : "East Midlands",
+    1 : "East of England",
+    2 : "London",
+    3 : "North East",
+    4 : "North West",
+    5 : "South East",
+    6 : "South West",
+    7 : "West Midlands",
+    8 : "Yorkshire and the Humber",
+    9 : "Northern Ireland",
+    10 : "Scotland",
+    11 : "Blaenau gwent",
+    12 : "Caerphilly",
+    13 : "Monmouthshire",
+    14 : "Newport",
+    15 : "Torfaen",
+    16 : "Conwy",
+    17 : "Denbighshire",
+    18 : "Flintshire",
+    19 : "Gwynedd",
+    20 : "Isle of Anglesey",
+    21 : "Wrexham",
+    22 : "Cardiff",
+    23 : "Vale of Glamorgan",
+    24 : "Bridgend",
+    25 : "Merthyr Tydfil",
+    26 :"Rhondda Cynon Taf",
+    27 : "Carmarthenshire",
+    28 :"Ceredigion",
+    29 : "Pembrokeshire",
+    30 : "Powys",
+    31 : "Neath Port Talbot",
+    32 : "Swansea",
 }
 
 def getRegionalIndexs(dataset):
@@ -96,7 +96,7 @@ for currRegion in range(len(splitList)):
     for currRow in splitList[currRegion]:
         
         regionalRts.append(float(currRow["Rt"]))
-        regionalNewCases.append(float(currRow["Case Change"]))
+        regionalNewCases.append(float(currRow["Cases"]))
 
     #Code from Xiyui Fan, adjusted for the dataset
     width = .4
@@ -118,10 +118,10 @@ for currRegion in range(len(splitList)):
     ax1.set_ylabel('Number of New Cases')
     ax2.set_ylabel('Rt', rotation=-90)
     
-    ax1.set_title(REGIONS[(33 - currRegion)])
+    ax1.set_title(REGIONS[currRegion])
 
     plt.tight_layout()
-    plt.savefig(f"{outputFilePath}/{33 - currRegion}.png")
+    plt.savefig(f"{outputFilePath}/{currRegion}.png")
 
 
 
