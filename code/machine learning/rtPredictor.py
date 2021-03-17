@@ -434,7 +434,7 @@ def prepareCurrentActionResults(currRegion, currRtIndex, actionList, firstValue=
     
     return actionListResults
 
-def createGraph(origRt, agentRt, regionNo, agentType):
+def createGraph(origRt, agentRt, regionNo, agentType, dataset):
     """
     Create a line graph that provides a clean comparison between the original Rt,
     and the one produced from the current agent
@@ -446,6 +446,7 @@ def createGraph(origRt, agentRt, regionNo, agentType):
         :param agentRt: List of floats, the Rt values produced by the agent when trying to mimic the Rt values.
         :param regionNo: Integer, the current regional number within the dataset
         :param agentType: String, the agent used to obtain these results
+        :param dataset: String, which dataset is currently being used
     
     OUTPUT:
         returns nothing, but produces a line graph of the two Rt values plotted together for comparison
@@ -470,7 +471,7 @@ def createGraph(origRt, agentRt, regionNo, agentType):
     ax1.set_title(f"{REGIONS[regionNo+1]} - Comparison of Rt vs Agent Rt")
 
     plt.tight_layout()
-    plt.savefig(f"../../images/Rt/machine learning/rt/{regionNo+1} - {agentType}.png", dpi =600)
+    plt.savefig(f"../../images/machine learning/rt/{dataset}/{regionNo+1} - {agentType}.png", dpi =600)
     plt.close()
 
 def getCumulativeDifference(element):
@@ -586,7 +587,7 @@ def mapTreeSearch(regionalRtAndActionList):
 
         return regionEvaluationResults
     
-def runAgent(potentialActionLists, regionRt, agentType="greedy"):
+def runAgent(potentialActionLists, regionRt, dataset, agentType="greedy"):
     """
     Given the actions lists that the agent can take for each region, have it try to match
     as closely as possible to the actual Rt as it can.
@@ -594,8 +595,9 @@ def runAgent(potentialActionLists, regionRt, agentType="greedy"):
     INPUTS:
         :param potentialActionLists: List of lists, containing the potential alterations the agent can make for each region
         :param regionRt: List of lists, containing the Rt values for each day within each region
+        :param dataset: String, which dataset is currently being used
         :param agentType: String, which type of agent will be use to try and mimic the Rt value
-    
+        
     OUTPUT:
         returns the results of running the agent on each region within the dataset
     """
@@ -629,7 +631,7 @@ def runAgent(potentialActionLists, regionRt, agentType="greedy"):
 
     for currIndex in range(len(agentResults)):
         agentRt = [currRt for currRt, _ in agentResults[currIndex]]
-        createGraph(regionRt[currIndex], agentRt, currIndex, agentType)
+        createGraph(regionRt[currIndex], agentRt, currIndex, agentType, dataset)
     
     return agentResults
 
@@ -1349,12 +1351,13 @@ def normaliseRt(regionalRt, amount):
 
     return normalisedRt
 
-def prepareDataRegressor(filepath):
+def prepareDataRegressor(filepath, dataset):
     """
     Prepare data for use with Regressor Models
 
     INPUTS:
         :param filepath: String, the location of the actions .csv
+        :param dataset: String, which dataset is currently being used
     
     OUTPUTS:
         returns four 2D Lists and two 2D Dataframes: 
@@ -1390,11 +1393,11 @@ def prepareDataRegressor(filepath):
 
     combined = deepcopy(coreData)
     combined["Action to Next Point"] = goalData
-    combined.to_csv(f"../../data/core/uk/predictor/tree_balanced.csv")
+    combined.to_csv(f"../../data/core/{dataset}/predictor/tree_balanced.csv")
     
     testingData = deepcopy(testCore)
     testingData["Action to Next Point"] = testGoal
-    testingData.to_csv(f"../../data/core/uk/predictor/tree_test_orig.csv")
+    testingData.to_csv(f"../../data/core/{dataset}/predictor/tree_test_orig.csv")
 
     coreData = coreData.to_numpy()
     goalData = goalData.to_numpy()
@@ -1519,8 +1522,8 @@ def main():
 
     regionalPotentialActionLists = getPotentialActionLists(rtValueChange)
     
-    regionalAgentResultsTree = runAgent(regionalPotentialActionLists, regionRt, "tree")
-    regionalAgentResultsGreed = runAgent(regionalPotentialActionLists, regionRt)
+    regionalAgentResultsTree = runAgent(regionalPotentialActionLists, regionRt, dataset, "tree")
+    regionalAgentResultsGreed = runAgent(regionalPotentialActionLists, regionRt, dataset)
 
     agentCumulativeDifferenceTree = 0
     agentCumulativeDifferenceGreedy = 0
@@ -1604,11 +1607,11 @@ def main():
         totalAccuracy = [[], [], [], [], []]
         totalAccuracyOrig = [[], [], [], [], []] 
 
-        regressorTrainingData, regressorTrainingActions, regressorTestData, regressorTestActions, origCore, origGoal = prepareDataRegressor(f"../../data/core/{dataset}/predictor/tree_{curr}.csv")
+        trainingData, trainingActions, testData, testActions, origCore, origGoal = prepareDataRegressor(f"../../data/core/{dataset}/predictor/tree_{curr}.csv", dataset)
                 
-        for curr in range(len(regressorTrainingData)):
+        for curr in range(len(trainingData)):
             
-            model, score, accuracy = runRegressors(regressorTrainingData[curr], regressorTrainingActions[curr], regressorTestData[curr], regressorTestActions[curr])
+            model, score, accuracy = runRegressors(trainingData[curr], trainingActions[curr], testData[curr], testActions[curr])
             
             for currIndex in range(len(accuracy)):
                 totalScore[currIndex].append(score[currIndex])

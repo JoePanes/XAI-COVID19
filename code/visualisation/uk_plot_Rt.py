@@ -8,7 +8,7 @@ import pandas as pd
 
 filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
 
-outputFilePath = "../../images/Rt/uk"
+outputFilePath = "../../images/rt/uk"
 
 REGIONS = {
     0 : "East Midlands",
