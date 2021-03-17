@@ -162,15 +162,19 @@ def readFile(dataset, filePath):
         currInsertionIndex = 0
         firstIteration = True
         prevRegionNo = None
+        dateColName = ""
         
         if dataset == "eu":
             regionalColName = "Country"
+        elif dataset == "fn":
+            regionalColName = None
+            compiledData.append([])
         else:
             regionalColName = "Regions"
 
         for row in myReader:
             #If a new region, start a new sublist
-            if prevRegionNo != row[regionalColName]:
+            if regionalColName != None and prevRegionNo != row[regionalColName]:
                 
                 if firstIteration:
                     firstIteration = False
@@ -181,8 +185,22 @@ def readFile(dataset, filePath):
 
             if dataset == "eu":
                 compiledData[currInsertionIndex].append(float(row["Rt"]))
-            else:
+            
+            elif dataset == "uk":
                 compiledData[currInsertionIndex].insert(0, float(row["Rt"]))
+
+            elif dataset == "fn":
+                if firstIteration:
+                    dateColName = list(row.keys())[0]
+                    firstIteration == False
+
+                #Only add dates within the desired years
+                if int(row[dateColName][-4:]) >= 2010 and int(row[dateColName][-4:]) <= 2011:
+                    compiledData[currInsertionIndex].append(float(row["US $ TO UK £ (WMR) - EXCHANGE RATE"]))
+            else:
+                print("The dataset that you are trying to use has not been implemented, or, there is an error in how it has been typed.")
+                print("Please check the code to determine the course of correction to be taken, thank you =)")
+                sys.exit()
 
     return compiledData
 
@@ -786,7 +804,7 @@ def evalutateAgentPerformance(regionRt, regionalAgentResults, regionalEvaluation
     
     return regionalGroupResults
 
-def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regionalGroupResults, regionalActionLists, agentType, useDifferentWindowSize=None):
+def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regionalGroupResults, regionalActionLists, agentType, dataset, useDifferentWindowSize=None):
     """
     Take in all of the results from the two runs of the Agent and write the desired parts to a 
     .csv file for further use elsewhere.
@@ -798,19 +816,24 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
         :param regionalGroupResults: List of tuples, the result of further comparison of the previous variables in order to determine the most impactful points
         :param regionalActionLists: List of lists, the potential actions that could be taken by the agent for each of the regions
         :param agentType: String, the name of the agent currently being used
+        :param dataset: String, which dataset is currently being used 
         :param useDifferentWindowSize: Integer, if given to the function, it will use that value over the value of WINDOW_SIZE
 
     OUTPUT:
         returns the filepath for the newly created .csv containing the formatted data
     """
     windowSize = WINDOW_SIZE
-    filePath = f"../../data/core/uk/predictor/{agentType}.csv"
+    filePath = f"../../data/core/{dataset}/predictor/{agentType}.csv"
 
     if type(useDifferentWindowSize) == int:
         windowSize = useDifferentWindowSize
-        filePath = f"../../data/core/uk/predictor/{agentType}_{useDifferentWindowSize}.csv"
+        filePath = f"../../data/core/{dataset}/predictor/{agentType}_{useDifferentWindowSize}.csv"
 
-    labels = ["Region No", "Group No"]
+    labels = []
+
+    labels.append("Region No")    
+
+    labels.append("Group No")
 
     outputList = []
 
@@ -1073,7 +1096,8 @@ def runLSTM(trainingData, trainingAction, validData, validAction):
 
 def testLSTM(trainingData, trainingAction, validData, validAction, lstmConfiguration):
     """
-    Runs a LSTM of the specified configuration, to get the results.
+    Runs a LSTM of the specified configuration. Requires altering of the code in the desired parts for
+    effects to take place.
 
     INPUTS:
         :param trainingData: 3D Numpy Array, contains the feature scaled data
@@ -1333,7 +1357,11 @@ def prepareDataRegressor(filepath):
         :param filepath: String, the location of the actions .csv
     
     OUTPUTS:
-        returns four 2D Dataframes, two each for the training and test set containing data (series of actions) and the label that needs to be predicted (next action)
+        returns four 2D Lists and two 2D Dataframes: 
+                Lists, two each for the training and test set containing data 
+                (series of actions) and the label that needs to be predicted (next action).
+                Dataframe, a portion of the original dataset that has been split off to be used for testing,
+                ensuring that the model has not seen this portion.
     """
     compiledData = read_csv(filepath)
 
@@ -1342,12 +1370,9 @@ def prepareDataRegressor(filepath):
     coreData = compiledData.drop(["Region No", "Group No", "Action to Next Point"], axis=1)
     goalData = compiledData["Action to Next Point"]
 
-    kFold = StratifiedKFold(n_splits=10, shuffle=True, random_state=10)
+    kFold = StratifiedKFold(n_splits=5, shuffle=True, random_state=10)
     
-    origCore = deepcopy(coreData)
-    origGoal = deepcopy(goalData)
-
-    coreData, testCore, goalData, testGoal = train_test_split(origCore, origGoal, test_size=0.2, random_state=10, stratify=origGoal)
+    coreData, testCore, goalData, testGoal = train_test_split(coreData, goalData, test_size=0.2, random_state=10, stratify=goalData)
     
     ros = RandomOverSampler()
     #rus = RandomUnderSampler()
@@ -1358,17 +1383,18 @@ def prepareDataRegressor(filepath):
     #oss = OneSidedSelection(n_neighbors=4, n_seeds_S=300)
     #ncr = NeighbourhoodCleaningRule(n_neighbors=7, kind_sel="mode", threshold_cleaning=0.5)
     #nm = NearMiss(version=3, n_neighbors=7, n_neighbors_ver3=7)
-    #smote = SMOTE(k_neighbors=7)
+    #smote = SMOTE()
 
     coreData, goalData = ros.fit_resample(coreData, goalData)
-    #coreData, goalData = ncr.fit_resample(coreData, goalData)
+    #coreData, goalData = rus.fit_resample(coreData, goalData)
 
     combined = deepcopy(coreData)
     combined["Action to Next Point"] = goalData
     combined.to_csv(f"../../data/core/uk/predictor/tree_balanced.csv")
     
-    testCore["Action to Next Point"] = testGoal
-    testCore.to_csv(f"../../data/core/uk/predictor/tree_test_orig.csv")
+    testingData = deepcopy(testCore)
+    testingData["Action to Next Point"] = testGoal
+    testingData.to_csv(f"../../data/core/uk/predictor/tree_test_orig.csv")
 
     coreData = coreData.to_numpy()
     goalData = goalData.to_numpy()
@@ -1377,15 +1403,15 @@ def prepareDataRegressor(filepath):
     
     split = kFold.split(coreData, goalData)
     trainingCore, trainingGoal = [], []
-    testCore, testGoal = [], []
+    testingCore, testingGoal = [], []
 
     for currTraining, currTest in split:
         trainingCore.append(coreData[currTraining])
         trainingGoal.append(goalData[currTraining])
-        testCore.append(coreData[currTest])
-        testGoal.append(goalData[currTest])
+        testingCore.append(coreData[currTest])
+        testingGoal.append(goalData[currTest])
 
-    return trainingCore, trainingGoal, testCore, testGoal, origCore, origGoal
+    return trainingCore, trainingGoal, testingCore, testingGoal, testCore,  testGoal
 
 def runRegressors(trainingData, trainingActions, testData, testActions):
     """
@@ -1462,12 +1488,11 @@ def runBaggingRegressor(trainingData, trainingActions, testData, testActions):
         returns the trained model, the score for the model's predictions, the accuracy of the model's predictions and the confusion matrix
     """
     regressorBR = BaggingRegressor(bootstrap=True, n_estimators=15)
-
     regressorBR.fit(trainingData, trainingActions)
+
     score = round(regressorBR.score(testData, testActions), 2)
 
     predictionsBR = regressorBR.predict(testData)
-
     predictionsBR = np.rint(predictionsBR)
 
     accuracy = round(accuracy_score(testActions, predictionsBR), 2)
@@ -1477,16 +1502,16 @@ def runBaggingRegressor(trainingData, trainingActions, testData, testActions):
     return regressorBR, score, accuracy, confuse 
 
 def main():
-    windowSizes = [20, 22, 25]
-    
-    """
-    filePath = "../../data/core/uk/2. Rt/uk_Rt.csv"
+    windowSizes = [5, 7, 10]
+    dataset = "fn"
 
-    regionRt = readFile("uk", filePath)
-
-    regionRt = normaliseRt(regionRt, 3)
+    #filepath = "../../data/core/uk/2. Rt/uk_Rt.csv"
+    filepath = "../../data/core/fn/raw/financial.csv"
+    regionRt = readFile(dataset, filepath)
 
     #regionRt = generateSineData(30, 350)
+
+    regionRt = normaliseRt(regionRt, 3)
 
     rtValueChange = getRtValueChange(regionRt)
 
@@ -1522,10 +1547,9 @@ def main():
 
     
     for curr in windowSizes:
-        filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree", curr)
-        filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy", curr)
-    """
-    learningAndDecay = [(0.001, 0.1), (0.0001, 0.001), (0.0001, 0.0001), (0.0001, 1e-05), (0.0001, 1e-07)]
+        filePathTree = saveResults(regionRt, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree", dataset, curr)
+        filePathGreed = saveResults(regionRt, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy", dataset, curr)
+    """learningAndDecay = [(0.001, 0.1), (0.0001, 0.001), (0.0001, 0.0001), (0.0001, 1e-05), (0.0001, 1e-07)]
 
     potentialLayers = [(32, 32, 64, 128), (32, 32, 128, 32), (32, 32, 256, 64), (32, 64, 32, 32), (32, 128, 128, 32), (32, 256, 64, 32),
                        (32, 256, 128, 64), (32, 256, 128, 128), (64, 32, 32, 64), (64, 32, 64, 128), (64, 32,64,256), (64, 32, 128, 64),
@@ -1550,9 +1574,9 @@ def main():
     #layers = list(product(rate, repeat=2))
     
 
-    """for currLr in learningAndDecay:
+    for currLr in learningAndDecay:
         for currLay in potentialLayers:
-            layers.append(tuple(list(currLr[::]) + list(currLay[::])))"""    
+            layers.append(tuple(list(currLr[::]) + list(currLay[::]))) 
 
     currRegionResultsOverall = []
     alreadyRun = {}
@@ -1567,19 +1591,20 @@ def main():
     #for curr in layers:
     history = []
     
-    """if str(curr) in alreadyRun:
-        continue"""
+    if str(curr) in alreadyRun:
+        continue
     #print(curr)
 
     #print(curr)
     groupOverallAccuracy = 0
+    """
     for curr in windowSizes:
         print(f"-----{curr}-----")
         totalScore = [[],[], [], [], []]
         totalAccuracy = [[], [], [], [], []]
         totalAccuracyOrig = [[], [], [], [], []] 
 
-        regressorTrainingData, regressorTrainingActions, regressorTestData, regressorTestActions, origCore, origGoal = prepareDataRegressor(f"../../data/core/uk/predictor/tree_{curr}.csv")
+        regressorTrainingData, regressorTrainingActions, regressorTestData, regressorTestActions, origCore, origGoal = prepareDataRegressor(f"../../data/core/{dataset}/predictor/tree_{curr}.csv")
                 
         for curr in range(len(regressorTrainingData)):
             
