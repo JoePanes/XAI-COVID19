@@ -500,6 +500,8 @@ def createGraph(origVal, agentVal, regionNo, agentType, dataset, startYear=None,
         filename += f"{regionNo + 1}"
     elif dataset == "fn":
         filename += f"{startYear + regionNo}"
+    else:
+        filename += f"{regionNo + 1}"
     
     filename +=f"- {agentType}.png"
 
@@ -893,9 +895,10 @@ def saveResults(regionRt, regionalAgentResults, regionalEvaluationResults, regio
 
                 _, action = regionalAgentResults[currRegionIndex][currPoint+currIndex+1]
 
+                
                 if action > QUANTILE_NO:
                     action = QUANTILE_NO - action
-
+                
                 currRow[f"Action to Next Point"] = action
             except:
                 #For groups at the end of the regional data, simply ignore them
@@ -938,42 +941,42 @@ def writeFile(filePath, outputList, labels=None):
         for row in outputList:
             myWriter.writerow(row)
 
-def prepareData(filePath, regionNo=None):
+def prepareDataLSTM(filePath, dataset, regionNo=None):
     """
     Read in a .csv file, then prepare the data for use with Long-Short-Term Memory
 
     INPUT:
         :param filePath: String, the location of the .csv file to be used 
+        :param dataset: String, what dataset is currently being used
         :param regionNo: Integer, the specific regional data to be used
 
     OUTPUT:
-        returns four separate numpy arrays, these are the training set, test set, and their corresponding most impactful.
+        returns six separate numpy arrays, these are the training set, test set, and the validation set.
     """
     compiledData = read_csv(filePath)
 
-    if regionNo == None:
-
-        maxGroupNo = findGroupNoCutoff(compiledData)
-
-        #Remove Group Nos that don't exist in all regions
-        rowsToDrop = []
-        for index, row in compiledData.iterrows():
-            if int(row["Group No"]) > maxGroupNo:
-                rowsToDrop.append(index)
-
-    elif regionNo != None and int(regionNo) in REGIONS:
+    if regionNo != None and int(regionNo) in REGIONS:
         currRegion = compiledData["Region No"] == regionNo
 
         compiledData = compiledData[currRegion]
 
-    nextActionLabels = []
+    columnsToDrop = ["Action to Next Point"]
 
-    coreData = compiledData.drop(["Region No", "Group No", "Action to Next Point"], axis=1)
+    if dataset == "uk":
+        columnsToDrop += ["Region No", "Group No"]
+    coreData = compiledData.drop(columnsToDrop, axis=1)
     goalData = compiledData["Action to Next Point"]
-    #Split the grouped data
-    trainingCore, testCore, trainingGoal, testGoal = train_test_split(coreData, goalData, test_size=0.2, random_state=10)
 
-    testCore, validCore, testGoal, validGoal = train_test_split(testCore, testGoal, test_size=0.5, random_state=10)
+    smote = SMOTE(k_neighbors=7)
+    rus = RandomUnderSampler()
+    #oss = OneSidedSelection()
+
+    #Split the grouped data
+    trainingCore, testCore, trainingGoal, testGoal = train_test_split(coreData, goalData, test_size=0.2, random_state=10, stratify=goalData)
+    
+    #trainingCore, trainingGoal = smote.fit_resample(trainingCore, trainingGoal)
+    #trainingCore, trainingGoal = rus.fit_resample(trainingCore, trainingGoal)
+    testCore, validCore, testGoal, validGoal = train_test_split(testCore, testGoal, test_size=0.5, random_state=10, stratify=testGoal)
 
 
     #Get ready to perform feature scaling
@@ -992,6 +995,65 @@ def prepareData(filePath, regionNo=None):
 
     return trainingCore, trainingGoal.to_numpy(), testCore, testGoal.to_numpy(), validCore, validGoal
 
+def prepareDataUnalteredLSTM(regionValues, windowSize):
+    """
+    Read in a .csv file of the original values, then prepare the data for use with Long-Short-Term Memory
+
+    Not currently really setup to work yet, my plan was:
+
+    Round the data to 1 decimal place
+    Format the goal data so that there are no negatives, or see if it will work with RMSE/MSE
+    See what the results are and tinker from there
+
+    INPUT:
+        :param regionValues: List of lists, containing numerical values for each day 
+        :param windowSize: Integer, how many days to put together 
+
+    OUTPUT:
+        returns six separate numpy arrays, these are the training set, test set, and the validation set.
+    """
+    windowedData = []
+
+    for currGroup in regionValues:
+        for currStart in range(len(currGroup)-(windowSize)):
+            
+            currRow = {}
+            for currIndex in range(windowSize):
+                currRow[f"Action {currIndex +1}"] = currGroup[currStart + currIndex]
+
+            currRow["Action to Next Point"] = currGroup[currStart + currIndex +1]
+            windowedData.append(currRow)
+
+    windowedDataframe = DataFrame(windowedData)
+
+    #windowedDataframe.round(1)
+    
+    coreData = windowedDataframe.drop(["Action to Next Point"], axis=1)
+    goalData = windowedDataframe["Action to Next Point"]
+
+    print(goalData)
+    #Split the grouped data
+    trainingCore, testCore, trainingGoal, testGoal = train_test_split(coreData, goalData, test_size=0.2, random_state=10)
+
+    testCore, validCore, testGoal, validGoal = train_test_split(testCore, testGoal, test_size=0.5, random_state=10)
+
+
+    #Get ready to perform feature scaling
+    scaler = MinMaxScaler()
+
+    trainingCore = scaler.fit_transform(trainingCore)
+    testCore = scaler.transform(testCore)
+    validCore = scaler.transform(validCore)
+
+    #Convert back into 3D
+    trainingCore = np.reshape(trainingCore, (trainingCore.shape[0], 1, trainingCore.shape[1]))
+    
+    testCore = np.reshape(testCore, (testCore.shape[0], 1, testCore.shape[1]))
+
+    validCore = np.reshape(validCore, (validCore.shape[0], 1, validCore.shape[1]))
+
+    return trainingCore, trainingGoal.to_numpy(), testCore, testGoal.to_numpy(), validCore, validGoal
+  
 def findGroupNoCutoff(dataframe):
     """
     From the dataframe:
@@ -1095,27 +1157,27 @@ def runLSTM(trainingData, trainingAction, validData, validAction):
     """
 
     model = Sequential()
-    model.add(LSTM(64, activation="sigmoid", return_sequences=True))
+    model.add(LSTM(64, activation="swish", return_sequences=True))
     model.add(Dropout(0.2))
     model.add(BatchNormalization())
     
-    model.add(LSTM(128, activation="sigmoid", return_sequences=True))
+    model.add(LSTM(128, activation="swish", return_sequences=True))
     model.add(Dropout(0.2))
     model.add(BatchNormalization())
 
-    model.add(LSTM(256, activation="swish", return_sequences=True))
+    model.add(LSTM(256, activation="swish"))
     model.add(Dropout(0.2))
     model.add(BatchNormalization())
 
-    model.add(Dense(1024, activation="swish"))
+    model.add(Dense(64, activation="swish"))
 
-    model.add(Dense((QUANTILE_NO*2)+1, activation="softmax"))
+    model.add(Dense(128, activation="softmax"))
      
     opt = Adam(lr=0.0005, decay=0.001)
 
     model.compile(loss="sparse_categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
-    history = model.fit(trainingData, trainingAction, validation_data=(validData, validAction), epochs=256, batch_size=200)
+    history = model.fit(trainingData, trainingAction, validation_data=(validData, validAction), epochs=256, batch_size=300)
 
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
@@ -1123,12 +1185,12 @@ def runLSTM(trainingData, trainingAction, validData, validAction):
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper right')
-    plt.savefig(f"../../images/Rt/machine learning/rt/{datetime.now().strftime('%d_%m_%Y_%H_%M_%S_%f')}.png")
+    plt.savefig(f"../../images/machine learning/predictor/{datetime.now().strftime('%d_%m_%Y_%H_%M_%S_%f')}.png")
     plt.close()
 
     return model
 
-def testLSTM(trainingData, trainingAction, validData, validAction, lstmConfiguration):
+def testLSTM(trainingData, trainingAction, validData, validAction, dataset, lstmConfiguration):
     """
     Runs a LSTM of the specified configuration. Requires altering of the code in the desired parts for
     effects to take place.
@@ -1138,35 +1200,38 @@ def testLSTM(trainingData, trainingAction, validData, validAction, lstmConfigura
         :param trainingAction: 3D Numpy Array, contains the corresponding actions taken for the training data
         :param validData: 3D Numpy Array, contains the feature scaled data
         :param validAction: 3D Numpy Array, contains the corresponding actions taken for the training data
+        :param dataset: String, which dataset is currently being used
         :param lstmConfiguration: Iterable (list or tuple) of numerical values, where each position contains the desired value for a component within the LSTM.
 
     OUTPUT:
         returns a trained Sequential model, that includes LSTM layers
     """
-    learningRate = 0.0001
-    epochs = 120
-    decay = 1e-5
+    learningRate = 0.0005
+    epochs = 40
+    decay = 1e-6
     model = Sequential()
 
-    model.add(LSTM(256, activation="swish", return_sequences=True))
-    model.add(Dropout(0.2))
+    model.add(LSTM(32, activation="swish", return_sequences=True, dropout=0.2))
 
-    model.add(LSTM(64, activation="swish", return_sequences=True))
-    model.add(Dropout(0.2))
+    model.add(LSTM(64, activation="swish", return_sequences=True, dropout=0.2))
 
-    model.add(LSTM(64, activation="swish", return_sequences=True))
-    model.add(Dropout(0.2))
+    model.add(LSTM(128, activation="swish", return_sequences=True, dropout=0.2))
 
-    model.add(Dense(128, activation="swish"))
-    model.add(Dropout(0.1))
+    model.add(LSTM(256, activation="swish", return_sequences=True, dropout=0.2))
+
+    model.add(LSTM(128, activation="swish", return_sequences=True, dropout=0.2))
+
+    model.add(LSTM(64, activation="swish", dropout=0.4))    
+
+    model.add(Dense(32, activation="swish"))
 
     #output layer
     model.add(Dense((QUANTILE_NO*2)+1))
 
-    opt = Adam(lr=learningRate, decay=decay, beta_1=0.4)
-    model.compile(loss="mean_squared_error", optimizer=opt, metrics=[rmse, "accuracy"])
+    opt = Adam(lr=learningRate, decay=decay, beta_1=0.5)
+    model.compile(loss="sparse_categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
-    history = model.fit(trainingData, trainingAction, validation_data=(validData, validAction), epochs=epochs, batch_size=256)
+    history = model.fit(trainingData, trainingAction, epochs=epochs, validation_data=(validData, validAction), batch_size=128)
 
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
@@ -1174,7 +1239,7 @@ def testLSTM(trainingData, trainingAction, validData, validAction, lstmConfigura
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper right')
-    plt.savefig(f"../../images/Rt/machine learning/rt/{lstmConfiguration}---{datetime.now().strftime('%d_%m_%Y_%H_%M_%S')}.png")
+    plt.savefig(f"../../images/machine learning/predictor/{dataset}/{lstmConfiguration}---{datetime.now().strftime('%d_%m_%Y_%H_%M_%S')}.png")
     plt.close()
 
     return model, history
@@ -1200,7 +1265,7 @@ def determineAccuracy(model, testData, testAction, printTable=False):
     predictionResults = []
     for currIndex in range(len(testData)):
         currentTestData = testData[currIndex]
-        #currentTestData = np.reshape(currentTestData, (1, currentTestData.shape[0], currentTestData.shape[1]))
+        currentTestData = np.reshape(currentTestData, (1, currentTestData.shape[0], currentTestData.shape[1]))
         
         prediction = model.predict(currentTestData)
         
@@ -1242,11 +1307,8 @@ def determineAccuracy(model, testData, testAction, printTable=False):
         print()
         title = "-----------------Result------------------"
         headers = "|Action Index|  "
-
         #Adjust padding dependending upon size of data
-
         headers += "Results  "
-        
         headers += "|   Percentage   | FP | FN |"
         print(title)
         print(headers)
@@ -1316,7 +1378,8 @@ def generateSineData(noRegions, length):
 
     plt.plot(amplitude)
     plt.title('Sine Wave')
-    plt.savefig(f"../../images/Rt/machine learning/rt/Sine-{datetime.now().strftime('%d_%m_%Y_%H_%M_%S_%f')}.png")
+    plt.savefig(f"../../images/machine learning/predictor/sn/{datetime.now().strftime('%d_%m_%Y_%H_%M_%S_%f')}.png")
+    plt.close()
     
     #Break up the Sine data into equal chunks, to mimic the regional nature of the original data
     currRegionLength = 0
@@ -1406,7 +1469,7 @@ def prepareDataRegressor(filepath, dataset):
 
     kFold = StratifiedKFold(n_splits=5, shuffle=True, random_state=10)
     
-    coreData, testCore, goalData, testGoal = train_test_split(coreData, goalData, test_size=0.2, random_state=10, stratify=goalData)
+    coreData, testCoreUnaltered, goalData, testGoalUnaltered = train_test_split(coreData, goalData, test_size=0.2, random_state=10, stratify=goalData)
     
     ros = RandomOverSampler()
     #rus = RandomUnderSampler()
@@ -1419,15 +1482,15 @@ def prepareDataRegressor(filepath, dataset):
     #nm = NearMiss(version=3, n_neighbors=7, n_neighbors_ver3=7)
     #smote = SMOTE()
 
-    coreData, goalData = ros.fit_resample(coreData, goalData)
+    #coreData, goalData = ros.fit_resample(coreData, goalData)
     #coreData, goalData = rus.fit_resample(coreData, goalData)
 
     combined = deepcopy(coreData)
     combined["Action to Next Point"] = goalData
     combined.to_csv(f"../../data/core/{dataset}/predictor/tree_balanced.csv")
     
-    testingData = deepcopy(testCore)
-    testingData["Action to Next Point"] = testGoal
+    testingData = deepcopy(testCoreUnaltered)
+    testingData["Action to Next Point"] = testGoalUnaltered
     testingData.to_csv(f"../../data/core/{dataset}/predictor/tree_test_orig.csv")
 
     coreData = coreData.to_numpy()
@@ -1445,7 +1508,7 @@ def prepareDataRegressor(filepath, dataset):
         testingCore.append(coreData[currTest])
         testingGoal.append(goalData[currTest])
 
-    return trainingCore, trainingGoal, testingCore, testingGoal, testCore,  testGoal
+    return trainingCore, trainingGoal, testingCore, testingGoal, testCoreUnaltered,  testGoalUnaltered
 
 def runRegressors(trainingData, trainingActions, testData, testActions):
     """
@@ -1537,15 +1600,16 @@ def runBaggingRegressor(trainingData, trainingActions, testData, testActions):
 
 def main():
     windowSizes = [5, 7, 10]
-    dataset = "uk"
-    startYear = 2010
-    endYear = 2015
+    dataset = "fn"
+    
+    startYear = 1984
+    endYear = 2021
 
-    filepath = "../../data/core/uk/2. Rt/uk_Rt.csv"
-    #filepath = "../../data/core/fn/raw/financial.csv"
+    #filepath = "../../data/core/uk/2. Rt/uk_Rt.csv"
+    filepath = "../../data/core/fn/raw/financial.csv"
     regionValues = readFile(dataset, filepath, startYear, endYear)
 
-    #regionValues = generateSineData(30, 350)
+    #regionValues = generateSineData(12, 300)
 
     regionValues = normalise(regionValues, 3)
 
@@ -1585,55 +1649,56 @@ def main():
     for curr in windowSizes:
         filePathTree = saveResults(regionValues, regionalAgentResultsTree, regionalEvaluationGroupsTree, regionalGroupResultsTree, regionalPotentialActionLists, "tree", dataset, curr)
         filePathGreed = saveResults(regionValues, regionalAgentResultsGreed, regionalEvaluationGroupsGreed, regionalGroupResultsGreed, regionalPotentialActionLists, "greedy", dataset, curr)
-    """learningAndDecay = [(0.001, 0.1), (0.0001, 0.001), (0.0001, 0.0001), (0.0001, 1e-05), (0.0001, 1e-07)]
-
-    potentialLayers = [(32, 32, 64, 128), (32, 32, 128, 32), (32, 32, 256, 64), (32, 64, 32, 32), (32, 128, 128, 32), (32, 256, 64, 32),
-                       (32, 256, 128, 64), (32, 256, 128, 128), (64, 32, 32, 64), (64, 32, 64, 128), (64, 32,64,256), (64, 32, 128, 64),
-                       (64, 32, 256, 32), (64, 32, 256, 128), (64, 128, 32, 128), (64, 128, 32, 256), (64, 128, 64, 128), (64, 128, 128, 32),
-                       (64, 128, 128, 64), (64, 128, 128, 256), (64, 256, 32, 32),(64, 256, 32, 64), (64, 256, 64, 32),(128, 32, 32, 64),
-                       (128, 32, 32, 256), (128, 32, 64, 64), (128, 32, 128, 64), (128, 64, 32, 128), (128, 64, 32, 256), (128, 64, 64, 256),
-                       (128, 64, 256, 32), (128, 128, 32, 256), (128, 128, 64, 64), (128, 128, 128, 32), (256, 32, 32, 64), (256, 32, 32, 128),
-                       (256, 32, 64, 64), (256, 32, 64, 256), (256,32,128,64), (256, 32, 256, 32), (256, 64, 32, 64), (256, 64, 32, 128),
-                       (256, 64, 32, 256), (256, 64, 64, 32), (256, 64, 64, 128), (256, 64, 128, 128), (256, 64, 256, 128), (256, 128, 32, 256),
-                       (256, 128, 64, 32), (256, 128, 64, 64), (256, 128, 128, 128), (128, 128, 256, 256), (256, 128, 256, 32)]
-    
-    rate = [0.001, 0.0001, 0.00001, 0.000001, 0.0000001]
-    dropout = [0.2, 0.4, 0.6, 0.8, 1]
-    neurons = [32, 64, 128]
-    filePath = "../../data/core/uk/predictor/boop.csv"
+   
+    """
+    LSTM
+    """
+    """
+    history = []
+    groupOverallAccuracy = 0
     noIterations = 10
-    regionStartNo = 1
-    regionEndNo = 2
-    firstRun = True
-    layers = ["boop"]
-    #layers = windowSizes
-    #layers = list(product(rate, repeat=2))
+    for _ in range(noIterations):
+        #trainingData, trainingAction, testData, testAction, validData, validAction = prepareDataUnalteredLSTM(regionValues, 7)
+        trainingData, trainingAction, testData, testAction, validData, validAction = prepareDataLSTM(f"../../data/core/{dataset}/predictor/tree_7.csv", dataset)
+        model, currHistory = testLSTM(trainingData, trainingAction, validData, validAction, dataset, "boop")
+        
+        history.append(currHistory)
+        resultsAccuracy, overallAccuracy = determineAccuracy(model, testData, testAction, True)
+
+        groupOverallAccuracy += round(float(overallAccuracy), 2)
+
+    print(resultsAccuracy, " | ", groupOverallAccuracy/noIterations)
     
+    for currHistory in history:
+        plt.plot(currHistory.history['loss'])
+    plt.title('Model Training')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    #plt.legend(['validation'], loc='upper right')
+    plt.savefig(f"../../images/machine learning/predictor/{dataset}/{curr}-Training-{datetime.now().strftime('%d_%m_%Y_%H_%M_%S')}.png")
+    plt.close()
 
-    for currLr in learningAndDecay:
-        for currLay in potentialLayers:
-            layers.append(tuple(list(currLr[::]) + list(currLay[::]))) 
+    for currHistory in history:
+        plt.plot(currHistory.history['val_loss'])
+    plt.title('Model Validation')
+    plt.ylabel('val_loss')
+    plt.xlabel('epoch')
+    #plt.legend(['validation'], loc='upper right')
+    plt.savefig(f"../../images/machine learning/predictor/{dataset}/{curr}-Validation-{datetime.now().strftime('%d_%m_%Y_%H_%M_%S')}.png")
+    plt.close()
+    existingResults = []
 
-    currRegionResultsOverall = []
-    alreadyRun = {}
     if firstRun != True:
         with open(filePath, "r") as dataFile:
             myReader = csv.DictReader(dataFile)
 
             for row in myReader:
-                alreadyRun[str(row["Window Size"])] = "yep"
-    
-    print(len(layers))
-    #for curr in layers:
-    history = []
-    
-    if str(curr) in alreadyRun:
-        continue
-    #print(curr)
-
-    #print(curr)
-    groupOverallAccuracy = 0
+                existingResults.append(row)
     """
+    """
+    Regressors
+    """
+
     for curr in windowSizes:
         print(f"-----{curr}-----")
         totalScore = [[],[], [], [], []]
@@ -1659,10 +1724,14 @@ def main():
                 currAccuracy = round(accuracy_score(origGoal, predictions), 2)
                 print("Current Orig Data Accuracy: ", currAccuracy)
                 totalAccuracyOrig[curr].append(currAccuracy)
-                #confuse = confusion_matrix(origGoal, np.array(predictions).astype(int))
+                confuse = confusion_matrix(origGoal, np.array(predictions).astype(int))
+                
+                #Which model to print the confuse for
+                if curr == 2:
+                    print(confuse)
                 
             
-        print("Entire Dataset accuracy:")
+        print("Unaltered Test Data accuracy:")
         for curr in totalAccuracyOrig:
             print(round(mean(curr), 2))
 
@@ -1670,45 +1739,6 @@ def main():
         for currIndex in range(len(totalAccuracy)):
             print(round(mean(totalScore[currIndex]), 2), " | ", round(mean(totalAccuracy[currIndex]), 2))
         print("===========")
-        """model, currHistory = testLSTM(trainingData, trainingAction, validData, validAction, curr)
-        
-        history.append(currHistory)
-        resultsAccuracy, overallAccuracy = determineAccuracy(model, testData, testAction, True)
-
-        groupOverallAccuracy += round(float(overallAccuracy), 2)"""
-
-    #print(resultsAccuracy, " | ", groupOverallAccuracy/noIterations)
-    
-    """for currHistory in history:
-        plt.plot(currHistory.history['loss'])
-    plt.title('Model Training')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    #plt.legend(['validation'], loc='upper right')
-    plt.savefig(f"../../images/Rt/machine learning/rt/{curr}-Training-{datetime.now().strftime('%d_%m_%Y_%H_%M_%S')}.png")
-    plt.close()
-
-    for currHistory in history:
-        plt.plot(currHistory.history['val_loss'])
-    plt.title('Model Validation')
-    plt.ylabel('val_loss')
-    plt.xlabel('epoch')
-    #plt.legend(['validation'], loc='upper right')
-    plt.savefig(f"../../images/Rt/machine learning/rt/{curr}-Validation-{datetime.now().strftime('%d_%m_%Y_%H_%M_%S')}.png")
-    plt.close()
-    existingResults = []
-
-    if firstRun != True:
-        with open(filePath, "r") as dataFile:
-            myReader = csv.DictReader(dataFile)
-
-            for row in myReader:
-                existingResults.append(row)
-
-    firstRun = False
-    existingResults.append({"Window Size":curr, "Accuracy":groupOverallAccuracy/noIterations})
-    print(existingResults)
-    writeFile(filePath, existingResults)"""
 
 if __name__ == "__main__":
     sys.exit(main())
