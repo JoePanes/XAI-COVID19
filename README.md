@@ -1,4 +1,7 @@
 # XAI-COVID19
+<p align="center">
+ <img width="500" src="https://www.swansea.ac.uk/_assets/images/logos/swansea-university-2017.en.png">
+</p>
 
 ## General Summary
 Hello, and welcome.
