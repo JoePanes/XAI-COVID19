@@ -21,6 +21,8 @@ To run the files, you will need the following:
 
 * **A Linux based system** (or if using Windows, use something like Windows Subsystem for Linux)
 
+* **Jupyter Notebook** (only if you want to look at the XAI parts)
+
 * Modules:
   * **copy** - Used for creating deepcopies of objects
   * **csv** - Used for reading in and saving files
