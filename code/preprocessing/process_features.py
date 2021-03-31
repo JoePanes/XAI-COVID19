@@ -10,6 +10,7 @@ Finally, writes the altered dataset to a new .csv file.
 import csv
 import os
 import sys
+
 from shared.sharedFunctions import createErrorFile
 from shared.sharedFunctions import removeBrackets
 from shared.sharedFunctions import readFile

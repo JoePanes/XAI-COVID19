@@ -1,3 +1,54 @@
+"""
+A general summary of this file, is as follows:
+
+Step 1: Determine the actions that should be possible for the current Rt value data
+
+Look through the Rt data, sort the changes of data into different bins, where each bin is a range of values (e.g. 0.5).
+Once all values have been sorted, the top 8(?) bins (in terms of total values within them) are averaged, and this is added as an action to the potential action list.
+
+Worthwhile note, for the sake of simplification, all negative Rt value changes will be made positive when being sorted into bins.
+
+An example potential action list may be:
+[0, 0.5, 0.25, 1, 0.1, 0.75, 1.25, 2, 2.1, -0.5, -0.25, -1, -0.1, -0.75, -1.25, -2, -2.1]
+/\ |____________________________________|  |____________________________________________|
+|               a)                                              b)
+0 will always be in every action list
+a) These are the positve bin values
+b) Negative verions of the positive bin values are added to provide more options easily
+
+Step 2: Create an agent that using those actions tries to mimic the Rt values as closely as possible
+
+\                      /
+ x      x--x    x--x--x
+  \    /    \  /
+   x--x       x 
+   
+
+
+Step 3: Break up the actions that the agent has chosen into sections, then looking at the point to the right of a section, look
+        at each of the points within that section, and evalute which one had the largest impact on its decision to make its currently
+        decided action. 
+
+\   |      |      |    |    /
+ x  |     x|--x   |x--x|--x
+  \ |    / |   \  |/   |
+   x|--x   |    x |    |
+
+Idea 1:
+        To evalute the previous points, create a list of all potential combinations of actions that could have been performed.
+        Then, look through the potential combinations and determine which one had a larger impact upon how the actual value came to be.
+                Look at which previous point actions ends up leading to the current point the most?
+
+Step 4: Put all of these window predictions into a table
+
+|Window step|Prediction|
+|           |          |
+|           |          |
+
+Step 5: Use Machine Learning techniques such as RNN and Regressors to try and predict the following action
+
+Step 6: Use SHAP on the Machine Learning model to see what explanations it can derive
+"""
 import sys
 import multiprocessing
 import csv
@@ -13,7 +64,6 @@ from tensorflow.keras.layers import LSTM
 from tensorflow.keras.layers import Dropout
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import BatchNormalization
-from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import MeanSquaredLogarithmicError
 from tensorflow.keras import backend
@@ -21,7 +71,6 @@ from tensorflow.keras import backend
 from pandas import qcut
 from pandas import DataFrame
 from pandas import read_csv
-from pandas import concat
 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedKFold
@@ -31,9 +80,6 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
 from sklearn.utils import resample
-
-from random import randint
-from random import shuffle
 
 from statistics import mean
 
@@ -57,10 +103,6 @@ from copy import deepcopy
 from copy import copy
 
 from datetime import datetime
-
-from itertools import product
-
-from math import sqrt
 
 from xgboost import XGBRFRegressor
 

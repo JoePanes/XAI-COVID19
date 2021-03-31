@@ -17,10 +17,11 @@ import multiprocessing
 import os
 
 from copy import deepcopy
+
 from scipy.stats import gamma
-from itertools import chain
 
 from shared.sharedVariables import FILE_PATH_CORE
+
 from shared.sharedFunctions import createErrorFile
 from shared.sharedFunctions import printProgressBar
 from shared.sharedFunctions import readFile
